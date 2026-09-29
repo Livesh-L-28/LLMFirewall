@@ -1,0 +1,49 @@
+name: AI Supply-Chain Security CI
+
+on:
+  push:
+    branches: [ main, release/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  supply-chain-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Dependency Inventory Scan
+        run: |
+          llmfirewall supply-chain scan --offline
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          llmfirewall supply-chain sbom --format cyclonedx --output sbom.json
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-cyclonedx-sbom
+          path: sbom.json
+
+      - name: Capture AI Security Snapshot
+        run: |
+          llmfirewall supply-chain snapshot --output security-snapshot.json
+
+      - name: Verify Model Weights (if present)
+        run: |
+          if [ -f "models/model.safetensors" ]; then
+            llmfirewall model verify models/model.safetensors --sha256 ${{ secrets.EXPECTED_MODEL_SHA256 }}
+          fi

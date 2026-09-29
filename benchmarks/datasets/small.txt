@@ -1,0 +1,2 @@
+"""Small sample prompt (approx 200 characters)."""
+Explain the difference between supervised and unsupervised learning algorithms in machine learning. Provide a concise example for each paradigm.

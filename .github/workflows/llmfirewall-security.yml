@@ -1,0 +1,45 @@
+name: LLMFirewall Security Governance
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  governance-gate:
+    name: AI Security Release Assurance Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install package
+        run: |
+          pip install --upgrade pip
+          pip install .
+
+      - name: Run security test suite
+        run: |
+          python3 -m llmfirewall.cli test security --suite core --format json --output security-results.json
+        continue-on-error: true
+
+      - name: Evaluate governance release gate
+        run: |
+          python3 -m llmfirewall.cli gate --results security-results.json --ci --format json --output governance-result.json
+
+      - name: Upload evidence manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-evidence-bundle
+          path: |
+            security-results.json
+            governance-result.json
+          retention-days: 90

@@ -1,0 +1,138 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llmfirewall"
+version = "1.0.0"
+description = "A lightweight, provider-agnostic security and policy enforcement layer for LLM, RAG, and AI-agent applications."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "LLMFirewall Authors" }
+]
+keywords = [
+    "llm",
+    "security",
+    "prompt-injection",
+    "pii-detection",
+    "secret-detection",
+    "guardrails",
+    "rag",
+    "ai-safety",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# Minimal runtime dependencies: Pydantic v2 for robust validation and safe serialization
+dependencies = [
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+]
+
+[project.optional-dependencies]
+fastapi = [
+    "fastapi>=0.100.0",
+]
+flask = [
+    "flask>=2.0.0",
+]
+django = [
+    "django>=4.0.0",
+]
+langchain = [
+    "langchain-core>=0.1.0",
+]
+llamaindex = [
+    "llama-index-core>=0.10.0",
+]
+all-integrations = [
+    "fastapi>=0.100.0",
+    "flask>=2.0.0",
+    "django>=4.0.0",
+    "langchain-core>=0.1.0",
+    "llama-index-core>=0.10.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+    "fastapi>=0.100.0",
+    "httpx>=0.23.0",
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+llmfirewall = "llmfirewall.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/livesh/LLMFirewall"
+Documentation = "https://github.com/livesh/LLMFirewall#readme"
+Repository = "https://github.com/livesh/LLMFirewall.git"
+"Bug Tracker" = "https://github.com/livesh/LLMFirewall/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llmfirewall"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+    "/SECURITY.md",
+    "/pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --import-mode=importlib"
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests for isolated functions, classes, and rules",
+    "integration: Cross-component and end-to-end subsystem integration tests",
+    "security: Security enforcement, information leakage, and attack payload tests",
+    "regression: Security regression tests for preventing past vulnerability recurrence",
+    "fastapi: Tests for optional FastAPI ASGI middleware and helpers",
+    "cli: Tests for command-line interface execution and exit codes",
+]
+
+[tool.coverage.run]
+source = ["src/llmfirewall"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # Line too long
+    "F401",  # Imported but unused (re-exports across package namespaces)
+    "F403",  # Star imports
+    "F405",  # Star imports
+    "E402",  # Module level import not at top of file
+    "F841",  # Local variable assigned but never used
+    "W291",  # Trailing whitespace
+    "W293",  # Blank line contains whitespace
+    "E741",  # Ambiguous variable name
+    "F811",  # Redefinition of unused name
+]

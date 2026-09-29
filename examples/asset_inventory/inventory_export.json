@@ -1,0 +1,270 @@
+{
+  "assets": [
+    {
+      "confidence": "HIGH",
+      "conflicts": [
+        {
+          "configured_value": "1.0.0",
+          "description": "Version discrepancy: '1.0.0' vs '1.1.0'.",
+          "detected_at": 1790596745.492179,
+          "field": "version",
+          "observed_value": "1.1.0"
+        }
+      ],
+      "environment": "production",
+      "fingerprint": "15dcd85d779b617c28957f11e6c3f6bd2d9b480a6cfa44c33a4facba5ab036a8",
+      "first_seen": 1790596745.49173,
+      "id": "agent:support_agent",
+      "last_seen": 1790596745.492168,
+      "metadata": {
+        "model": "gpt-4o",
+        "observed_runtime_latency_ms": 142.5,
+        "rag_source": "rag_source:kb_articles",
+        "tools": [
+          "database_tool",
+          "crm_lookup"
+        ]
+      },
+      "name": "Support Conversational Agent",
+      "owner": null,
+      "provenance": [
+        {
+          "details": {},
+          "observed_at": 1790596745.491689,
+          "provider_name": "config_discovery",
+          "reference": "agents.yaml:line_15",
+          "source": "CONFIGURATION"
+        },
+        {
+          "details": {},
+          "observed_at": 1790596745.4921432,
+          "provider_name": "runtime_discovery",
+          "reference": "metrics:session_8819",
+          "source": "RUNTIME"
+        }
+      ],
+      "source": "RUNTIME",
+      "status": "ACTIVE",
+      "tags": [
+        "agent",
+        "autonomous",
+        "tier1"
+      ],
+      "type": "agent",
+      "version": "1.1.0"
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "production",
+      "fingerprint": "6145f902a926d5c258208ff352cca6d7262007508d121786fda5e0d2fb521085",
+      "first_seen": 1790596745.491617,
+      "id": "application:customer_support_app",
+      "last_seen": 1790596745.491617,
+      "metadata": {},
+      "name": "Customer Support Portal",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [
+        "core",
+        "perimeter",
+        "customer_facing"
+      ],
+      "type": "application",
+      "version": "2.4.0"
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "production",
+      "fingerprint": "2748f887ccd85175e984346f2936b8ce25638fd6cc237cfc08647bd9792cefb9",
+      "first_seen": 1790596745.4917629,
+      "id": "model:gpt-4o",
+      "last_seen": 1790596745.4917629,
+      "metadata": {
+        "max_context": 128000,
+        "provider": "openai"
+      },
+      "name": "GPT-4o Omnimodal",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [],
+      "type": "model",
+      "version": "2024-08-06"
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "unknown",
+      "fingerprint": "3d6ff376dd659bf182c5fc62b2e60e9a159fa18b44868313431a9481fcecec18",
+      "first_seen": 1790596745.491789,
+      "id": "provider:openai",
+      "last_seen": 1790596745.491789,
+      "metadata": {
+        "configured": true,
+        "region": "us-east-1"
+      },
+      "name": "OpenAI Platform",
+      "owner": null,
+      "provenance": [],
+      "source": "ENVIRONMENT",
+      "status": "ACTIVE",
+      "tags": [],
+      "type": "model_provider",
+      "version": null
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "unknown",
+      "fingerprint": "02214fc543eac350aabf30d26d34dc3d3db3ddd7c2a666358a31b4bb06c8168e",
+      "first_seen": 1790596745.492009,
+      "id": "rag_source:kb_articles",
+      "last_seen": 1790596745.492009,
+      "metadata": {
+        "vector_store": "vector_store:pinecone_docs"
+      },
+      "name": "KnowledgeBase RAG Pipeline",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [],
+      "type": "rag_source",
+      "version": null
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "unknown",
+      "fingerprint": "417e4ebfa416110be5a026992d7009adefd8fbc2d6c77dd401c522ed95a8e1fd",
+      "first_seen": 1790596745.492107,
+      "id": "security_control:prompt_firewall",
+      "last_seen": 1790596745.492108,
+      "metadata": {
+        "categories": [
+          "injection",
+          "pii"
+        ],
+        "mode": "blocking"
+      },
+      "name": "LLMFirewall Prompt Guardrail",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [],
+      "type": "security_control",
+      "version": null
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "production",
+      "fingerprint": "445f61a6382c42cb103d338d38e8046e1e910c96d6037a4b7427683d75615c7b",
+      "first_seen": 1790596745.49198,
+      "id": "tool:crm_lookup",
+      "last_seen": 1790596745.49198,
+      "metadata": {
+        "auth_mode": "oauth2",
+        "category": "api"
+      },
+      "name": "Zendesk CRM Lookup",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [
+        "crm",
+        "external_api"
+      ],
+      "type": "tool",
+      "version": null
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "production",
+      "fingerprint": "b63b5f97ff1fe2b8cc751b441a7847229fc896106bd34731fcbbfd384ff479a6",
+      "first_seen": 1790596745.491926,
+      "id": "tool:database_tool",
+      "last_seen": 1790596745.492809,
+      "metadata": {
+        "category": "database",
+        "endpoint": "internal://db.support.local",
+        "removal_reason": "Migrated to secure API",
+        "removed_at": 1790596745.492809
+      },
+      "name": "Customer Orders Database",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "REMOVED",
+      "tags": [
+        "database",
+        "sensitive"
+      ],
+      "type": "tool",
+      "version": null
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "production",
+      "fingerprint": "e979975ab0ca37e2c7025aad25fdc7e9836bbe237d65ef77f0a02b0b9e60d8c4",
+      "first_seen": 1790596745.492864,
+      "id": "tool:refund_api",
+      "last_seen": 1790596745.492865,
+      "metadata": {
+        "capabilities": [
+          "payment:refund"
+        ],
+        "category": "finance"
+      },
+      "name": "Stripe Refund API Tool",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [],
+      "type": "tool",
+      "version": null
+    },
+    {
+      "confidence": "HIGH",
+      "conflicts": [],
+      "environment": "unknown",
+      "fingerprint": "f30d5c8a04dfab35abab04716563394d570888806d2896e4ac1ce673b18bd93f",
+      "first_seen": 1790596745.492034,
+      "id": "vector_store:pinecone_docs",
+      "last_seen": 1790596745.492034,
+      "metadata": {
+        "dimension": 1536,
+        "metric": "cosine"
+      },
+      "name": "Pinecone Support Index",
+      "owner": null,
+      "provenance": [],
+      "source": "CONFIGURATION",
+      "status": "ACTIVE",
+      "tags": [],
+      "type": "vector_store",
+      "version": null
+    }
+  ],
+  "assets_count": 10,
+  "created_at": 1790596745.493025,
+  "graph_hash": "760bb27f7e86bcd58b836b86054a9a35734f212cd395529c6ea012a67081f44c",
+  "inventory_version": "1.0",
+  "schema_version": "1.0.0",
+  "snapshot_hash": "c435e74bfba3d24f484a9ff6897e54bba904ac4c05f703048f6ec409a485641c",
+  "sources": [
+    "CONFIGURATION",
+    "ENVIRONMENT",
+    "RUNTIME"
+  ]
+}

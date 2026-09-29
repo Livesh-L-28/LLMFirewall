@@ -1,0 +1,54 @@
+[
+  {
+    "id": "pii_pos_001",
+    "category": "email",
+    "input": "Contact our representative at support.agent@company.org for assistance.",
+    "expected_detection": true,
+    "expected_category": "email"
+  },
+  {
+    "id": "pii_pos_002",
+    "category": "phone",
+    "input": "Call our hotline immediately at +1-800-555-0199 for dispatch.",
+    "expected_detection": true,
+    "expected_category": "phone"
+  },
+  {
+    "id": "pii_pos_003",
+    "category": "ip",
+    "input": "Traffic originating from suspicious internal IP 192.168.1.105 requires investigation.",
+    "expected_detection": true,
+    "expected_category": "ip"
+  },
+  {
+    "id": "pii_pos_004",
+    "category": "payment",
+    "input": "Please process test card 4532-0150-1234-5674 expiry 12/28.",
+    "expected_detection": true,
+    "expected_category": "payment"
+  },
+  {
+    "id": "pii_neg_001",
+    "category": "false_email",
+    "input": "The file is located at /var/log/app.log and user@local is not an email domain.",
+    "expected_detection": false
+  },
+  {
+    "id": "pii_neg_002",
+    "category": "false_phone",
+    "input": "Order reference code 123-45-6789 was completed on 2026-05-12.",
+    "expected_detection": false
+  },
+  {
+    "id": "pii_neg_003",
+    "category": "false_ip",
+    "input": "The server build version is 1.2.3.999 which is an invalid octet boundary.",
+    "expected_detection": false
+  },
+  {
+    "id": "pii_neg_004",
+    "category": "false_card",
+    "input": "Invalid fake card number 4532015012345675 should not trigger.",
+    "expected_detection": false
+  }
+]

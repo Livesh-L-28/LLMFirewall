@@ -1,0 +1,27 @@
+{
+  "dataset_version": "benchmark dataset v1",
+  "schema_version": "1.0.0",
+  "creation_date": "2026-09-28",
+  "total_cases": 40,
+  "categories": [
+    "prompt_injection",
+    "jailbreak",
+    "data_exfiltration",
+    "tool_abuse",
+    "rag_poisoning",
+    "memory_poisoning",
+    "sensitive_data",
+    "agent_attacks"
+  ],
+  "cases_by_category": {
+    "prompt_injection": 11,
+    "jailbreak": 7,
+    "data_exfiltration": 3,
+    "tool_abuse": 5,
+    "rag_poisoning": 3,
+    "memory_poisoning": 3,
+    "sensitive_data": 5,
+    "agent_attacks": 3
+  },
+  "safety_attestation": "All cases contain synthetic data and simulated attacks only. Zero actual credentials, PII, or external targets are included."
+}

@@ -1,0 +1,68 @@
+{
+  "audit_version": "1.0.0",
+  "target_package": "llmfirewall",
+  "version": "1.0.0rc1",
+  "timestamp": "2026-09-28T22:00:00Z",
+  "status": "PASS",
+  "summary": {
+    "critical_vulnerabilities": 0,
+    "high_vulnerabilities": 0,
+    "medium_vulnerabilities": 0,
+    "low_vulnerabilities": 0,
+    "hardcoded_secrets": 0,
+    "unsafe_eval_exec": 0,
+    "unsafe_subprocess": 0,
+    "unsafe_deserialization": 0,
+    "sql_injection_risks": 0
+  },
+  "dependencies": [
+    {
+      "dependency": "pydantic",
+      "version": "2.13.5",
+      "scope": "runtime",
+      "known_vulnerabilities": 0,
+      "severity": "none",
+      "action": "maintain"
+    },
+    {
+      "dependency": "fastapi",
+      "version": "0.141.1",
+      "scope": "optional",
+      "known_vulnerabilities": 0,
+      "severity": "none",
+      "action": "maintain"
+    }
+  ],
+  "static_analysis": {
+    "eval_exec": {
+      "occurrences": 0,
+      "status": "pass"
+    },
+    "subprocess_invocation": {
+      "occurrences": 0,
+      "status": "pass",
+      "note": "Mock shell tools in eval module strictly return simulated strings without spawning OS processes."
+    },
+    "unsafe_deserialization": {
+      "yaml_safe_load": "Enforced across all 8 YAML ingestion points",
+      "pickle_deserialization": "Disabled by default via supply chain verifier and config models",
+      "status": "pass"
+    },
+    "sql_injection": {
+      "parameterized_queries": "Enforced across observability and graph sqlite stores",
+      "raw_sql_formatting": 0,
+      "status": "pass"
+    },
+    "hardcoded_secrets": {
+      "live_secrets_detected": 0,
+      "synthetic_test_fixtures": 2,
+      "status": "pass"
+    },
+    "defaults": {
+      "fail_behavior": "FAIL_CLOSED",
+      "runtime_mode": "ENFORCE",
+      "allow_unsafe_serialization": false,
+      "status": "pass"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+name: Release & Distribution
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-publish:
+    name: Build, Attest & Publish to PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Build Tools
+        run: |
+          python -m pip install --upgrade pip build twine
+
+      - name: Build Wheel and Source Distribution
+        run: |
+          python -m build
+
+      - name: Verify Package Metadata
+        run: |
+          twine check dist/*
+
+      - name: Test Wheel in Isolated Virtualenv
+        run: |
+          python -m venv test_env
+          . test_env/bin/activate
+          pip install dist/*.whl
+          llmfirewall --version
+          python -c "from llmfirewall import Firewall; fw = Firewall(); res = fw.check('Hello'); assert res.decision.action.value == 'allow'"
+
+      # Trusted Publishing with OIDC: PyPI publication (configured for release tags only)
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true

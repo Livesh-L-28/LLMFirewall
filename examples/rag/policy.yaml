@@ -1,0 +1,28 @@
+# RAG Security Policy Example (Phase 27)
+version: "1.0"
+name: "rag_security_policy"
+description: "Security policy for RAG ingestion scanning and context assembly"
+
+rag:
+  ingestion:
+    scan_documents: true
+    quarantine_on_injection: true
+    deduplicate_chunks: true
+
+  context:
+    max_items: 10
+    max_tokens: 8000
+    max_bytes: 100000
+
+rules:
+  - id: "block_prompt_injection"
+    description: "Block prompt injection attacks across documents and context"
+    condition:
+      threat_type: "prompt_injection"
+    action: "block"
+
+  - id: "block_secrets"
+    description: "Block credentials and secrets from entering context"
+    condition:
+      threat_type: "secret"
+    action: "block"

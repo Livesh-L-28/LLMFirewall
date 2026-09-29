@@ -1,0 +1,23 @@
+agent:
+  role: research
+  capabilities:
+    - filesystem.read
+    - network.request
+
+  deny:
+    - shell.execute
+    - filesystem.delete
+
+  budget:
+    max_actions: 10
+    max_runtime_seconds: 300
+    per_capability_limits:
+      filesystem.read: 5
+      network.request: 5
+
+  delegation:
+    max_depth: 2
+
+  approval:
+    database.delete: required
+    email.send: required

@@ -1,0 +1,77 @@
+# LLMFirewall Governance Policy (Phase 31)
+name: enterprise-release-governance
+version: "1.0"
+profile: production
+
+# Global severity enforcement
+block_on:
+  - critical
+
+review_on:
+  - high
+
+# Mandatory gates required for release approval
+require:
+  - core-security
+  - model-integrity
+  - configuration-integrity
+  - agent-security
+
+gates:
+  - id: core-security
+    type: test
+    name: Core LLM Security Tests
+    required: true
+    minimum_pass_rate: 1.0
+    block_on:
+      - critical
+    required_tests:
+      - PI-001
+      - TOOL-001
+
+  - id: model-integrity
+    type: model
+    name: AI Model Artifact Integrity & Provenance
+    required: true
+    block_on:
+      - critical
+      - high
+
+  - id: configuration-integrity
+    type: configuration
+    name: Firewall Security Configuration Integrity
+    required: true
+    block_on:
+      - critical
+
+  - id: agent-security
+    type: agent
+    name: Agent Capabilities & Action Authorization
+    required: true
+    block_on:
+      - critical
+
+  - id: rag-security
+    type: rag
+    name: RAG Document Trust & Provenance
+    required: false
+    review_on:
+      - high
+
+# Active auditable risk waivers
+waivers: []
+
+# Component change mapping
+change_requirements:
+  MODEL:
+    - model-integrity
+    - core-security
+  CAPABILITY:
+    - agent-security
+  RAG:
+    - rag-security
+  CONFIGURATION:
+    - configuration-integrity
+
+evidence_retention_days: 90
+allow_emergency_override: true

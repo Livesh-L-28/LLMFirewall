@@ -1,0 +1,213 @@
+{
+  "graph_hash": "81134369caa5e1b173ef7360d1ee3c63b454455e8338d936db6ca0d4277ac266",
+  "graph_version": "1.0",
+  "node_count": 11,
+  "nodes": [
+    {
+      "created_at": 1790591979.8359659,
+      "id": "agent:support_copilot",
+      "properties": {
+        "framework": "langchain",
+        "role": "customer_support",
+        "version": "2.4.0"
+      },
+      "type": "agent",
+      "updated_at": 1790591979.8359659
+    },
+    {
+      "created_at": 1790591979.8359418,
+      "id": "app:customer_portal",
+      "properties": {
+        "environment": "production",
+        "tier": "mission_critical"
+      },
+      "type": "application",
+      "updated_at": 1790591979.835943
+    },
+    {
+      "created_at": 1790591979.836135,
+      "id": "control:prompt_shield",
+      "properties": {
+        "enforcement": "block",
+        "name": "Prompt Injection Shield"
+      },
+      "type": "security_control",
+      "updated_at": 1790591979.836135
+    },
+    {
+      "created_at": 1790591979.83614,
+      "id": "control:sql_sanitizer",
+      "properties": {
+        "enforcement": "validate_and_sanitize",
+        "name": "SQL Injection & Tool Parameter Sanitizer"
+      },
+      "type": "security_control",
+      "updated_at": 1790591979.83614
+    },
+    {
+      "created_at": 1790591979.836155,
+      "id": "finding:db_auth_missing",
+      "properties": {
+        "rule_id": "SEC-TOOL-02",
+        "severity": "medium",
+        "title": "Tool lacks granular column-level authorization"
+      },
+      "type": "finding",
+      "updated_at": 1790591979.836155
+    },
+    {
+      "created_at": 1790591979.835974,
+      "id": "model:gpt-4o",
+      "properties": {
+        "context_window": 128000,
+        "model_id": "gpt-4o-2024-08-06",
+        "provider": "openai"
+      },
+      "type": "model",
+      "updated_at": 1790591979.835974
+    },
+    {
+      "created_at": 1790591979.8361301,
+      "id": "policy:enterprise_ai_guardrails",
+      "properties": {
+        "compliance": [
+          "NIST_AI_RMF",
+          "EU_AI_ACT"
+        ],
+        "version": "3.1.0"
+      },
+      "type": "policy",
+      "updated_at": 1790591979.8361301
+    },
+    {
+      "created_at": 1790591979.836149,
+      "id": "test:pi_regression_suite",
+      "properties": {
+        "pass_rate": 1.0,
+        "status": "passing",
+        "suite_name": "prompt_injection_v2"
+      },
+      "type": "security_test",
+      "updated_at": 1790591979.836149
+    },
+    {
+      "created_at": 1790591979.8361442,
+      "id": "threat:indirect_injection",
+      "properties": {
+        "cwe": "CWE-1426",
+        "severity": "high"
+      },
+      "type": "threat",
+      "updated_at": 1790591979.8361442
+    },
+    {
+      "created_at": 1790591979.835988,
+      "id": "tool:customer_db",
+      "properties": {
+        "category": "database",
+        "permission": "read_write"
+      },
+      "type": "tool",
+      "updated_at": 1790591979.835988
+    },
+    {
+      "created_at": 1790591979.835983,
+      "id": "tool:web_search",
+      "properties": {
+        "network_access": true,
+        "permission": "read_only"
+      },
+      "type": "tool",
+      "updated_at": 1790591979.835983
+    }
+  ],
+  "relationship_count": 12,
+  "relationships": [
+    {
+      "created_at": 1790591979.836187,
+      "properties": {},
+      "source": "agent:support_copilot",
+      "target": "tool:customer_db",
+      "type": "CAN_CALL"
+    },
+    {
+      "created_at": 1790591979.836183,
+      "properties": {},
+      "source": "agent:support_copilot",
+      "target": "tool:web_search",
+      "type": "CAN_CALL"
+    },
+    {
+      "created_at": 1790591979.836194,
+      "properties": {},
+      "source": "agent:support_copilot",
+      "target": "policy:enterprise_ai_guardrails",
+      "type": "GOVERNED_BY"
+    },
+    {
+      "created_at": 1790591979.836174,
+      "properties": {},
+      "source": "agent:support_copilot",
+      "target": "model:gpt-4o",
+      "type": "USES"
+    },
+    {
+      "created_at": 1790591979.836191,
+      "properties": {},
+      "source": "app:customer_portal",
+      "target": "policy:enterprise_ai_guardrails",
+      "type": "GOVERNED_BY"
+    },
+    {
+      "created_at": 1790591979.836163,
+      "properties": {},
+      "source": "app:customer_portal",
+      "target": "agent:support_copilot",
+      "type": "USES"
+    },
+    {
+      "created_at": 1790591979.8362062,
+      "properties": {},
+      "source": "control:prompt_shield",
+      "target": "threat:indirect_injection",
+      "type": "MITIGATES"
+    },
+    {
+      "created_at": 1790591979.8361988,
+      "properties": {},
+      "source": "control:prompt_shield",
+      "target": "agent:support_copilot",
+      "type": "PROTECTS"
+    },
+    {
+      "created_at": 1790591979.836202,
+      "properties": {},
+      "source": "control:sql_sanitizer",
+      "target": "tool:customer_db",
+      "type": "PROTECTS"
+    },
+    {
+      "created_at": 1790591979.836214,
+      "properties": {},
+      "source": "finding:db_auth_missing",
+      "target": "tool:customer_db",
+      "type": "AFFECTS"
+    },
+    {
+      "created_at": 1790591979.836218,
+      "properties": {},
+      "source": "finding:db_auth_missing",
+      "target": "control:sql_sanitizer",
+      "type": "MITIGATED_BY"
+    },
+    {
+      "created_at": 1790591979.83621,
+      "properties": {},
+      "source": "test:pi_regression_suite",
+      "target": "control:prompt_shield",
+      "type": "TESTS"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "timestamp": 1790591979.8367949
+}

@@ -1,0 +1,14 @@
+version: "1.0"
+models:
+  llama-3-8b-instruct:
+    version: "1.0.0"
+    format: "safetensors"
+    source: "internal_registry"
+    sha256: "37eadb4772ddeab376bc33a120b21c6acd885e981cbe7601a253290aa55fe36a"
+    provider: "meta"
+  bge-large-en:
+    version: "1.5.0"
+    format: "onnx"
+    source: "approved_huggingface"
+    sha256: "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
+    provider: "baai"

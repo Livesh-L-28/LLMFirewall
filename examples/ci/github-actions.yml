@@ -1,0 +1,57 @@
+name: AI Security Gate & Continuous Assurance
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  ai-security-governance:
+    name: Evaluate AI Security Release Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install LLMFirewall
+        run: |
+          pip install --upgrade pip
+          pip install .
+
+      - name: Run AI Security Test Suite (Phase 30)
+        run: |
+          llmfirewall test security --suite all --format json --output security-results.json
+        continue-on-error: true
+
+      - name: Capture Supply-Chain Security Snapshot (Phase 28)
+        run: |
+          llmfirewall supply-chain snapshot --output security-snapshot.json
+        continue-on-error: true
+
+      - name: Evaluate Security Governance Gates (Phase 31)
+        run: |
+          llmfirewall gate \
+            --policy examples/governance/policy.yaml \
+            --results security-results.json \
+            --snapshot security-snapshot.json \
+            --ci \
+            --format json \
+            --output governance-result.json
+
+      - name: Upload Security Evidence Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llmfirewall-security-evidence
+          path: |
+            security-results.json
+            security-snapshot.json
+            governance-result.json
+          retention-days: 90

@@ -1,0 +1,41 @@
+{
+  "name": "production-continuous-test-policy",
+  "version": "1.0",
+  "description": "Security policy enforced during continuous automated security testing.",
+  "allowed_tools": [
+    "calculator",
+    "web_fetch",
+    "read_file"
+  ],
+  "denied_tools": [
+    "terminal",
+    "raw_shell"
+  ],
+  "rules": [
+    {
+      "id": "block-prompt-injection",
+      "threat_type": "prompt_injection",
+      "action": "block",
+      "priority": 100
+    },
+    {
+      "id": "block-secrets",
+      "threat_type": "secret",
+      "action": "block",
+      "priority": 100
+    },
+    {
+      "id": "redact-pii",
+      "threat_type": "pii",
+      "action": "redact",
+      "priority": 80
+    },
+    {
+      "id": "block-ssrf",
+      "threat_type": "malicious_url",
+      "action": "block",
+      "priority": 100
+    }
+  ],
+  "default_action": "allow"
+}

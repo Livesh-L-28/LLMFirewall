@@ -1,0 +1,41 @@
+[
+  {
+    "num_assets": 1000,
+    "population_time_sec": 0.0777,
+    "full_evaluation_sec": 0.0799,
+    "evaluation_throughput_assets_per_sec": 12517.6,
+    "incremental_evaluation_ms": 0.158,
+    "incremental_assets_count": 2,
+    "snapshot_creation_ms": 154.994,
+    "diff_evaluation_ms": 2.673,
+    "report_generation_ms": 72.123,
+    "memory_overhead_mb": 92.89,
+    "snapshot_hash": "d0331deae0747773..."
+  },
+  {
+    "num_assets": 10000,
+    "population_time_sec": 0.7209,
+    "full_evaluation_sec": 0.9011,
+    "evaluation_throughput_assets_per_sec": 11097.3,
+    "incremental_evaluation_ms": 0.158,
+    "incremental_assets_count": 2,
+    "snapshot_creation_ms": 1963.985,
+    "diff_evaluation_ms": 36.681,
+    "report_generation_ms": 770.07,
+    "memory_overhead_mb": 809.02,
+    "snapshot_hash": "51bf5979f8d646a1..."
+  },
+  {
+    "num_assets": 50000,
+    "population_time_sec": 3.9834,
+    "full_evaluation_sec": 5.1262,
+    "evaluation_throughput_assets_per_sec": 9753.8,
+    "incremental_evaluation_ms": 0.189,
+    "incremental_assets_count": 2,
+    "snapshot_creation_ms": 9996.582,
+    "diff_evaluation_ms": 242.49,
+    "report_generation_ms": 8069.804,
+    "memory_overhead_mb": 3690.09,
+    "snapshot_hash": "7e8a0a5b87b19c11..."
+  }
+]

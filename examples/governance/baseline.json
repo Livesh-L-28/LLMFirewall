@@ -1,0 +1,18 @@
+{
+  "accepted_findings": [],
+  "baseline_id": "BASE-RELEASE-1.0",
+  "configuration_hash": "34b3e8c9f0a12e34",
+  "created_at": 1790590088.2435682,
+  "created_by": "system",
+  "dependency_state": {},
+  "findings": [],
+  "integrity_hash": "d485b236496bba5191e0a5c06c198bb322741c253140a8d8bde533c130c19bb5",
+  "model_identity": {},
+  "policy_version": "1.0",
+  "required_gates": [
+    "core-security",
+    "model-integrity"
+  ],
+  "test_configuration": {},
+  "version": "1.0"
+}

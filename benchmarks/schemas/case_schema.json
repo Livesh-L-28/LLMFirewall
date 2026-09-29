@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LLMFirewall Benchmark Case Schema",
+  "description": "Schema for reproducible AI security evaluation and benchmark test cases.",
+  "type": "object",
+  "required": [
+    "id",
+    "category",
+    "description",
+    "severity",
+    "input",
+    "expected_action"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_-]+$",
+      "description": "Unique test case identifier (e.g. PI-001, JB-002, RAG-003)."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "prompt_injection",
+        "jailbreak",
+        "data_exfiltration",
+        "tool_abuse",
+        "rag_poisoning",
+        "memory_poisoning",
+        "sensitive_data",
+        "agent_attacks",
+        "runtime_policy"
+      ],
+      "description": "Primary security benchmark category."
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "Granular attack technique or scenario type."
+    },
+    "description": {
+      "type": "string",
+      "description": "Concise human-readable description of test objective and threat vector."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "informational"],
+      "description": "Inherent threat severity."
+    },
+    "input": {
+      "type": "string",
+      "description": "Text payload, prompt, or command passed to the target system."
+    },
+    "context": {
+      "type": "object",
+      "description": "Optional contextual envelope (e.g. tool name, arguments, rag context, memory items).",
+      "properties": {
+        "tool": { "type": "string" },
+        "tool_args": { "type": "object" },
+        "rag_chunks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "memory_candidate": { "type": "string" },
+        "session_id": { "type": "string" },
+        "user_role": { "type": "string" },
+        "direction": { "type": "string", "enum": ["input", "output"] }
+      }
+    },
+    "expected_action": {
+      "type": "string",
+      "enum": ["allow", "block", "redact", "review", "rate_limit"],
+      "description": "Expected policy decision enforcement outcome."
+    },
+    "expected_category": {
+      "type": "string",
+      "description": "Expected threat category detection match."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary metadata for benchmarking and classification."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Taxonomy tags (e.g. owasp_llm01, direct, evasive, synthetic)."
+    }
+  },
+  "additionalProperties": false
+}

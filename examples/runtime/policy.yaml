@@ -1,0 +1,36 @@
+# Runtime Security Policy Example (Phase 26)
+version: "1.0"
+name: "runtime_guardrails_policy"
+description: "Comprehensive multi-boundary policy for agent reasoning loops and tools"
+
+runtime:
+  max_iterations: 20
+  max_tool_calls: 30
+  timeout_seconds: 120
+
+allowed_tools:
+  - "calculator"
+  - "search_web"
+  - "weather_lookup"
+
+denied_tools:
+  - "bash_shell"
+  - "terminal_exec"
+  - "eval_python"
+
+rules:
+  - id: "block_prompt_injection"
+    description: "Block prompt injection attacks across input, prompt, and tool results"
+    condition:
+      field: "threat_type"
+      operator: "contains"
+      value: "prompt_injection"
+    action: "block"
+
+  - id: "block_secret_leakage"
+    description: "Block secret credentials in output or tool arguments"
+    condition:
+      field: "threat_type"
+      operator: "contains"
+      value: "secret"
+    action: "block"

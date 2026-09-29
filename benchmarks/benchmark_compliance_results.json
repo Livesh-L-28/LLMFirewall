@@ -1,0 +1,41 @@
+[
+  {
+    "num_controls": 100,
+    "num_assets": 50,
+    "framework_loading_ms": 0.98,
+    "control_mapping_ms": 2.51,
+    "evidence_ingestion_ms": 29.44,
+    "asset_assessment_ms": 8.18,
+    "assessment_throughput_controls_per_sec": 12224.8,
+    "snapshot_creation_ms": 418.25,
+    "snapshot_diff_ms": 209.89,
+    "report_generation_ms": 4.53,
+    "memory_overhead_mb": 119.48
+  },
+  {
+    "num_controls": 1000,
+    "num_assets": 50,
+    "framework_loading_ms": 7.81,
+    "control_mapping_ms": 25.56,
+    "evidence_ingestion_ms": 29.62,
+    "asset_assessment_ms": 72.22,
+    "assessment_throughput_controls_per_sec": 13847.3,
+    "snapshot_creation_ms": 4840.15,
+    "snapshot_diff_ms": 1134.05,
+    "report_generation_ms": 6.31,
+    "memory_overhead_mb": 1003.0
+  },
+  {
+    "num_controls": 10000,
+    "num_assets": 50,
+    "framework_loading_ms": 76.66,
+    "control_mapping_ms": 24.91,
+    "evidence_ingestion_ms": 29.93,
+    "asset_assessment_ms": 997.07,
+    "assessment_throughput_controls_per_sec": 10029.4,
+    "snapshot_creation_ms": 50652.58,
+    "snapshot_diff_ms": 54858.57,
+    "report_generation_ms": 33.32,
+    "memory_overhead_mb": 3920.05
+  }
+]

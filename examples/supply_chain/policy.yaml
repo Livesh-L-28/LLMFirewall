@@ -1,0 +1,19 @@
+model_security:
+  require_hash: true
+  allow_unknown_source: false
+  allow_unsafe_serialization: false
+  allowed_sources:
+    - internal_registry
+    - approved_huggingface
+
+dependencies:
+  vulnerabilities:
+    critical: block
+    high: warn
+  allowed_packages: null
+  blocked_packages:
+    - malicious_lib
+    - suspicious_telemetry_pkg
+
+configuration:
+  detect_drift: true
