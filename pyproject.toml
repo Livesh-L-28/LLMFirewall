@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "llmfirewall"
+name = "llmfirewall-core"
 version = "1.0.0"
 description = "A lightweight, provider-agnostic security and policy enforcement layer for LLM, RAG, and AI-agent applications."
 readme = "README.md"
@@ -77,10 +77,10 @@ dev = [
 llmfirewall = "llmfirewall.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/livesh/LLMFirewall"
-Documentation = "https://github.com/livesh/LLMFirewall#readme"
-Repository = "https://github.com/livesh/LLMFirewall.git"
-"Bug Tracker" = "https://github.com/livesh/LLMFirewall/issues"
+Homepage = "https://github.com/Livesh-L-28/LLMFirewall"
+Documentation = "https://github.com/Livesh-L-28/LLMFirewall#readme"
+Repository = "https://github.com/Livesh-L-28/LLMFirewall.git"
+"Bug Tracker" = "https://github.com/Livesh-L-28/LLMFirewall/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/llmfirewall"]

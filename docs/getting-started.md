@@ -6,17 +6,17 @@ LLMFirewall is a lightweight, local-first security and governance engine for LLM
 
 ## 1. Installation
 
-Install via pip:
+Install via pip (PyPI distribution: `llmfirewall-core`):
 
 ```bash
-pip install llmfirewall
+pip install llmfirewall-core
 ```
 
 Or install with development dependencies:
 
 ```bash
-git clone https://github.com/llmfirewall/llmfirewall.git
-cd llmfirewall
+git clone https://github.com/Livesh-L-28/LLMFirewall.git
+cd LLMFirewall
 pip install -e ".[dev]"
 ```
 

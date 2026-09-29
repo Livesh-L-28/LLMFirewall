@@ -41,8 +41,8 @@ All examples operate **locally by default** with simulated models and synthetic 
 Ensure `llmfirewall` is installed in your active environment:
 
 ```bash
-# From PyPI
-pip install llmfirewall
+# From PyPI (distribution name: llmfirewall-core)
+pip install llmfirewall-core
 
 # Or for local development from repository root:
 pip install -e ".[dev,fastapi]"
@@ -81,7 +81,7 @@ To launch the interactive FastAPI web service:
 
 ```bash
 # Install optional web dependencies
-pip install "llmfirewall[fastapi]" uvicorn
+pip install "llmfirewall-core[fastapi]" uvicorn
 
 # Start the application
 python examples/fastapi_app/main.py

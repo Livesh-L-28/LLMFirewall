@@ -59,11 +59,14 @@ python -m pip install --upgrade pip
 
 ### Option A: Standard Installation (PyPI)
 
-Install the core package with minimal dependencies:
+Install the core package from PyPI (published under the distribution name `llmfirewall-core`):
 
 ```bash
-pip install llmfirewall
+pip install llmfirewall-core
 ```
+
+> [!NOTE]
+> **PyPI vs Python Import**: The PyPI distribution name is `llmfirewall-core`. In your Python code, import directly with `import llmfirewall`, and use the `llmfirewall` CLI.
 
 ### Option B: Optional Integration Extras
 
@@ -71,22 +74,22 @@ LLMFirewall provides modular extras to minimize unnecessary dependencies:
 
 ```bash
 # FastAPI ASGI middleware and helpers
-pip install "llmfirewall[fastapi]"
+pip install "llmfirewall-core[fastapi]"
 
 # Flask middleware
-pip install "llmfirewall[flask]"
+pip install "llmfirewall-core[flask]"
 
 # Django middleware
-pip install "llmfirewall[django]"
+pip install "llmfirewall-core[django]"
 
 # LangChain integration adapter
-pip install "llmfirewall[langchain]"
+pip install "llmfirewall-core[langchain]"
 
 # LlamaIndex context guard integration
-pip install "llmfirewall[llamaindex]"
+pip install "llmfirewall-core[llamaindex]"
 
 # All web and framework integrations
-pip install "llmfirewall[all-integrations]"
+pip install "llmfirewall-core[all-integrations]"
 ```
 
 ### Option C: Source & Development Installation
@@ -95,7 +98,7 @@ If contributing to LLMFirewall or running test suites locally:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/livesh/LLMFirewall.git
+git clone https://github.com/Livesh-L-28/LLMFirewall.git
 cd LLMFirewall
 
 # 2. Create and activate virtual environment
@@ -168,5 +171,5 @@ Risk Score: 0.0 (INFO)
 - **Cause**: Attempting to use `llmfirewall.integrations.fastapi` without installing the optional extra.
 - **Solution**: Install the extra:
   ```bash
-  pip install "llmfirewall[fastapi]"
+  pip install "llmfirewall-core[fastapi]"
   ```

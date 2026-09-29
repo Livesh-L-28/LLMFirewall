@@ -218,7 +218,7 @@ except SecurityBlockError as err:
 
 ### FastAPI Integration (Optional Extra)
 
-Available via `pip install "llmfirewall[fastapi]"`.
+Available via `pip install "llmfirewall-core[fastapi]"`.
 
 - **`FirewallMiddleware`**: ASGI middleware intercepting HTTP requests before route handlers.
 - **`scan_response(generation, firewall, raise_on_block=True)`**: Helper verifying model outputs.

@@ -115,15 +115,18 @@ except SecurityBlockError as err:
 
 LLMFirewall requires **Python 3.9+** and is designed with minimal external runtime dependencies (`pydantic` and `pyyaml`).
 
+> [!NOTE]
+> **PyPI Distribution**: The package is published on PyPI as [`llmfirewall-core`](https://pypi.org/project/llmfirewall-core/). Python code imports the namespace directly (`import llmfirewall`), and the CLI remains `llmfirewall`.
+
 ```bash
 # Standard installation
-pip install llmfirewall
+pip install llmfirewall-core
 
 # With optional FastAPI integration
-pip install "llmfirewall[fastapi]"
+pip install "llmfirewall-core[fastapi]"
 
 # Full installation for development
-pip install "llmfirewall[dev]"
+pip install "llmfirewall-core[dev]"
 ```
 
 For platform-specific instructions and virtual environment setup, see the [Installation Guide](docs/installation.md).
