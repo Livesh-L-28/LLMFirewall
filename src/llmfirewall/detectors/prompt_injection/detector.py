@@ -8,6 +8,9 @@ from llmfirewall.detectors.metadata import DetectorMetadata
 from llmfirewall.detectors.prompt_injection.analyzer import InjectionHeuristicAnalyzer
 from llmfirewall.detectors.prompt_injection.normalizer import normalize_prompt_text
 from llmfirewall.detectors.prompt_injection.rules import (
+    AuthorityImpersonationRule,
+    DelimiterAttackRule,
+    IndirectInjectionRule,
     InjectionRule,
     InstructionHierarchyRule,
     InstructionOverrideRule,
@@ -46,6 +49,9 @@ class PromptInjectionDetector(Detector):
             RoleManipulationRule(),
             InstructionHierarchyRule(),
             SuspiciousControlRule(),
+            IndirectInjectionRule(),
+            DelimiterAttackRule(),
+            AuthorityImpersonationRule(),
         ]
         self._analyzer = InjectionHeuristicAnalyzer()
 
@@ -79,4 +85,4 @@ class PromptInjectionDetector(Detector):
                 all_matches.extend(matches)
 
         # 3. Heuristic analysis & correlation
-        return self._analyzer.analyze(text, all_matches)
+        return self._analyzer.analyze(text, all_matches, context=context)

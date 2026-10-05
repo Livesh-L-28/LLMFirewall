@@ -27,13 +27,13 @@ The full automated verification suite executed across the repository yielded:
 
 | Test Suite Category | Test Count | Passed | Failed | Status |
 |:---|:---:|:---:|:---:|:---:|
-| **Unit Tests** | 530 | 530 | 0 | **PASS** |
+| **Unit Tests** | 598 | 598 | 0 | **PASS** |
 | **Security Regression Tests** | 25 | 25 | 0 | **PASS** |
-| **End-to-End Integration Tests** | 13 | 13 | 0 | **PASS** |
+| **End-to-End Integration Tests** | 29 | 29 | 0 | **PASS** |
 | **Core Detection & Policy Tests** | 40 | 40 | 0 | **PASS** |
-| **Total Automated Tests** | **608** | **608** | **0** | **PASS** |
+| **Total Automated Tests (v1.1.0)** | **692** | **692** | **0** | **PASS** |
 
-Execution time for the 608-test automated suite was **2.18 seconds**.
+Execution time for the 692-test automated suite was **2.84 seconds** with 100% pass rate.
 
 ---
 
@@ -85,6 +85,15 @@ To evaluate runtime overhead introduced by LLMFirewall in high-throughput produc
 
 ### 4.2 Latency Conclusion
 The empirical added median overhead of LLMFirewall is approximately **0.022 milliseconds** (`~22 microseconds`), confirming that the runtime protection layer adds **sub-millisecond overhead** well below the variance of network transport and downstream LLM inference.
+
+### 4.3 Scan Cache Throughput & Speedup (v1.1.0)
+Phase 52 introduced the in-memory L1/L2 `ScanCache` with bounded LRU eviction and SHA-256 state hashing. Microbenchmarks across 1,000 iterations yielded:
+- **Cold Inspection Latency (P50)**: 0.309 ms
+- **Warm Cache Hit Latency (P50)**: 0.038 ms
+- **Speedup Factor**: **8.1x faster** on warm hits (`~38 microseconds`)
+- **Memory Footprint**: Bounded buffer under 5 MB for 5,000 cached records.
+
+For full caching methodology and reproducibility scripts, see [docs/performance.md](performance.md).
 
 ---
 

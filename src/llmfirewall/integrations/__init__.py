@@ -16,11 +16,19 @@ import importlib
 import sys
 from typing import Any, Dict, List, Optional
 
+from llmfirewall.integrations.asgi import LLMFirewallASGIMiddleware
 from llmfirewall.integrations.base import (
     FirewallIntegration,
     SecurityViolation,
     protect,
 )
+from llmfirewall.integrations.client import (
+    AsyncClientSessionContext,
+    AsyncLLMFirewallClient,
+    ClientSessionContext,
+    LLMFirewallClient,
+)
+from llmfirewall.integrations.stream import StreamingTextGuard
 
 
 class IntegrationRegistry:
@@ -28,6 +36,7 @@ class IntegrationRegistry:
 
     _AVAILABLE = {
         "fastapi": "llmfirewall.integrations.fastapi.middleware:FirewallMiddleware",
+        "asgi": "llmfirewall.integrations.asgi:LLMFirewallASGIMiddleware",
         "flask": "llmfirewall.integrations.flask:FirewallExtension",
         "django": "llmfirewall.integrations.django:FirewallMiddleware",
         "langchain": "llmfirewall.integrations.langchain:FirewallCallbackHandler",
@@ -42,6 +51,8 @@ class IntegrationRegistry:
     @classmethod
     def is_installed(cls, name: str) -> bool:
         """Check if third-party dependency for integration is installed in the current environment."""
+        if name.lower() == "asgi":
+            return True  # Pure ASGI has zero external dependencies!
         dep_modules = {
             "fastapi": "fastapi",
             "flask": "flask",
@@ -71,8 +82,16 @@ class IntegrationRegistry:
 
 
 __all__ = [
+    # Core Base & Decorators
     "FirewallIntegration",
     "SecurityViolation",
     "protect",
     "IntegrationRegistry",
+    # Developer Integrations 2.0 (Phase 51)
+    "LLMFirewallASGIMiddleware",
+    "LLMFirewallClient",
+    "AsyncLLMFirewallClient",
+    "StreamingTextGuard",
+    "ClientSessionContext",
+    "AsyncClientSessionContext",
 ]

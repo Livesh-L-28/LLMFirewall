@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-09-28T16:21:50.404200+00:00",
-  "version": "1.0.0rc1",
+  "timestamp": "2026-10-05T01:41:46.045624+00:00",
+  "version": "1.0.0",
   "dataset_version": "benchmark dataset v1",
   "environment": {
-    "platform": "macOS-14.3.1-arm64-arm-64bit",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
     "python_version": "3.12.1",
     "cpu_architecture": "arm64"
   },
@@ -22,73 +22,73 @@
     "recall": 1.0,
     "false_positive_rate": 0.0,
     "false_negative_rate": 0.0,
-    "p50_latency_ms": 0.104,
-    "p95_latency_ms": 0.474,
-    "p99_latency_ms": 1.637
+    "p50_latency_ms": 0.153,
+    "p95_latency_ms": 0.639,
+    "p99_latency_ms": 2.216
   },
   "by_category": {
     "agent_attacks": {
       "total": 3,
       "passed": 3,
       "failed": 0,
-      "p50_ms": 0.158,
-      "p95_ms": 1.637,
+      "p50_ms": 0.218,
+      "p95_ms": 2.216,
       "accuracy": 1.0
     },
     "data_exfiltration": {
       "total": 3,
       "passed": 3,
       "failed": 0,
-      "p50_ms": 0.15,
-      "p95_ms": 0.474,
+      "p50_ms": 0.213,
+      "p95_ms": 0.639,
       "accuracy": 1.0
     },
     "jailbreak": {
       "total": 7,
       "passed": 7,
       "failed": 0,
-      "p50_ms": 0.11,
-      "p95_ms": 0.131,
+      "p50_ms": 0.166,
+      "p95_ms": 0.198,
       "accuracy": 1.0
     },
     "memory_poisoning": {
       "total": 3,
       "passed": 3,
       "failed": 0,
-      "p50_ms": 0.082,
-      "p95_ms": 0.098,
+      "p50_ms": 0.086,
+      "p95_ms": 0.102,
       "accuracy": 1.0
     },
     "prompt_injection": {
       "total": 11,
       "passed": 11,
       "failed": 0,
-      "p50_ms": 0.105,
-      "p95_ms": 0.128,
+      "p50_ms": 0.153,
+      "p95_ms": 0.413,
       "accuracy": 1.0
     },
     "rag_poisoning": {
       "total": 3,
       "passed": 3,
       "failed": 0,
-      "p50_ms": 0.08,
-      "p95_ms": 0.088,
+      "p50_ms": 0.096,
+      "p95_ms": 0.127,
       "accuracy": 1.0
     },
     "sensitive_data": {
       "total": 5,
       "passed": 5,
       "failed": 0,
-      "p50_ms": 0.023,
-      "p95_ms": 0.145,
+      "p50_ms": 0.027,
+      "p95_ms": 0.173,
       "accuracy": 1.0
     },
     "tool_abuse": {
       "total": 5,
       "passed": 5,
       "failed": 0,
-      "p50_ms": 0.098,
-      "p95_ms": 0.154,
+      "p50_ms": 0.109,
+      "p95_ms": 0.168,
       "accuracy": 1.0
     }
   },
@@ -98,19 +98,19 @@
       "mean_ms": 0.0001,
       "p50_ms": 0.0001,
       "p95_ms": 0.0001,
-      "p99_ms": 0.0001,
+      "p99_ms": 0.0002,
       "min_ms": 0.0,
       "max_ms": 0.0004
     },
     "with_firewall": {
-      "mean_ms": 0.0235,
-      "p50_ms": 0.0223,
-      "p95_ms": 0.0263,
-      "p99_ms": 0.059,
-      "min_ms": 0.0219,
-      "max_ms": 0.0929
+      "mean_ms": 0.0276,
+      "p50_ms": 0.0235,
+      "p95_ms": 0.0486,
+      "p99_ms": 0.1291,
+      "min_ms": 0.0225,
+      "max_ms": 0.2334
     },
-    "added_latency_p50_ms": 0.0222,
+    "added_latency_p50_ms": 0.0234,
     "sub_millisecond_overhead": true
   }
 }

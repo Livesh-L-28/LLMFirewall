@@ -4,11 +4,12 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from pydantic import ConfigDict
 
+from llmfirewall.core.interfaces import BaseDetector
 from llmfirewall.core.models import Finding
 from llmfirewall.detectors.metadata import DetectorMetadata
 
 
-class Detector(ABC):
+class Detector(BaseDetector, ABC):
     """Abstract Base Class for all detectors in LLMFirewall.
     
     CRITICAL ARCHITECTURAL RULE:

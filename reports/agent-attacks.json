@@ -17,7 +17,7 @@
         "block-dangerous-exec-tools"
       ],
       "reason": "Direct execution of system shell, admin shutdown, or arbitrary execution tools is prohibited.",
-      "latency_ms": 1.636625000173808,
+      "latency_ms": 2.2164169999996375,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -36,7 +36,7 @@
         "block-dangerous-exec-tools"
       ],
       "reason": "Direct execution of system shell, admin shutdown, or arbitrary execution tools is prohibited.",
-      "latency_ms": 0.15808399984962307,
+      "latency_ms": 0.21762500000477303,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -53,7 +53,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "Request complies with all active security policies.",
-      "latency_ms": 0.03737499901035335,
+      "latency_ms": 0.04108299981453456,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,

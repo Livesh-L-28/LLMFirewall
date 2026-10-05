@@ -3,8 +3,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
-[![Release](https://img.shields.io/badge/release-v1.0.0-green.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-608%20passed-brightgreen.svg)](docs/benchmarks.md)
+[![Release](https://img.shields.io/badge/release-v1.1.0-green.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-692%20passed-brightgreen.svg)](docs/benchmarks.md)
 [![Overhead](https://img.shields.io/badge/overhead-sub--millisecond-blueviolet.svg)](docs/benchmarks.md)
 
 LLMFirewall is a lightweight, provider-agnostic, defense-in-depth security framework for Large Language Model (LLM) applications, Retrieval-Augmented Generation (RAG) pipelines, and autonomous AI agents. It operates entirely in-process to detect prompt injection, redact sensitive PII and secrets, sandbox agent tool calls, and enforce Policy-as-Code with sub-millisecond execution latency.
@@ -33,15 +33,20 @@ LLMFirewall acts as an application-layer defense system that sits between your u
 
 ---
 
-## Key Capabilities
+## Key Capabilities (v1.1.0)
 
 1. **Sub-Millisecond Runtime Defense**: Core inspection paths execute in `< 1ms` (`~0.02ms` P50 latency), avoiding bottlenecks in streaming generation.
 2. **Deterministic Detection Engines**: Normalized pattern matching and Shannon entropy calculations for prompt injection, jailbreaks, PII, and credentials.
-3. **Declarative Policy-as-Code**: Human-readable JSON/YAML policies specifying granular actions (`ALLOW`, `WARN`, `REDACT`, `BLOCK`, `REVIEW`, `RATE_LIMIT`).
-4. **Agent Sandboxing & Action Budgets**: Parameter bounds checking, domain allowlists, and execution turn limits for tools.
-5. **Context Defense for RAG**: Document ingestion scanning, untrusted reference framing, and poisoned chunk isolation.
-6. **AI-SPM & Asset Discovery**: Automated discovery of models, agents, tools, and vector stores, with compliance mapping (NIST, OWASP, ISO) and SARIF exports.
-7. **Zero-Retention Privacy**: Prompts and raw credentials are never transmitted over the network or stored in plaintext telemetry.
+3. **Advanced Prompt-Injection Defense**: Unicode homoglyph normalization, zero-width character stripping, leetspeak decoding, and contextual intent scoring.
+4. **Declarative Policy-as-Code & Linter**: Human-readable JSON/YAML policies specifying granular actions (`ALLOW`, `WARN`, `REDACT`, `BLOCK`) with static rule contradiction and cycle linting.
+5. **Agent Sandboxing & Action Budgets**: Parameter bounds checking, SSRF/cloud-metadata blocking, domain allowlists, and execution turn limits for tools.
+6. **Context Defense for RAG**: Document ingestion scanning, untrusted reference framing, and poisoned chunk isolation.
+7. **Risk Intelligence 2.0**: Multi-turn session risk tracking with temporal decay, cross-detector attack chain correlation, and systemic blast radius estimation.
+8. **High-Performance Caching**: L1/L2 bounded LRU and compiled regex caches with deterministic SHA-256 keys delivering an ~8x latency reduction on warm hits.
+9. **Developer Integrations**: Pure ASGI 3.0 middleware, boundary-aware sliding window `StreamingTextGuard`, and unified async/sync clients.
+10. **Security Dashboard API & SIEM Exporters**: Programmatic dashboard endpoints, Prometheus cache telemetry, and Common Event Format (CEF) SIEM export.
+11. **Adversarial Evaluation**: Automated mutation engine (homoglyphs, BiDi, role confusion) and failure clustering for red-teaming.
+12. **Zero-Retention Privacy**: Prompts and raw credentials are never transmitted over the network or stored in plaintext telemetry.
 
 ---
 
@@ -209,7 +214,7 @@ LLMFirewall was evaluated against the project's internal **40-case security benc
 
 | Metric | Result | Benchmark Population |
 |:---|:---:|:---|
-| **Automated Test Suite** | **608 / 608 Passed** | Unit, regression, and integration tests |
+| **Automated Test Suite** | **692 / 692 Passed** | Unit, regression, and integration tests |
 | **Benchmark Detection Rate** | **100% (28 / 28)** | Curated reference attack cases |
 | **False Positive Rate** | **0.0% (0 / 12)** | Curated benign reference cases |
 | **Median Inspection Latency (P50)** | **0.104 ms** | End-to-end multi-detector scan |
@@ -246,21 +251,26 @@ app.add_middleware(
 ```
 
 Additional integration guides:
-- [Integrations Overview](docs/integrations/overview.md)
-- [Agent & Tool Security](docs/agent-security.md)
+- [Developer Integrations 2.0 (ASGI & Streaming)](docs/integrations.md)
+- [FastAPI & Web Frameworks](docs/integrations/overview.md)
+- [Agent & Tool Security](docs/agent-tool-security.md)
 - [RAG Security](docs/rag-security.md)
 
 ---
 
 ## Examples
 
-The repository includes 21 runnable, self-contained examples in the [`examples/`](examples/) directory:
+The repository includes runnable, self-contained examples in the [`examples/`](examples/) directory:
 
+- [`v1_1_end_to_end_pipeline.py`](examples/v1_1_end_to_end_pipeline.py): Complete end-to-end security pipeline across all v1.1.0 engines.
+- [`benchmark_performance.py`](examples/benchmark_performance.py): Caching throughput and latency speedup microbenchmark.
+- [`policy_rules.py`](examples/policy_rules.py): Declarative YAML/JSON Policy-as-Code and rule authoring.
+- [`prompt_injection_defense.py`](examples/prompt_injection_defense.py): Homoglyph, invisible character, and instruction override defense.
+- [`secure_tool_agent.py`](examples/secure_tool_agent.py): Tool permission boundaries, SSRF prevention, and parameter bounds.
 - [`basic_scan/`](examples/basic_scan/): Input prompt and output threat scanning.
 - [`runtime_protection/`](examples/runtime_protection/): Sub-millisecond defense with `@protect` and `protect_tool`.
 - [`fastapi_app/`](examples/fastapi_app/): Complete FastAPI application guarded by `FirewallMiddleware`.
 - [`rag/`](examples/rag/): Document ingestion scanning and context quarantine.
-- [`agent_security/`](examples/agent_security/): Tool permission boundaries, SSRF prevention, and action budgets.
 - [`continuous_security_testing/`](examples/continuous_security_testing/): Automated red-team test suites and HTML reports.
 - [`incident_response/`](examples/incident_response/): Event correlation, chronological timelines, and containment hooks.
 
@@ -278,11 +288,18 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - [Python API Reference](docs/api.md)
 - [CLI Reference](docs/cli.md)
 - [Security Model & Threat Boundaries](docs/security-model.md)
+- [Detection Engine 2.0](docs/detection-engine.md)
+- [Prompt Injection Defense](docs/prompt-injection-defense.md)
+- [Agent & Tool Security 2.0](docs/agent-tool-security.md)
+- [Runtime Security 2.0](docs/runtime-security.md)
+- [Policy-as-Code & Linter](docs/policy-as-code.md)
+- [Risk Intelligence 2.0](docs/risk-intelligence.md)
+- [Developer Integrations (Pure ASGI & Streaming)](docs/integrations.md)
+- [Performance & Scan Caching](docs/performance.md)
+- [Security Evaluation & Red-Teaming](docs/security-evaluation.md)
+- [Observability & Security Dashboard API](docs/observability.md)
 - [Security Benchmarks & Performance](docs/benchmarks.md)
 - [Security Audit Report](docs/security-audit.md)
-- [Policy-as-Code Guide](docs/policy-as-code.md)
-- [AI-SPM & Posture Management](docs/ai-spm.md)
-- [Release Notes (v1.0.0)](docs/releases/v1.0.0.md)
 
 ---
 

@@ -10,6 +10,12 @@ All examples operate **locally by default** with simulated models and synthetic 
 
 | Directory | Topic | Key Files | Capabilities Demonstrated |
 |:---|:---|:---|:---|
+| [`v1_1_end_to_end_pipeline.py`](v1_1_end_to_end_pipeline.py) | Complete v1.1.0 Pipeline | [`v1_1_end_to_end_pipeline.py`](v1_1_end_to_end_pipeline.py) | Full request lifecycle: Ingress → Detection (homoglyphs) → RAG Quarantine → Tool Sandboxing (SSRF) → Runtime Decorator → Policy Linting → Risk Intelligence (Multi-turn session, Attack chains, Blast radius) → Observability & SIEM. |
+| [`benchmark_performance.py`](benchmark_performance.py) | Caching & Performance | [`benchmark_performance.py`](benchmark_performance.py) | Benchmark measuring L1/L2 ScanCache throughput, latency distributions, and ~8x speedup. |
+| [`custom_detector.py`](custom_detector.py) | Extensibility & Custom Detectors | [`custom_detector.py`](custom_detector.py) | Implementing and registering custom heuristic/regex threat detectors conforming to `DetectorProtocol`. |
+| [`policy_rules.py`](policy_rules.py) | Policy-as-Code 2.0 | [`policy_rules.py`](policy_rules.py), [`policy_yaml.yaml`](policy_yaml.yaml) | Declarative YAML/JSON rule authoring, multi-condition matching, static linting, and conflict resolution. |
+| [`prompt_injection_defense.py`](prompt_injection_defense.py) | Advanced Injection Defense | [`prompt_injection_defense.py`](prompt_injection_defense.py) | Unicode homoglyph normalization, invisible char removal, leetspeak decoding, and contextual intent scoring. |
+| [`secure_tool_agent.py`](secure_tool_agent.py) | Tool Security 2.0 | [`secure_tool_agent.py`](secure_tool_agent.py) | Tool authorization, URL safety (SSRF/cloud metadata blocking), path traversal defense, and argument bounds checking. |
 | [`basic_scan/`](basic_scan/) | Core Threat Scanning | [`application.py`](basic_scan/application.py) | Input prompt scanning, jailbreak detection, secret/PII masking, `Scanner` vs `Firewall` API. |
 | [`runtime_protection/`](runtime_protection/) | Sub-Millisecond Defense | [`application.py`](runtime_protection/application.py) | `< 1ms` execution overhead, `@protect` decorator, `protect_tool` wrapper, policy decisions (`ALLOW`, `BLOCK`, `REDACT`, `REVIEW`, `RATE_LIMIT`). |
 | [`fastapi_app/`](fastapi_app/) | Web Application Gateway | [`main.py`](fastapi_app/main.py) | Universal ASGI middleware (`FirewallMiddleware`), request sanitization, response scanning (`scan_response`), error handling (`FAIL_CLOSED`). |

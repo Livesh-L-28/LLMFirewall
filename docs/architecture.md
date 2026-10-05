@@ -79,8 +79,10 @@ The codebase under `src/llmfirewall` is organized into modular packages:
 src/llmfirewall/
 ├── core/              # Foundational domain models, enums, interfaces, exceptions
 ├── detectors/         # Deterministic detection engines (injection, pii, secrets)
-├── risk/              # Risk scoring, factor weighting, and prioritization engine
-├── policy/            # Declarative Policy-as-Code engine, redaction, and rules
+├── cache/             # High-performance L1/L2 ScanCache and compiled regex cache (~8x speedup)
+├── integrations/      # Pure ASGI 3.0 middleware, StreamingTextGuard, sync/async clients
+├── risk/              # Risk scoring, session tracking, attack chain correlation, blast radius
+├── policy/            # Declarative Policy-as-Code engine, redaction, and static linter
 ├── protection/        # Sub-millisecond runtime protection, rate limiting, and SDK decorators
 ├── rag/               # RAG context security, document ingestion scanner, quarantine store
 ├── tools/             # Agent tool call authorization, schema validation, SSRF/SQL checks
@@ -88,7 +90,7 @@ src/llmfirewall/
 ├── runtime/           # LLM session lifecycle, loop guard, provider adapters
 ├── supply_chain/      # Model weight verification, SBOM dependency auditing, artifact integrity
 ├── eval/              # Adversarial red-team evaluation suite, test generators, mutation engine
-├── observability/     # Zero-leakage security telemetry, event stores, Prometheus export
+├── observability/     # Zero-leakage security telemetry, SecurityDashboardAPI, CEF exporter
 ├── governance/        # Security release assurance gates, cryptographic baselines, waivers
 ├── graph/             # In-memory and SQLite security knowledge graph
 ├── attack_graph/      # Multi-step attack path discovery, choke points, threat modeling

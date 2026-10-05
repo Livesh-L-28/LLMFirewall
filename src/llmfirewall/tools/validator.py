@@ -144,16 +144,104 @@ def validate_json_schema(
                 metadata={"schema_error": str(err.message), "path": list(err.path)},
             )
     except ImportError:
-        # Fallback: Basic top-level required properties check
-        required_fields: List[str] = schema.get("required", [])
-        for req in required_fields:
-            if req not in arguments:
-                return Finding(
-                    detector_name="schema_validator",
-                    threat_type=ThreatType.POLICY_VIOLATION,
-                    description=f"Missing required argument: '{req}'.",
-                    severity=Severity.HIGH,
-                    confidence=1.0,
-                    metadata={"missing_field": req},
-                )
+        pass
+
+    # Built-in lightweight schema validator: required fields, types, enum, min/max, pattern
+    required_fields: List[str] = schema.get("required", [])
+    for req in required_fields:
+        if req not in arguments:
+            return Finding(
+                detector_name="schema_validator",
+                threat_type=ThreatType.POLICY_VIOLATION,
+                description=f"Missing required argument: '{req}'.",
+                severity=Severity.HIGH,
+                confidence=1.0,
+                metadata={"missing_field": req},
+            )
+
+    properties: Dict[str, Any] = schema.get("properties", {})
+    for key, val in arguments.items():
+        if key in properties and isinstance(properties[key], dict):
+            prop_def = properties[key]
+            expected_type = prop_def.get("type")
+            if expected_type:
+                type_map = {
+                    "string": str,
+                    "integer": int,
+                    "number": (int, float),
+                    "boolean": bool,
+                    "array": (list, tuple),
+                    "object": dict,
+                }
+                # Note: in Python bool is a subclass of int, so handle bool specially
+                if expected_type in type_map:
+                    target_cls = type_map[expected_type]
+                    valid = isinstance(val, target_cls)
+                    if expected_type in ("integer", "number") and isinstance(val, bool):
+                        valid = False
+                    if not valid:
+                        return Finding(
+                            detector_name="schema_validator",
+                            threat_type=ThreatType.POLICY_VIOLATION,
+                            description=f"Argument '{key}' expected type '{expected_type}', got '{type(val).__name__}'.",
+                            severity=Severity.HIGH,
+                            confidence=1.0,
+                            metadata={"field": key, "expected_type": expected_type, "actual_type": type(val).__name__},
+                        )
+
+            # Enum constraints
+            if "enum" in prop_def and isinstance(prop_def["enum"], list):
+                if val not in prop_def["enum"]:
+                    return Finding(
+                        detector_name="schema_validator",
+                        threat_type=ThreatType.POLICY_VIOLATION,
+                        description=f"Argument '{key}' value '{val}' is not in allowed enum {prop_def['enum']}.",
+                        severity=Severity.HIGH,
+                        confidence=1.0,
+                        metadata={"field": key, "value": val, "allowed": prop_def["enum"]},
+                    )
+
+            # Numeric bounds
+            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                if "minimum" in prop_def and val < prop_def["minimum"]:
+                    return Finding(
+                        detector_name="schema_validator",
+                        threat_type=ThreatType.POLICY_VIOLATION,
+                        description=f"Argument '{key}' value {val} is less than minimum {prop_def['minimum']}.",
+                        severity=Severity.HIGH,
+                        confidence=1.0,
+                        metadata={"field": key, "value": val, "minimum": prop_def["minimum"]},
+                    )
+                if "maximum" in prop_def and val > prop_def["maximum"]:
+                    return Finding(
+                        detector_name="schema_validator",
+                        threat_type=ThreatType.POLICY_VIOLATION,
+                        description=f"Argument '{key}' value {val} exceeds maximum {prop_def['maximum']}.",
+                        severity=Severity.HIGH,
+                        confidence=1.0,
+                        metadata={"field": key, "value": val, "maximum": prop_def["maximum"]},
+                    )
+
+            # String constraints
+            if isinstance(val, str):
+                if "minLength" in prop_def and len(val) < prop_def["minLength"]:
+                    return Finding(
+                        detector_name="schema_validator",
+                        threat_type=ThreatType.POLICY_VIOLATION,
+                        description=f"Argument '{key}' length {len(val)} is shorter than minLength {prop_def['minLength']}.",
+                        severity=Severity.HIGH,
+                        confidence=1.0,
+                        metadata={"field": key, "length": len(val), "minLength": prop_def["minLength"]},
+                    )
+                if "maxLength" in prop_def and len(val) > prop_def["maxLength"]:
+                    return Finding(
+                        detector_name="schema_validator",
+                        threat_type=ThreatType.POLICY_VIOLATION,
+                        description=f"Argument '{key}' length {len(val)} exceeds maxLength {prop_def['maxLength']}.",
+                        severity=Severity.HIGH,
+                        confidence=1.0,
+                        metadata={"field": key, "length": len(val), "maxLength": prop_def["maxLength"]},
+                    )
+
     return None
+

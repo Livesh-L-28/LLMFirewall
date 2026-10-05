@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from llmfirewall._version import __version__
 from llmfirewall.audit import AuditLogger, default_audit_logger
+from llmfirewall.core.exceptions import LLMFirewallError
 from llmfirewall.core.models import Action, AuditEvent, Severity
 from llmfirewall.eval.models import AttackCategory, SecurityEvaluationReport, SecurityTestResult
 from llmfirewall.governance.baseline import BaselineDiff, SecurityBaseline
@@ -32,7 +33,7 @@ from llmfirewall.governance.waivers import SecurityWaiver
 logger = logging.getLogger("llmfirewall.governance")
 
 
-class SecurityGateFailure(Exception):
+class SecurityGateFailure(LLMFirewallError):
     """Raised when a programmatic release check is blocked by governance policy."""
 
     def __init__(self, result: GovernanceResult) -> None:

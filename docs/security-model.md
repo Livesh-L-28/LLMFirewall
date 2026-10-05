@@ -22,14 +22,20 @@ LLMFirewall implements defense-in-depth across the following layers:
 | Layer | Security Controls | Module |
 |:---|:---|:---|
 | **Input Inspection** | Normalization, regex/heuristic pattern matching, jailbreak detectors, system prompt extraction guards. | `llmfirewall.detectors.prompt_injection` |
+| **Advanced Injection Defense** | Unicode homoglyph normalization, invisible zero-width char stripping, leetspeak decoding, delimiter parsing, role confusion defense. | `llmfirewall.detectors.prompt_injection.analyzer` |
 | **Data Protection** | Regex and checksum validation for PII (emails, phone numbers, IPs, credit cards); high-entropy secret detection (API keys, private tokens). | `llmfirewall.detectors.pii`, `llmfirewall.detectors.secrets` |
 | **Output Guardrails** | Outgoing model response inspection and automatic character-span redaction before returning to clients. | `llmfirewall.policy.redactor` |
+| **Policy-as-Code & Linter** | Declarative rules, conflict resolution (`BLOCK > REDACT > WARN > ALLOW`), rule shadowing, cycle and contradiction detection. | `llmfirewall.policy.linter`, `llmfirewall.policy.engine` |
 | **Tool Sandboxing** | Schema argument bounds checking, SSRF prevention (IP range, cloud metadata blocking), SQL injection heuristic analysis, domain allowlists. | `llmfirewall.tools` |
 | **Agent Capability Control** | Action budgets, capability grants, privilege delegation rules, human approval provider gates. | `llmfirewall.capabilities` |
 | **RAG Security** | Document ingestion sanitization, strict untrusted context tagging, quarantine store for infected records. | `llmfirewall.rag` |
 | **Runtime Protection** | Sub-millisecond rate limiting, session loop guards, fail-safe modes (`FAIL_CLOSED`, `FAIL_OPEN`). | `llmfirewall.protection`, `llmfirewall.runtime` |
+| **Risk Intelligence 2.0** | Multi-turn session risk tracking with temporal decay, cross-detector attack chain correlation, and systemic blast radius estimation. | `llmfirewall.risk` |
+| **Performance & Caching** | High-performance L1/L2 ScanCache with bounded LRU eviction, deterministic SHA-256 keys, and compiled regex cache (~8x speedup). | `llmfirewall.cache` |
+| **Developer Integrations** | Pure ASGI 3.0 middleware, boundary-aware sliding window `StreamingTextGuard`, sync/async clients. | `llmfirewall.integrations` |
+| **Observability & SIEM** | Zero-leakage structured telemetry, SecurityDashboardAPI, Common Event Format (CEF) SIEM export, Prometheus cache counters. | `llmfirewall.observability` |
+| **Adversarial Evaluation** | Automated adversarial mutations (homoglyphs, BiDi, leetspeak), failure clustering, and bypass rate tracking. | `llmfirewall.eval` |
 | **Supply Chain Verification** | Streaming SHA-256 model hashing, unsafe serialization detection (`pickle` blocking), dependency auditing. | `llmfirewall.supply_chain` |
-| **Observability & Audit** | Zero-leakage structured telemetry, SHA-256 event hashing, incident correlation engine. | `llmfirewall.observability`, `llmfirewall.incidents` |
 
 ---
 

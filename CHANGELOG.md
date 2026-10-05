@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-05
+
+### Added
+- **Security Dashboard API & Enterprise SIEM Integration (Phase 54)**:
+  - Added `SecurityDashboardAPI` providing privacy-safe summary metrics, paginated sanitized events, and time-bucketed aggregations.
+  - Added Common Event Format (CEF) exporter (`export_events_cef`) for Splunk, ArcSight, QRadar, and Microsoft Sentinel.
+  - Added cache telemetry counters (`llmfirewall_cache_hits_total`, `llmfirewall_cache_misses_total`, `llmfirewall_cache_hit_ratio`) to Prometheus exporter.
+  - Added comprehensive test suite `tests/test_observability_v2.py`.
+- **Adversarial Evaluation & Red-Teaming (Phase 53)**:
+  - Added `AdversarialMutationEngine` generating attack mutations across Unicode homoglyphs, zero-width characters, BiDi overrides, leetspeak, delimiter manipulation, role confusion, RAG poisoning, and tool injection.
+  - Added `AdversarialRedTeamRunner` evaluating bypass rates and clustering failure patterns into `FailureCluster` reports.
+  - Added comprehensive test suite `tests/test_security_evaluation_v2.py`.
+- **Performance & Scan Caching (Phase 52)**:
+  - Added thread-safe `ScanCache` featuring bounded LRU eviction, configurable TTL, deterministic SHA-256 keys, ephemeral context isolation, and operational telemetry.
+  - Added `RegexCache` and `compile_regex` for compiled regular expression caching across detectors.
+  - Verified 8.1x latency speedup on warm cache hits (0.309 ms cold → 0.038 ms warm) with 99.9% hit ratios.
+  - Added comprehensive test suite `tests/test_performance_and_caching.py` and benchmark runner `examples/benchmark_performance.py`.
+- **Developer Integrations 2.0 (Phase 51)**:
+  - Added pure ASGI 3.0 middleware `LLMFirewallASGIMiddleware` with zero external dependencies, streaming HTTP body inspection, and WebSocket support.
+  - Added `StreamingTextGuard` implementing boundary-aware sliding window inspection for continuous LLM token streams.
+  - Added `LLMFirewallClient` and `AsyncLLMFirewallClient` for unified sync and async LLM framework pipelines.
+  - Added convenience entrypoints `Firewall.scan_prompt` and `Firewall.scan_output`.
+  - Added comprehensive test suite `tests/test_developer_integrations_v2.py`.
+- **Risk Intelligence 2.0 (Phase 50)**:
+  - Added `SessionRiskTracker` for multi-turn session tracking with exponential temporal decay and low-and-slow probing attack detection.
+  - Added `FindingCorrelationEngine` inferring compound attack chains (`EXFILTRATION_CHAIN`, `REMOTE_EXECUTION_CHAIN`, `INDIRECT_RAG_POISONING`, `PRIVILEGE_ESCALATION`, `MULTI_VECTOR_FLOOD`).
+  - Added `BlastRadiusEstimator` estimating systemic downstream impact, reachable services, and immediate containment steps.
+  - Added comprehensive test suite `tests/test_risk_intelligence_v2.py`.
+- **Policy-as-Code 2.0 & Static Linter (Phase 49)**:
+  - Added `PolicyLinter` detecting unreachable shadowed rules, logical contradictions, evaluation cycles, and invalid regexes.
+  - Added advanced predicates to `RuleCondition` (`min_confidence`, `category`, `direction`).
+  - Added dry-run policy simulation and conflict resolution validation.
+  - Added comprehensive test suite `tests/test_policy_as_code.py`.
+- **Agent & Tool Security 2.0 (Phase 47)**:
+  - Added comprehensive tool argument validation, SSRF prevention (blocking link-local, private, and AWS/GCP cloud metadata IP ranges), and path traversal checks.
+  - Added tool registry enforcement and action budget ceilings.
+- **Advanced Prompt-Injection Defense (Phase 45)**:
+  - Added `IndirectInjectionRule` detecting assistant target overrides and hidden comment payloads.
+  - Added `DelimiterAttackRule` detecting boundary framing and special envelope tag escapes.
+  - Added `AuthorityImpersonationRule` detecting administrator role impersonation and privilege claims.
+  - Added `PromptSecurityContext` and `PromptSourceType` for source awareness and provenance tracking.
+  - Added `MultiTurnSecurityState` for tracking bounded security history and suspicious multi-turn probing.
+  - Added comprehensive test suite `tests/test_prompt_injection_defense.py`.
+- **Advanced Detection Engine Pipeline (Phase 44)**:
+  - Multi-stage detection engine in `DetectorEngine` supporting normalization, candidate pre-filtering, token heuristics, confidence calibration, and finding deduplication.
+  - Structural typing protocol `DetectorProtocol` via `typing.Protocol`.
+  - Deterministic execution planner `ExecutionPlanner` with cost model (`DetectorCost`).
+  - Finding aggregator `FindingAggregator` with SHA-256 fingerprint deduplication.
+- **End-to-End Pipeline & Examples (Phase 55)**:
+  - Added complete runnable pipeline example `examples/v1_1_end_to_end_pipeline.py`.
+  - Updated all documentation guides and references across `docs/` and `README.md`.
+
+### Fixed
+- Re-exported `HASH_CHUNK_SIZE` in `llmfirewall.__init__` to satisfy declared `__all__` public contract.
+- Unified `Detector` to inherit directly from `BaseDetector`, closing interface hierarchy divergence.
+- Re-parented `SecurityGateFailure` under `LLMFirewallError` so all framework-raised exceptions inherit from root error base.
+
 ---
 
 ## [1.0.0] - 2026-09-29

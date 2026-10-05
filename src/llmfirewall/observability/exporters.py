@@ -61,7 +61,55 @@ def export_prometheus_metrics(summary: Dict[str, Any]) -> str:
             lines.append(f'llmfirewall_detector_triggers_total{{detector="{safe_name}"}} {count}')
         lines.append("")
 
+    # Cache Operational Metrics (Phase 52)
+    cache = summary.get("cache") or {}
+    if cache:
+        lines.append("# HELP llmfirewall_cache_hits_total Total in-memory scan cache hits.")
+        lines.append("# TYPE llmfirewall_cache_hits_total counter")
+        lines.append(f"llmfirewall_cache_hits_total {cache.get('hits', 0)}")
+        lines.append("")
+        lines.append("# HELP llmfirewall_cache_misses_total Total in-memory scan cache misses.")
+        lines.append("# TYPE llmfirewall_cache_misses_total counter")
+        lines.append(f"llmfirewall_cache_misses_total {cache.get('misses', 0)}")
+        lines.append("")
+        lines.append("# HELP llmfirewall_cache_hit_ratio Normalized cache hit ratio [0.0, 1.0].")
+        lines.append("# TYPE llmfirewall_cache_hit_ratio gauge")
+        lines.append(f"llmfirewall_cache_hit_ratio {cache.get('hit_ratio', 0.0)}")
+        lines.append("")
+
     return "\n".join(lines) + "\n"
+
+
+def export_events_cef(events: List[SecurityEvent]) -> str:
+    """Export security events in standard ArcSight Common Event Format (CEF) for SIEM ingestion."""
+    cef_lines: List[str] = []
+    sev_map = {"critical": 10, "high": 7, "medium": 5, "low": 2, "info": 0}
+
+    for e in events:
+        sev_int = sev_map.get(e.severity.value.lower(), 5)
+        name = f"Security Violation: {e.detector_name}" if e.detector_name else f"Firewall Event: {e.event_type.value}"
+        act = e.action.value if e.action else "unknown"
+        ext_parts = [
+            f"act={act}",
+            f"dvc={e.environment}",
+            f"cs1={e.detector_name or 'none'}",
+            "cs1Label=DetectorName",
+            f"cs2={e.policy_id or 'none'}",
+            "cs2Label=PolicyID",
+            f"cfp1={e.risk_score or 0.0}",
+            "cfp1Label=RiskScore",
+            f"externalId={e.event_id}",
+            f"rt={int(e.timestamp.timestamp() * 1000)}",
+        ]
+        if e.tool_name:
+            ext_parts.append(f"cs3={e.tool_name} cs3Label=ToolName")
+        if e.payload_hash:
+            ext_parts.append(f"cs4={e.payload_hash} cs4Label=PayloadHash")
+
+        extension = " ".join(ext_parts)
+        cef_lines.append(f"CEF:0|LLMFirewall|LLMFirewallCore|1.1.0|{e.event_type.value}|{name}|{sev_int}|{extension}")
+
+    return "\n".join(cef_lines) + "\n"
 
 
 def export_events_json(events: List[SecurityEvent], indent: Optional[int] = None) -> str:

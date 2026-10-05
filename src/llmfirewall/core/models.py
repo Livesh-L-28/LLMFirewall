@@ -191,6 +191,11 @@ class ScanResult(BaseModel):
         return self.decision.action == Action.BLOCK
 
     @property
+    def reason(self) -> str:
+        """The explanation string for the policy decision."""
+        return self.decision.reason
+
+    @property
     def text(self) -> str:
         """The final safe text to pass downstream."""
         return self.processed_text

@@ -83,3 +83,24 @@ class TestZeroSecretsInCodebase:
             # All tokens must be synthetic test markers, not live production credentials
             assert "LIVE_PRODUCTION_TOKEN" not in text
             assert not text.startswith("AKIAIOSFODNN7EXAMPLELIVE")
+
+
+class TestPhase43FoundationalContracts:
+    """Regression and architectural contract tests established in Phase 43 audit."""
+
+    def test_base_detector_inheritance(self):
+        from llmfirewall.core.interfaces import BaseDetector
+        from llmfirewall.detectors.base import Detector
+        assert issubclass(Detector, BaseDetector)
+
+    def test_security_gate_failure_hierarchy(self):
+        from llmfirewall.core.exceptions import LLMFirewallError
+        from llmfirewall.governance.engine import SecurityGateFailure
+        assert issubclass(SecurityGateFailure, LLMFirewallError)
+
+    def test_all_public_exports_resolve(self):
+        import llmfirewall
+        assert hasattr(llmfirewall, "HASH_CHUNK_SIZE")
+        for export_name in llmfirewall.__all__:
+            assert hasattr(llmfirewall, export_name), f"Missing attribute {export_name} in llmfirewall"
+

@@ -13,6 +13,12 @@ from llmfirewall.eval.assertions import (
     evaluate_assertion,
     evaluate_assertions,
 )
+from llmfirewall.eval.clustering import (
+    AdversarialRedTeamRunner,
+    FailureCluster,
+    MutationEvaluationResult,
+    RedTeamEvaluationReport,
+)
 from llmfirewall.eval.engine import SecurityEvaluationEngine
 from llmfirewall.eval.generators import (
     AgentCapabilityGenerator,
@@ -25,6 +31,11 @@ from llmfirewall.eval.generators import (
     ToolSecurityGenerator,
 )
 from llmfirewall.eval.mock_tools import MockToolRegistry
+from llmfirewall.eval.mutations import (
+    AdversarialMutationEngine,
+    MutatedPayload,
+    MutationType,
+)
 from llmfirewall.eval.models import (
     AssertionType,
     AttackCategory,
@@ -89,6 +100,14 @@ __all__ = [
     "SecurityMetrics",
     "SecurityDetectionCoverage",
     "SecurityEvaluationReport",
+    # Security Evaluation 2.0 (Phase 53)
+    "MutationType",
+    "MutatedPayload",
+    "AdversarialMutationEngine",
+    "MutationEvaluationResult",
+    "FailureCluster",
+    "RedTeamEvaluationReport",
+    "AdversarialRedTeamRunner",
     "AttackCategory",
     "TargetType",
     "TestStatus",

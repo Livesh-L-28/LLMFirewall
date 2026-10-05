@@ -1,6 +1,6 @@
 # LLMFirewall Installation Guide
 
-This guide covers installing, verifying, and troubleshooting **LLMFirewall v1.0.0**.
+This guide covers installing, verifying, and troubleshooting **LLMFirewall v1.1.0**.
 
 ---
 

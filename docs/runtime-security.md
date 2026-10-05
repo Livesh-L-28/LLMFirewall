@@ -170,9 +170,34 @@ llmfirewall runtime inspect --trace-id trace-12345 --backend sqlite
 
 ---
 
-## 9. Security Limitations
+---
 
-Phase 26 runtime protection provides multi-boundary policy enforcement and semantic inspection. It **does NOT** provide:
+## 9. Incremental Streaming Inspection 2.0 (Phase 48)
+
+In high-throughput generation scenarios, LLM responses are streamed as token fragments or chunks. Malicious payloads can be intentionally split across chunk boundaries (e.g. Chunk 1: `"Ignore prev"`, Chunk 2: `"ious instructions"`) to evade single-token filters.
+
+Runtime Security 2.0 provides:
+- **Rolling Window Inspection**: Maintains a bounded sliding window over recent chunks to detect split injection payloads seamlessly across boundaries.
+- **Fail-Closed Stream Halting**: When a malicious fragment is detected, the stream is aborted immediately with `RuntimeSecurityError` preventing further model tokens from reaching clients.
+- **Bounded In-Memory Tail Buffering**: Employs configurable `buffer_window_size` (default 256 chars) and `max_buffer_chars` limits to guarantee memory consumption cannot grow unbounded even during multi-megabyte generations.
+- **Sync & Async Generator Support**: `guard_stream` and `guard_stream_async` integrate into synchronous or ASGI asynchronous event loops.
+- **Graceful Cancellation**: Detects generator early exits and client disconnections cleanly without resource leaks.
+
+```python
+# Synchronous streaming guard
+for safe_chunk in session.guard_stream(token_generator):
+    yield safe_chunk
+
+# Asynchronous streaming guard
+async for safe_chunk in session.guard_stream_async(async_token_generator):
+    yield safe_chunk
+```
+
+---
+
+## 10. Security Limitations
+
+Phase 26 / Phase 48 runtime protection provides multi-boundary policy enforcement, streaming inspection, and semantic guardrails. It **does NOT** provide:
 * Operating system kernel sandboxing or process isolation (e.g. cgroups, seccomp).
 * Container sandboxing or microVM isolation (e.g. Firecracker, Docker).
 * Network packet firewalls (e.g. iptables, VPC network policies).

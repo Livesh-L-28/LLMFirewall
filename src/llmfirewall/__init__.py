@@ -31,9 +31,16 @@ from llmfirewall.detectors.base import Detector
 from llmfirewall.detectors.collection import FindingCollection
 from llmfirewall.detectors.engine import DetectorEngine
 from llmfirewall.detectors.examples import KeywordDetector
+from llmfirewall.detectors.heuristics import TokenHeuristics
 from llmfirewall.detectors.metadata import DetectorMetadata
 from llmfirewall.detectors.pii import PIIDetector
-from llmfirewall.detectors.prompt_injection import PromptInjectionDetector
+from llmfirewall.detectors.prompt_injection import (
+    MultiTurnSecurityState,
+    PromptInjectionDetector,
+    PromptSecurityContext,
+    PromptSourceType,
+)
+from llmfirewall.detectors.protocols import DetectorCost, DetectorProtocol
 from llmfirewall.detectors.registry import DetectorRegistry, default_detector_registry
 from llmfirewall.config.models import (
     AgentCapabilitiesConfig,
@@ -83,6 +90,7 @@ from llmfirewall.supply_chain import (
     SnapshotDiff,
     VulnerabilityFinding,
     VulnerabilityProvider,
+    HASH_CHUNK_SIZE,
     compute_streaming_hash,
     detect_model_format,
     hash_configuration,
@@ -200,6 +208,7 @@ from llmfirewall.risk.config import RiskConfig
 from llmfirewall.risk.engine import RiskEngine
 from llmfirewall.tools import (
     ArgumentLimits,
+    ResultTrustLevel,
     ToolCall,
     ToolDefinition,
     ToolPermission,
@@ -562,13 +571,19 @@ __all__ = [
     "MAX_SCAN_TEXT_LENGTH",
     # Detector Architecture
     "Detector",
+    "DetectorProtocol",
+    "DetectorCost",
     "DetectorMetadata",
     "DetectorEngine",
     "FindingCollection",
     "DetectorRegistry",
     "default_detector_registry",
+    "TokenHeuristics",
     # Concrete Detectors
     "PromptInjectionDetector",
+    "PromptSecurityContext",
+    "PromptSourceType",
+    "MultiTurnSecurityState",
     "PIIDetector",
     "SecretDetector",
     "KeywordDetector",
@@ -609,9 +624,10 @@ __all__ = [
     "ConfigurationError",
     "BlockedPromptError",
     "BlockedOutputError",
-    # Agent & Tool Security (Phase 22)
+    # Agent & Tool Security (Phase 22 / Phase 47)
     "ToolCall",
     "ToolResult",
+    "ResultTrustLevel",
     "ToolPermission",
     "ToolSecurityDecision",
     "ToolDefinition",

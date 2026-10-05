@@ -18,7 +18,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.12299999980314169,
+      "latency_ms": 0.18358300030740793,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -39,7 +39,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.1306670001213206,
+      "latency_ms": 0.19274999976914842,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -59,7 +59,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.10008299977926072,
+      "latency_ms": 0.1659580002524308,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -79,7 +79,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.1249169999937294,
+      "latency_ms": 0.19837500030917,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -100,7 +100,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.11037500007660128,
+      "latency_ms": 0.1556249999339343,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -117,7 +117,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "No policy violations or risk thresholds triggered; default allow.",
-      "latency_ms": 0.08974999946076423,
+      "latency_ms": 0.13550000039685983,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,
@@ -134,7 +134,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "No policy violations or risk thresholds triggered; default allow.",
-      "latency_ms": 0.08608300049672835,
+      "latency_ms": 0.1257079998140398,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,

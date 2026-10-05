@@ -1,0 +1,43 @@
+version: "1.1.0"
+id: "policy-security-baseline"
+name: "Security Baseline Policy"
+description: "Production policy with layered guardrails and dry-run simulation support"
+rules:
+  - id: "block-critical-injection"
+    name: "Block Critical Prompt Injection"
+    description: "Immediately block high-confidence injection attempts"
+    action: "block"
+    priority: 100
+    conditions:
+      - detector: "prompt_injection"
+        min_confidence: 0.85
+        min_risk_score: 0.80
+
+  - id: "redact-pii-secrets"
+    name: "Redact Sensitive Data"
+    description: "Mask detected secrets and PII before proceeding"
+    action: "redact"
+    priority: 80
+    conditions:
+      - detector: "pii"
+        min_confidence: 0.70
+
+  - id: "warn-untrusted-sources"
+    name: "Warn on Untrusted RAG Sources"
+    description: "Log warnings when external untrusted contexts are ingested"
+    action: "warn"
+    priority: 50
+    conditions:
+      - source: "untrusted_rag"
+        min_risk_score: 0.40
+
+default_action: "allow"
+allowed_tools:
+  - "calculator"
+  - "read_docs"
+denied_tools:
+  - "execute_command"
+  - "bash"
+metadata:
+  environment: "production"
+  tier: "pci-dss"

@@ -373,3 +373,176 @@ class SuspiciousControlRule(InjectionRule):
                     )
                 )
         return matches
+
+
+class IndirectInjectionRule(InjectionRule):
+    """Detects indirect prompt injection markers commonly hidden in retrieved documents or tool outputs."""
+
+    def __init__(self) -> None:
+        self._patterns = [
+            (
+                re.compile(
+                    r"\b(ai\s+instruction|assistant\s+instruction|note\s+to\s+(the\s+)?(ai|assistant|model|llm))\s*:\s*"
+                    r"(ignore|disregard|instead|override|execute|reveal|send|exfiltrate|fetch)\b",
+                    re.IGNORECASE,
+                ),
+                0.94,
+                Severity.HIGH,
+                "Indirect prompt injection targeted at autonomous assistant detected",
+            ),
+            (
+                re.compile(
+                    r"\b(important\s+system\s+update|urgent\s+admin\s+notice)\s*:\s*"
+                    r"(forward|transmit|send|email|post)\s+(all|user|confidential|secret|api)\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.CRITICAL,
+                "Action-oriented indirect data exfiltration instruction detected",
+            ),
+            (
+                re.compile(
+                    r"<!--\s*(system\s+instruction|admin\s+command|ai\s+override)\s*:\s*.*-->",
+                    re.IGNORECASE,
+                ),
+                0.90,
+                Severity.HIGH,
+                "Hidden comment injection payload embedded in markup",
+            ),
+        ]
+
+    @property
+    def rule_id(self) -> str:
+        return "indirect_injection"
+
+    @property
+    def description(self) -> str:
+        return "Detects indirect prompt injection vectors embedded in third-party or retrieved content."
+
+    def evaluate(self, raw_text: str, norm_text: str) -> List[RuleMatch]:
+        matches: List[RuleMatch] = []
+        for pattern, confidence, severity, desc in self._patterns:
+            for m in pattern.finditer(norm_text):
+                start, end = m.span()
+                matched_snippet = raw_text[start:end] if end <= len(raw_text) else m.group(0)
+                matches.append(
+                    RuleMatch(
+                        rule_id=self.rule_id,
+                        description=desc,
+                        severity=severity,
+                        confidence=confidence,
+                        start_pos=start,
+                        end_pos=end,
+                        matched_text=matched_snippet,
+                    )
+                )
+        return matches
+
+
+class DelimiterAttackRule(InjectionRule):
+    """Detects multi-language delimiter framing attacks and boundary escapes."""
+
+    def __init__(self) -> None:
+        self._patterns = [
+            (
+                re.compile(
+                    r"(\"\"\"|\'\'\'|```)\s*(system|admin|override|root)\s*(\"\"\"|\'\'\'|```)",
+                    re.IGNORECASE,
+                ),
+                0.88,
+                Severity.HIGH,
+                "Multi-quote delimiter boundary escape attempting role escalation",
+            ),
+            (
+                re.compile(
+                    r"(<instructions?>|</instructions?>|<system_prompt>|</system_prompt>|\[SYSTEM_PROMPT\])",
+                    re.IGNORECASE,
+                ),
+                0.86,
+                Severity.HIGH,
+                "Fabricated XML/bracket prompt envelope tag detected",
+            ),
+        ]
+
+    @property
+    def rule_id(self) -> str:
+        return "delimiter_attack"
+
+    @property
+    def description(self) -> str:
+        return "Detects structural delimiter manipulation and tag escape sequences."
+
+    def evaluate(self, raw_text: str, norm_text: str) -> List[RuleMatch]:
+        matches: List[RuleMatch] = []
+        for pattern, confidence, severity, desc in self._patterns:
+            for m in pattern.finditer(norm_text):
+                start, end = m.span()
+                matched_snippet = raw_text[start:end] if end <= len(raw_text) else m.group(0)
+                matches.append(
+                    RuleMatch(
+                        rule_id=self.rule_id,
+                        description=desc,
+                        severity=severity,
+                        confidence=confidence,
+                        start_pos=start,
+                        end_pos=end,
+                        matched_text=matched_snippet,
+                    )
+                )
+        return matches
+
+
+class AuthorityImpersonationRule(InjectionRule):
+    """Detects forged authority headers and credentialed administrative claims."""
+
+    def __init__(self) -> None:
+        self._patterns = [
+            (
+                re.compile(
+                    r"\b(i\s+am\s+(the\s+)?(system\s+administrator|openai\s+developer|anthropic\s+engineer|"
+                    r"lead\s+developer|root\s+user|system\s+operator))\b\s*,\s*"
+                    r"(you\s+must|i\s+authorize|grant\s+access|execute|disable\s+safety)\b",
+                    re.IGNORECASE,
+                ),
+                0.93,
+                Severity.HIGH,
+                "Direct administrative authority impersonation claim",
+            ),
+            (
+                re.compile(
+                    r"\b(sudo\s+override|sudo\s+su|root\s+access\s+granted|security\s+clearance\s+level\s+5)\b",
+                    re.IGNORECASE,
+                ),
+                0.87,
+                Severity.HIGH,
+                "Privilege escalation credential passphrase spoofing",
+            ),
+        ]
+
+    @property
+    def rule_id(self) -> str:
+        return "authority_impersonation"
+
+    @property
+    def description(self) -> str:
+        return "Detects false authority impersonation claims attempting privilege escalation."
+
+    def evaluate(self, raw_text: str, norm_text: str) -> List[RuleMatch]:
+        matches: List[RuleMatch] = []
+        for pattern, confidence, severity, desc in self._patterns:
+            for m in pattern.finditer(norm_text):
+                start, end = m.span()
+                matched_snippet = raw_text[start:end] if end <= len(raw_text) else m.group(0)
+                matches.append(
+                    RuleMatch(
+                        rule_id=self.rule_id,
+                        description=desc,
+                        severity=severity,
+                        confidence=confidence,
+                        start_pos=start,
+                        end_pos=end,
+                        matched_text=matched_snippet,
+                    )
+                )
+        return matches
+

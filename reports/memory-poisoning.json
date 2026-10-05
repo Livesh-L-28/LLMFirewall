@@ -17,7 +17,7 @@
         "memory-poisoning-protection"
       ],
       "reason": "Memory item contains adversarial prompt override attempt.",
-      "latency_ms": 0.09837499965215102,
+      "latency_ms": 0.10170900031880592,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -36,7 +36,7 @@
         "block-secrets"
       ],
       "reason": "Memory storage rejected: contains raw credentials or secret patterns.",
-      "latency_ms": 0.08199999865610152,
+      "latency_ms": 0.08612500005256152,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -53,7 +53,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "Request complies with all active security policies.",
-      "latency_ms": 0.050582999392645434,
+      "latency_ms": 0.035292000120534794,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,

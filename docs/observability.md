@@ -214,7 +214,73 @@ observability:
 
 ---
 
-## 10. Security Limitations
+## 10. Security Dashboard API & Enterprise SIEM Integration (v1.1.0)
+
+Phase 54 introduces structured programmatic endpoints for powering internal security dashboards, SIEM connectors, and SOC workflows:
+
+### Security Dashboard API (`SecurityDashboardAPI`)
+The `SecurityDashboardAPI` exposes privacy-preserving aggregate metrics and paginated event streams designed for dashboard backends:
+
+```python
+from llmfirewall import Firewall
+from llmfirewall.observability import SecurityDashboardAPI
+
+firewall = Firewall()
+dashboard = SecurityDashboardAPI(
+    store=firewall.event_store,
+    cache_metrics_provider=firewall.cache,
+)
+
+# 1. Summary Metrics
+summary = dashboard.get_summary(time_window_seconds=86400)
+print(f"Total Requests: {summary.total_requests}")
+print(f"Block Rate: {summary.block_rate_percent}%")
+print(f"P50 Latency: {summary.p50_latency_ms} ms")
+print(f"Threat Breakdown: {summary.threat_breakdown}")
+print(f"Cache Hit Ratio: {summary.cache_metrics.hit_ratio if summary.cache_metrics else 0.0}")
+
+# 2. Paginated Sanitized Events
+page = dashboard.get_events(offset=0, limit=20, severity="critical")
+for event in page.events:
+    print(f"[{event.timestamp}] {event.event_type} - {event.action} (Risk: {event.risk_score})")
+
+# 3. Time Series Aggregations
+buckets = dashboard.get_timeseries(window_seconds=86400, bucket_count=24)
+for b in buckets:
+    print(f"{b.timestamp_start}: {b.total_requests} reqs, {b.blocked} blocks, {b.threats_detected} threats")
+```
+
+### Common Event Format (CEF) SIEM Exporter
+To integrate with enterprise SIEM platforms such as Splunk, ArcSight, IBM QRadar, or Microsoft Sentinel, events can be exported in standardized CEF format:
+
+```python
+from llmfirewall.observability import export_events_cef
+
+events = firewall.event_store.query()
+cef_log_payload = export_events_cef(events)
+# Example CEF Line:
+# CEF:0|LLMFirewall|LLMFirewallCore|1.1.0|detector_triggered|LLMFirewall Security Event|10|cs1=prompt_injection_detector cs1Label=DetectorName act=block
+```
+
+### Prometheus Cache Telemetry
+Prometheus metric scraping automatically includes L1/L2 Scan Cache performance counters:
+```text
+# HELP llmfirewall_cache_hits_total Number of cache hits in ScanCache.
+# TYPE llmfirewall_cache_hits_total counter
+llmfirewall_cache_hits_total 80
+
+# HELP llmfirewall_cache_misses_total Number of cache misses in ScanCache.
+# TYPE llmfirewall_cache_misses_total counter
+llmfirewall_cache_misses_total 20
+
+# HELP llmfirewall_cache_hit_ratio Proportion of cache requests resulting in hits.
+# TYPE llmfirewall_cache_hit_ratio gauge
+llmfirewall_cache_hit_ratio 0.8
+```
+
+---
+
+## 11. Security Limitations
 
 1. **Not a Full SIEM / SOC**: LLMFirewall Observability provides application-level AI security telemetry and intelligence; it does not replace enterprise SIEM, EDR, or network IDS platforms.
 2. **Deterministic Signals**: Anomaly indicators are statistical signals and must be treated as alerts rather than definitive proof of adversarial campaigns.

@@ -15,6 +15,7 @@ Coordinates:
 from __future__ import annotations
 
 import asyncio
+import time
 from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
 if TYPE_CHECKING:
@@ -334,31 +335,171 @@ class RuntimeSession:
 
         return dec
 
-    def check_stream_chunk(self, chunk: str, buffer_window_size: int = 128) -> str:
-        """Safe streaming chunk inspection. Returns chunk if safe, raises on violation."""
+    def check_stream_chunk(
+        self,
+        chunk: str,
+        buffer_window_size: int = 256,
+        max_buffer_chars: int = 32768,
+    ) -> str:
+        """Bounded rolling-window streaming chunk inspection (Runtime Security 2.0).
+        
+        Guarantees:
+        - Maintains a bounded rolling tail buffer so attacks split across chunk boundaries
+          (e.g. 'Ignore prev' + 'ious instructions') are evaluated as a logical sequence.
+        - Scans current window with DetectorEngine and evaluates PolicyEngine.
+        - Supports ALLOW, WARN, REDACT, and BLOCK actions.
+        - Respects max_buffer_chars to prevent unbounded memory growth.
+        """
         if not chunk:
             return ""
-        # Incremental light check
+
+        # Initialize stream buffer if needed
+        if not hasattr(self, "_stream_buffer"):
+            self._stream_buffer: str = ""
+            self._stream_total_chars: int = 0
+
+        # Memory bound check: do not buffer unlimited generation
+        if self._stream_total_chars + len(chunk) > max_buffer_chars:
+            # Shift buffer keeping only the recent window
+            self._stream_buffer = self._stream_buffer[-buffer_window_size:]
+
+        self._stream_total_chars += len(chunk)
+        self._stream_buffer += chunk
+
+        # Inspect current rolling window (up to buffer_window_size tail + new chunk)
+        window_to_inspect = self._stream_buffer[-min(len(self._stream_buffer), buffer_window_size + len(chunk)):]
+
+        # Run fast detection on window: scan both output policies and prompt injection
+        scan_res = self.firewall.check_output(
+            generation=window_to_inspect,
+            user_id=self.context.user_id,
+            session_id=self.context.session_id,
+            context={
+                "runtime_id": self.runtime_id,
+                "boundary": RuntimeBoundary.STREAMING.value,
+                "streaming": True,
+            },
+        )
+
+        # In streaming LLM output or multi-step agent interaction, prompt injection payloads
+        # (e.g. delimiters or overrides) must also be intercepted in output streams
+        prompt_scan = self.firewall.check_prompt(
+            prompt=window_to_inspect,
+            user_id=self.context.user_id,
+            session_id=self.context.session_id,
+            context={
+                "runtime_id": self.runtime_id,
+                "boundary": RuntimeBoundary.STREAMING.value,
+                "streaming": True,
+            },
+        )
+
+        effective_scan = prompt_scan if prompt_scan.decision.action == Action.BLOCK else scan_res
+        dec = self._create_decision(RuntimeBoundary.STREAMING, effective_scan)
+
+        if dec.is_blocked:
+            self._security_state = RuntimeSecurityState.BLOCKED
+            self._record_event(
+                RuntimeEventType.STREAM_CHUNK_BLOCKED,
+                f"Stream chunk blocked: {dec.reason}",
+                decision=dec,
+            )
+            if self.raise_on_block:
+                raise RuntimeSecurityError(
+                    f"Streaming token generation blocked by security policy: {dec.reason}",
+                    boundary=RuntimeBoundary.STREAMING,
+                    decision=dec,
+                    runtime_id=self.runtime_id,
+                    trace_id=self.trace_id,
+                )
+            return ""
+
+        if dec.action == Action.REDACT and effective_scan.processed_text:
+            self._record_event(
+                RuntimeEventType.STREAM_CHUNK_REDACTED,
+                f"Stream chunk redacted: {dec.reason}",
+                decision=dec,
+            )
+            # Retain tail of bounded buffer
+            self._stream_buffer = self._stream_buffer[-buffer_window_size:]
+            return chunk
+
+        if dec.action == Action.WARN:
+            self._record_event(
+                RuntimeEventType.STREAM_CHUNK_WARNED,
+                f"Stream chunk warning: {dec.reason}",
+                decision=dec,
+            )
+            if self._security_state == RuntimeSecurityState.CLEAN:
+                self._security_state = RuntimeSecurityState.WARNING
+
+        # Keep rolling buffer bounded
+        if len(self._stream_buffer) > buffer_window_size * 2:
+            self._stream_buffer = self._stream_buffer[-buffer_window_size:]
+
         return chunk
 
-    def guard_stream(self, stream_iterator: Iterator[str]) -> Iterator[str]:
-        """Wrap a synchronous token stream generator with runtime chunk protection."""
-        accumulated = []
-        for chunk in stream_iterator:
-            safe_chunk = self.check_stream_chunk(chunk)
-            accumulated.append(safe_chunk)
-            yield safe_chunk
-        # Validate full output at end of stream
+    def guard_stream(
+        self,
+        stream_iterator: Iterator[str],
+        buffer_window_size: int = 256,
+        max_buffer_chars: int = 32768,
+        timeout: Optional[float] = None,
+    ) -> Iterator[str]:
+        """Wrap a synchronous token stream generator with bounded rolling-window chunk protection."""
+        accumulated: List[str] = []
+        start_t = time.monotonic()
+        self._stream_buffer = ""
+        self._stream_total_chars = 0
+
+        try:
+            for chunk in stream_iterator:
+                if timeout is not None and (time.monotonic() - start_t) > timeout:
+                    raise TimeoutError(f"Streaming exceeded timeout of {timeout}s.")
+                safe_chunk = self.check_stream_chunk(
+                    chunk,
+                    buffer_window_size=buffer_window_size,
+                    max_buffer_chars=max_buffer_chars,
+                )
+                accumulated.append(safe_chunk)
+                yield safe_chunk
+        except GeneratorExit:
+            # Handle client cancellation gracefully
+            self._record_event(RuntimeEventType.RUNTIME_COMPLETED, "Stream cancelled by client.")
+            return
+
+        # Complete response validation
         full_text = "".join(accumulated)
         self.check_llm_response(full_text)
 
-    async def guard_stream_async(self, async_stream: AsyncIterator[str]) -> AsyncIterator[str]:
-        """Wrap an asynchronous token stream with runtime chunk protection."""
-        accumulated = []
-        async for chunk in async_stream:
-            safe_chunk = self.check_stream_chunk(chunk)
-            accumulated.append(safe_chunk)
-            yield safe_chunk
+    async def guard_stream_async(
+        self,
+        async_stream: AsyncIterator[str],
+        buffer_window_size: int = 256,
+        max_buffer_chars: int = 32768,
+        timeout: Optional[float] = None,
+    ) -> AsyncIterator[str]:
+        """Wrap an asynchronous token stream with bounded rolling-window chunk protection."""
+        accumulated: List[str] = []
+        start_t = time.monotonic()
+        self._stream_buffer = ""
+        self._stream_total_chars = 0
+
+        try:
+            async for chunk in async_stream:
+                if timeout is not None and (time.monotonic() - start_t) > timeout:
+                    raise asyncio.TimeoutError(f"Async streaming exceeded timeout of {timeout}s.")
+                safe_chunk = self.check_stream_chunk(
+                    chunk,
+                    buffer_window_size=buffer_window_size,
+                    max_buffer_chars=max_buffer_chars,
+                )
+                accumulated.append(safe_chunk)
+                yield safe_chunk
+        except (asyncio.CancelledError, GeneratorExit):
+            self._record_event(RuntimeEventType.RUNTIME_COMPLETED, "Async stream cancelled.")
+            return
+
         full_text = "".join(accumulated)
         self.check_llm_response(full_text)
 

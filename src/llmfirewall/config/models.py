@@ -90,6 +90,15 @@ class DetectorConfig(BaseModel):
         default=False,
         description="If True, halt scan on first detector error; if False, isolate errors.",
     )
+    enable_prefilter: bool = Field(
+        default=True,
+        description="Enable lightweight candidate pre-filtering based on detector metadata.",
+    )
+    enable_heuristics: bool = Field(
+        default=True,
+        description="Enable token heuristics analysis and context enrichment.",
+    )
+
 
 
 class AuditConfig(BaseModel):

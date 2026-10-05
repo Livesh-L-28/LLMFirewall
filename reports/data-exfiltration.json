@@ -18,7 +18,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_secrets': Block raw secrets and credentials from leaking. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.4736659993795911,
+      "latency_ms": 0.638790999801131,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -38,7 +38,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.1496659988333704,
+      "latency_ms": 0.2128750002157176,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -55,7 +55,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "No policy violations or risk thresholds triggered; default allow.",
-      "latency_ms": 0.10533299973758403,
+      "latency_ms": 0.16187500023079338,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,

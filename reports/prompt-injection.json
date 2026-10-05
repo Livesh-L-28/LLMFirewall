@@ -18,7 +18,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.1126669994846452,
+      "latency_ms": 0.15312499999708962,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -38,7 +38,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.10458399992785417,
+      "latency_ms": 0.1485830002820876,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -58,7 +58,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.10549999933573417,
+      "latency_ms": 0.15162499994403333,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -78,7 +78,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.1281669992749812,
+      "latency_ms": 0.16466599981868058,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -98,7 +98,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.1059159985743463,
+      "latency_ms": 0.15337500008172356,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -118,7 +118,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.10400000064691994,
+      "latency_ms": 0.4131250002501474,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -139,7 +139,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.10683300024538767,
+      "latency_ms": 0.24045800000749296,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -159,7 +159,7 @@
         "warn_high_risk_score"
       ],
       "reason": "Action 'BLOCK' determined by rule 'block_prompt_injection': Block any prompt injection or jailbreak attempt. Conflicting actions resolved [block, warn] -> block.",
-      "latency_ms": 0.09029200009535998,
+      "latency_ms": 0.1547920001030434,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -176,7 +176,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "No policy violations or risk thresholds triggered; default allow.",
-      "latency_ms": 0.08441700083494652,
+      "latency_ms": 0.13637499978358392,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,
@@ -193,7 +193,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "No policy violations or risk thresholds triggered; default allow.",
-      "latency_ms": 0.07916599861346185,
+      "latency_ms": 0.12375000005704351,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,
@@ -210,7 +210,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "No policy violations or risk thresholds triggered; default allow.",
-      "latency_ms": 0.08341700049641076,
+      "latency_ms": 0.28379199966366286,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,

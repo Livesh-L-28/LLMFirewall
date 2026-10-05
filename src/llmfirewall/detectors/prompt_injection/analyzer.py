@@ -1,6 +1,6 @@
 """Heuristic analysis for prompt injection findings."""
 
-from typing import List
+from typing import Any, Dict, List, Optional
 from llmfirewall.core.models import Finding, Severity, ThreatType
 from llmfirewall.detectors.prompt_injection.rules import RuleMatch
 
@@ -15,7 +15,12 @@ class InjectionHeuristicAnalyzer:
     4. Emit final Finding objects adhering strictly to domain contracts.
     """
 
-    def analyze(self, raw_text: str, matches: List[RuleMatch]) -> List[Finding]:
+    def analyze(
+        self,
+        raw_text: str,
+        matches: List[RuleMatch],
+        context: Optional[dict] = None,
+    ) -> List[Finding]:
         if not matches:
             return []
 
@@ -59,6 +64,19 @@ class InjectionHeuristicAnalyzer:
                 if match.severity == Severity.MEDIUM:
                     final_sev = Severity.HIGH
 
+            meta = {
+                "rule_id": match.rule_id,
+                "compound_attack": multi_rule_cooccurrence,
+                "triggered_rule_count": len(distinct_rules),
+            }
+            if context:
+                if "source_type" in context:
+                    meta["source_type"] = str(context["source_type"])
+                if "trust_level" in context:
+                    meta["trust_level"] = str(context["trust_level"])
+                if "source_id" in context:
+                    meta["source_id"] = str(context["source_id"])
+
             findings.append(
                 Finding(
                     detector_name="prompt_injection_detector",
@@ -69,11 +87,7 @@ class InjectionHeuristicAnalyzer:
                     start_pos=match.start_pos,
                     end_pos=match.end_pos,
                     matched_text=match.matched_text,
-                    metadata={
-                        "rule_id": match.rule_id,
-                        "compound_attack": multi_rule_cooccurrence,
-                        "triggered_rule_count": len(distinct_rules),
-                    },
+                    metadata=meta,
                 )
             )
 

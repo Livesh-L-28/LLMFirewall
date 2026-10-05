@@ -17,7 +17,7 @@
         "rag-poisoning-protection"
       ],
       "reason": "Retrieved RAG document chunk from 'unspecified' contains malicious prompt instructions.",
-      "latency_ms": 0.08758299918554258,
+      "latency_ms": 0.12674999970840872,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -36,7 +36,7 @@
         "rag-poisoning-protection"
       ],
       "reason": "Retrieved RAG document chunk from 'unspecified' contains malicious prompt instructions.",
-      "latency_ms": 0.08037499901547562,
+      "latency_ms": 0.09562500008541974,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
@@ -53,7 +53,7 @@
       "actual_action": "allow",
       "matched_rules": [],
       "reason": "Request complies with all active security policies.",
-      "latency_ms": 0.03933299922209699,
+      "latency_ms": 0.04350000017439015,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,

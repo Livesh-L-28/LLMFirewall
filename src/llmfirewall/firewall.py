@@ -1,8 +1,11 @@
 """Main Firewall orchestrator coordinating Detectors, Risk Engine, and Policy Engine."""
 
+from datetime import datetime, timezone
 import time
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import uuid
+
+from llmfirewall.cache import ScanCache
 
 if TYPE_CHECKING:
     from llmfirewall.config.models import FirewallConfig
@@ -83,6 +86,10 @@ class Firewall:
         tool_registry: Optional[ToolRegistry] = None,
         tool_security_engine: Optional[ToolSecurityEngine] = None,
         event_store: Optional[EventStore] = None,
+        enable_cache: bool = True,
+        cache: Optional[ScanCache] = None,
+        cache_size: int = 5000,
+        cache_ttl: float = 1800.0,
     ) -> None:
         """Initialize the Firewall with optional configuration or explicit custom components.
         
@@ -101,10 +108,19 @@ class Firewall:
             tool_registry: Optional custom ToolRegistry for agent tool security.
             tool_security_engine: Optional custom ToolSecurityEngine.
             event_store: Optional custom EventStore for production observability and intelligence.
+            enable_cache: Whether in-memory ScanCache is active (Phase 52).
+            cache: Optional custom ScanCache instance.
+            cache_size: Max entries in ScanCache if default instance created.
+            cache_ttl: Time-to-live in seconds for cached scan results.
         """
         # Store effective configuration (frozen Pydantic model)
         from llmfirewall.config.models import FirewallConfig as _FirewallConfig
         self._config: _FirewallConfig = config if config is not None else _FirewallConfig()
+
+        if enable_cache:
+            self._scan_cache: Optional[ScanCache] = cache if cache is not None else ScanCache(max_size=cache_size, ttl_seconds=cache_ttl)
+        else:
+            self._scan_cache = None
 
         # 1. Build Detectors
         if detectors is not None:
@@ -162,6 +178,8 @@ class Firewall:
                 active_detectors.append(SecretDetector(rules=sec_rules))
 
             effective_fail_fast = fail_fast_detectors or det_cfg.fail_fast
+            effective_prefilter = det_cfg.enable_prefilter
+            effective_heuristics = det_cfg.enable_heuristics
         else:
             active_detectors = [
                 PromptInjectionDetector(),
@@ -169,10 +187,14 @@ class Firewall:
                 SecretDetector(),
             ]
             effective_fail_fast = fail_fast_detectors
+            effective_prefilter = True
+            effective_heuristics = True
 
         self._detector_engine = DetectorEngine(
             detectors=active_detectors,
             fail_fast=effective_fail_fast,
+            enable_prefilter=effective_prefilter,
+            enable_heuristics=effective_heuristics,
         )
 
         # 2. Build Risk Engine
@@ -605,6 +627,48 @@ class Firewall:
             context=context,
         )
 
+    def scan_prompt(
+        self,
+        prompt: str,
+        user_id: Optional[Union[str, Dict[str, Any]]] = None,
+        session_id: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> ScanResult:
+        """Scan a user prompt (direction='input')."""
+        if isinstance(user_id, dict) and context is None:
+            context = user_id
+            user_id = None
+        return self.scan(
+            text_or_request=prompt,
+            direction="input",
+            user_id=user_id,
+            session_id=session_id,
+            context=context,
+        )
+
+    def scan_output(
+        self,
+        output: str,
+        prompt: Optional[str] = None,
+        user_id: Optional[Union[str, Dict[str, Any]]] = None,
+        session_id: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> ScanResult:
+        """Scan an LLM generated output (direction='output')."""
+        if isinstance(user_id, dict) and context is None:
+            context = user_id
+            user_id = None
+        ctx = dict(context or {})
+        if prompt:
+            ctx["prompt"] = prompt
+        return self.scan(
+            text_or_request=output,
+            direction="output",
+            user_id=user_id,
+            session_id=session_id,
+            context=ctx,
+        )
+
     def check(
         self,
         text_or_request: Union[str, ScanRequest],
@@ -651,6 +715,33 @@ class Firewall:
         # Ensure direction is in context for direction-aware rules and detectors
         scan_context = dict(request.metadata)
         scan_context["direction"] = request.direction
+
+        # Step 1.5: High-Performance Scan Cache (Phase 52)
+        cache_key = None
+        if self._scan_cache is not None and not scan_context.get("no_cache"):
+            policy_ck = (
+                self._policy_engine.policy.get_checksum()
+                if hasattr(self._policy_engine, "policy") and hasattr(self._policy_engine.policy, "get_checksum")
+                else "default"
+            )
+            detector_suite_id = ":".join(sorted(d.metadata.name for d in self._detector_engine.detectors))
+            cache_key = self._scan_cache.compute_key(
+                text=request.text,
+                direction=request.direction,
+                policy_checksum=policy_ck,
+                detector_suite_id=detector_suite_id,
+                context=scan_context,
+            )
+            cached_res = self._scan_cache.get(cache_key)
+            if cached_res is not None:
+                meta = dict(cached_res.metadata)
+                meta["cached"] = True
+                return cached_res.model_copy(update={
+                    "request_id": request.id,
+                    "created_at": datetime.now(timezone.utc),
+                    "execution_time_ms": round((time.perf_counter() - start_time) * 1000.0, 3),
+                    "metadata": meta,
+                })
 
         # Step 2: Run Detector Engine
         finding_collection = self._detector_engine.execute(
@@ -725,10 +816,18 @@ class Firewall:
             )
             self._event_store.write(sec_event)
         except Exception:
-            # Observability store failures must never alter or block security decisions
             pass
 
+        # Store in ScanCache (Phase 52)
+        if cache_key is not None and self._scan_cache is not None:
+            self._scan_cache.put(cache_key, scan_result)
+
         return scan_result
+
+    @property
+    def cache(self) -> Optional[ScanCache]:
+        """Active ScanCache instance, or None if disabled."""
+        return self._scan_cache
 
     def trace_decision(
         self,

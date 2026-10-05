@@ -9,6 +9,6 @@
 
 | ID | Subcategory | Severity | Expected | Actual | Latency | Outcome |
 |---|---|---|---|---|---|---|
-| `EX-001` | markdown_image_exfil | HIGH | `BLOCK` | `BLOCK` | 0.47ms | **PASS** |
-| `EX-002` | secret_parameter_exfil | CRITICAL | `BLOCK` | `BLOCK` | 0.15ms | **PASS** |
-| `EX-003` | benign_image_render | INFORMATIONAL | `ALLOW` | `ALLOW` | 0.11ms | **PASS** |
+| `EX-001` | markdown_image_exfil | HIGH | `BLOCK` | `BLOCK` | 0.64ms | **PASS** |
+| `EX-002` | secret_parameter_exfil | CRITICAL | `BLOCK` | `BLOCK` | 0.21ms | **PASS** |
+| `EX-003` | benign_image_render | INFORMATIONAL | `ALLOW` | `ALLOW` | 0.16ms | **PASS** |

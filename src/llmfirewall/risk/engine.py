@@ -6,7 +6,10 @@ from typing import Any, Dict, List, Optional, Union
 from llmfirewall.core.interfaces import BaseRiskEngine
 from llmfirewall.core.models import Finding, RiskScore, Severity, ThreatType
 from llmfirewall.detectors.collection import FindingCollection
+from llmfirewall.risk.blast_radius import BlastRadiusEstimator, BlastRadiusReport
 from llmfirewall.risk.config import RiskConfig
+from llmfirewall.risk.correlation import CorrelationReport, FindingCorrelationEngine
+from llmfirewall.risk.session import SessionRiskSummary, SessionRiskTracker
 
 
 class RiskEngine(BaseRiskEngine):
@@ -58,6 +61,9 @@ class RiskEngine(BaseRiskEngine):
             governance=governance,
             audit_logger=audit_logger,
         )
+        self._correlation_engine = FindingCorrelationEngine()
+        self._blast_radius_estimator = BlastRadiusEstimator()
+        self._session_tracker = SessionRiskTracker()
 
     @property
     def config(self) -> RiskConfig:
@@ -66,6 +72,18 @@ class RiskEngine(BaseRiskEngine):
     @property
     def prioritizer(self) -> Any:
         return self._prioritizer
+
+    @property
+    def correlation_engine(self) -> FindingCorrelationEngine:
+        return self._correlation_engine
+
+    @property
+    def blast_radius_estimator(self) -> BlastRadiusEstimator:
+        return self._blast_radius_estimator
+
+    @property
+    def session_tracker(self) -> SessionRiskTracker:
+        return self._session_tracker
 
     def assess_asset_risk(self, asset_id: str) -> List[Any]:
         """Perform contextual, explainable risk assessment for an asset."""
@@ -86,6 +104,54 @@ class RiskEngine(BaseRiskEngine):
     def get_risk_history(self, asset_id: Optional[str] = None) -> List[Any]:
         """Retrieve historical state transitions in risk assessments."""
         return self._prioritizer.get_risk_history(asset_id)
+
+    def correlate(
+        self,
+        findings: Union[List[Finding], FindingCollection],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> CorrelationReport:
+        """Detect multi-stage compound attack chains across findings."""
+        raw_list = findings.findings if isinstance(findings, FindingCollection) else list(findings or [])
+        return self._correlation_engine.correlate(raw_list, context=context)
+
+    def estimate_blast_radius(
+        self,
+        findings: Union[List[Finding], FindingCollection],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> BlastRadiusReport:
+        """Quantify potential systemic blast radius and data exposure."""
+        raw_list = findings.findings if isinstance(findings, FindingCollection) else list(findings or [])
+        return self._blast_radius_estimator.estimate(raw_list, context=context)
+
+    def track_session(
+        self,
+        session_id: str,
+        findings: Union[List[Finding], FindingCollection],
+        risk_score: Optional[float] = None,
+        timestamp: Optional[float] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> SessionRiskSummary:
+        """Record turn and compute cumulative session risk with temporal decay."""
+        raw_list = findings.findings if isinstance(findings, FindingCollection) else list(findings or [])
+        if risk_score is None:
+            score_obj = self.evaluate(raw_list, context=context)
+            score_val = score_obj.score
+        else:
+            score_val = risk_score
+        return self._session_tracker.record_turn(
+            session_id=session_id,
+            findings=raw_list,
+            risk_score=score_val,
+            timestamp=timestamp,
+        )
+
+    def get_session_risk(
+        self,
+        session_id: str,
+        current_time: Optional[float] = None,
+    ) -> SessionRiskSummary:
+        """Retrieve decayed multi-turn session risk summary."""
+        return self._session_tracker.get_session_risk(session_id=session_id, current_time=current_time)
 
     def evaluate(
         self,
@@ -128,19 +194,61 @@ class RiskEngine(BaseRiskEngine):
         # 4. Composite overall score
         overall_score = self._calculate_composite_score(category_scores)
 
-        # 5. Determined risk level (mapped against score thresholds)
+        # 5. Risk 2.0: Finding Correlation & Context-Aware Dynamic Scoring
+        correlation_report: Optional[CorrelationReport] = None
+        blast_radius_report: Optional[BlastRadiusReport] = None
+        contextual_mult = 1.0
+
+        if context:
+            # 5a. Correlation Engine
+            if self._config.enable_correlation:
+                correlation_report = self._correlation_engine.correlate(unique_findings, context=context)
+                if correlation_report.is_compound_attack:
+                    contextual_mult *= correlation_report.correlation_multiplier
+                    if correlation_report.highest_severity == Severity.CRITICAL and max_severity < Severity.CRITICAL:
+                        max_severity = Severity.CRITICAL
+
+            # 5b. Dynamic Contextual Scaling
+            if self._config.enable_dynamic_context:
+                env = str(context.get("environment", "")).lower()
+                if env in self._config.environmental_multipliers:
+                    contextual_mult *= self._config.environmental_multipliers[env]
+
+                if context.get("trust_boundary_traversed") or context.get("cross_boundary"):
+                    contextual_mult *= self._config.trust_boundary_multiplier
+
+                asset_crit = context.get("asset_criticality")
+                if isinstance(asset_crit, (int, float)) and 0.0 <= asset_crit <= 1.0:
+                    contextual_mult *= (0.8 + 0.4 * float(asset_crit))
+
+            # 5c. Blast Radius Estimation
+            blast_radius_report = self._blast_radius_estimator.estimate(unique_findings, context=context)
+
+        # Apply contextual multiplier if any
+        if contextual_mult != 1.0:
+            overall_score = min(1.0, max(0.0, overall_score * contextual_mult))
+
+        # 6. Determined risk level (mapped against score thresholds)
         risk_level = self._config.determine_risk_level(overall_score)
+
+        meta: Dict[str, Any] = {
+            "risk_level": risk_level.value,
+            "findings_count": len(raw_list),
+            "deduplicated_count": len(unique_findings),
+            "category_count": len(category_scores),
+        }
+        if correlation_report and correlation_report.is_compound_attack:
+            meta["correlation"] = correlation_report.model_dump(mode="json")
+        if blast_radius_report:
+            meta["blast_radius"] = blast_radius_report.model_dump(mode="json")
+        if contextual_mult != 1.0:
+            meta["contextual_multiplier"] = round(contextual_mult, 4)
 
         return RiskScore(
             score=round(overall_score, 4),
             max_severity=max_severity,
             category_scores={k: round(v, 4) for k, v in category_scores.items()},
-            metadata={
-                "risk_level": risk_level.value,
-                "findings_count": len(raw_list),
-                "deduplicated_count": len(unique_findings),
-                "category_count": len(category_scores),
-            },
+            metadata=meta,
         )
 
     def _deduplicate_findings(self, findings: List[Finding]) -> List[Finding]:

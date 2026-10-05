@@ -33,6 +33,14 @@ class ToolPermission(str, Enum):
     CUSTOM = "custom"
 
 
+class ResultTrustLevel(str, Enum):
+    """Trust classification for data returned by tools."""
+    TRUSTED = "trusted"
+    UNTRUSTED = "untrusted"
+    SANITIZED = "sanitized"
+    QUARANTINED = "quarantined"
+
+
 class ToolCall(BaseModel):
     """Immutable representation of an AI agent's requested tool invocation."""
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -43,6 +51,10 @@ class ToolCall(BaseModel):
     request_id: Optional[str] = Field(default=None, description="Correlating client or session request ID")
     user_id: Optional[str] = Field(default=None, description="Calling user or tenant identifier")
     session_id: Optional[str] = Field(default=None, description="Conversation session identifier")
+    agent_id: Optional[str] = Field(default=None, description="Requesting agent identifier")
+    parent_action_id: Optional[str] = Field(default=None, description="Parent action ID if in an action chain")
+    chain_id: Optional[str] = Field(default=None, description="Action chain identifier tracking multi-step workflows")
+    call_provenance: Optional[str] = Field(default=None, description="Origin or initiator provenance of tool call")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Contextual execution metadata")
 
     @field_validator("tool_name")
@@ -70,6 +82,17 @@ class ToolResult(BaseModel):
     output: str = Field(..., description="Raw text, JSON, or stringified payload produced by the tool")
     tool_call_id: Optional[str] = Field(default=None, description="Correlating ToolCall ID")
     request_id: Optional[str] = Field(default=None, description="Correlating client request ID")
+    agent_id: Optional[str] = Field(default=None, description="Calling agent identifier")
+    session_id: Optional[str] = Field(default=None, description="Session identifier")
+    chain_id: Optional[str] = Field(default=None, description="Correlating action chain identifier")
+    trust_level: ResultTrustLevel = Field(
+        default=ResultTrustLevel.UNTRUSTED,
+        description="Trust classification of the tool result (external tool data is untrusted by default)",
+    )
+    result_provenance: Optional[str] = Field(
+        default=None,
+        description="Provenance origin of the result data (e.g. tool provider, external URL, DB host)",
+    )
     success: bool = Field(default=True, description="Whether tool execution completed without error")
     error: Optional[str] = Field(default=None, description="Error message if tool execution failed")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata associated with tool output")
@@ -105,6 +128,18 @@ class ToolSecurityDecision(BaseModel):
     require_approval: bool = Field(
         default=False,
         description="Whether this tool invocation requires explicit human-in-the-loop approval",
+    )
+    trust_level: Optional[ResultTrustLevel] = Field(
+        default=None,
+        description="Trust level evaluated for tool result (e.g. UNTRUSTED, SANITIZED, QUARANTINED)",
+    )
+    chain_id: Optional[str] = Field(
+        default=None,
+        description="Action chain ID associated with this decision",
+    )
+    explanation: Optional[str] = Field(
+        default=None,
+        description="Detailed plain-language decision explanation",
     )
     policy_id: Optional[str] = Field(default=None, description="Evaluated policy ID")
     policy_version: Optional[str] = Field(default=None, description="Evaluated policy version")

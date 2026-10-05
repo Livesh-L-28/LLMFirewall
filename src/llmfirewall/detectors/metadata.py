@@ -26,3 +26,12 @@ class DetectorMetadata(BaseModel):
         description="Whether this detector runs in default pipeline configs",
     )
     author: Optional[str] = Field(default=None, description="Detector author or maintainer")
+    cost: str = Field(
+        default="normal",
+        description="Estimated computation cost class ('cheap', 'normal', 'expensive')",
+    )
+    trigger_hints: List[str] = Field(
+        default_factory=list,
+        description="Optional trigger hint keywords or tokens for candidate selection pre-filters",
+    )
+

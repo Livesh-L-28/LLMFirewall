@@ -1,6 +1,6 @@
-# Policy-as-Code & Security Rules Engine (Phase 21)
+# Policy-as-Code & Security Rules Engine 2.0 (Phase 49)
 
-LLMFirewall incorporates a declarative **Policy-as-Code** engine that allows security and engineering teams to version-control, audit, validate, and enforce AI safety rules consistently across LLM applications, RAG pipelines, and CI/CD stages.
+LLMFirewall incorporates a declarative, deterministic **Policy-as-Code** engine that allows security and engineering teams to version-control, audit, validate, compose, simulate, and enforce AI safety rules across LLM applications, agentic workflows, RAG pipelines, and CI/CD stages.
 
 ---
 
@@ -15,7 +15,7 @@ LLMFirewall incorporates a declarative **Policy-as-Code** engine that allows sec
                      │   (Declarative Rules) │
                      └───────────┬───────────┘
                                  │
-                 Priority Sorting & Evaluation
+                 Priority Sorting & Pre-Indexed Dispatch
                                  │
                                  ▼
                      ┌───────────────────────┐
@@ -26,31 +26,46 @@ LLMFirewall incorporates a declarative **Policy-as-Code** engine that allows sec
                                  │
                                  ▼
                       Typed PolicyDecision
-                  (Action + Explainability)
+                  (Action + Decision Trace)
 ```
 
 - **Deterministic Evaluation**: Rules are evaluated in strict priority order with deterministic tie-breaking.
+- **Pre-Indexed Dispatch**: Sub-millisecond matching across large rule sets.
 - **Zero Scripting / Zero `eval()`**: Policies are strictly data-driven (JSON/YAML models). No arbitrary code execution, dynamic imports, or shell commands can be executed.
-- **Explainability**: Every `PolicyDecision` includes structured rule matching details (`explanations`), indicating exactly why an action was chosen.
-- **Conflict Resolution**: When multiple rules match different actions, the engine applies strict safety precedence:
+- **Fail-Closed Security**: Evaluation exceptions fail-closed to `Action.BLOCK`. Malformed policies never silently default to `ALLOW`.
+- **Explainability**: Every `PolicyDecision` includes structured rule matching details (`explanations`) and complete step-by-step evaluation traces (`decision_trace`).
+- **Conflict Resolution Precedence**:
   $$\text{BLOCK} > \text{REDACT} > \text{WARN} > \text{ALLOW}$$
 
 ---
 
-## 2. Policy Schema & Rule Models
+## 2. Policy Schema & Models
 
-### Top-Level Document (`Policy`)
+### Policy Identity & Top-Level Schema (`Policy`)
 
 ```json
 {
+  "id": "urn:llmfirewall:policy:corp-strict-v1",
   "name": "production-ai-guardrail",
-  "version": "1.0",
+  "version": "1.1.0",
   "description": "Enterprise production policy",
   "rules": [...],
+  "allowed_tools": ["search", "calculator"],
+  "denied_tools": ["bash", "curl"],
   "default_action": "allow",
   "auto_redact_on_warn": true
 }
 ```
+
+| Field | Type | Default | Description |
+|:---|:---:|:---:|:---|
+| `id` | `Optional[str]` | `None` | Unique URN or identifier for the policy document. |
+| `name` | `str` | `"custom_policy"` | Policy name for telemetry and logs. |
+| `version` | `str` | `"1.0"` | Semantic version string. |
+| `rules` | `List[PolicyRule]` | `[]` | Declarative security rules evaluated by priority. |
+| `allowed_tools` | `Optional[List[str]]` | `None` | Tool allowlist (any unlisted tool is blocked). |
+| `denied_tools` | `Optional[List[str]]` | `None` | Tool denylist (any listed tool is strictly blocked). |
+| `default_action` | `Action` | `Action.ALLOW` | Fallback action when no rules trigger. |
 
 ### Rule Model (`PolicyRule`)
 
@@ -65,104 +80,95 @@ LLMFirewall incorporates a declarative **Policy-as-Code** engine that allows sec
 | `conditions` | `List[RuleCondition]` | `[]` | Compound criteria evaluated via `operator`. |
 | `operator` | `LogicalOperator` | `"and"` | `"and"` or `"or"` across compound conditions. |
 
-### Rule Conditions (`RuleCondition`)
+### Advanced Predicates (`RuleCondition`)
 
 - `threat_type`: Target `ThreatType` (`prompt_injection`, `secret`, `pii`, `toxicity`, `malicious_url`, etc.).
 - `detector`: Specific detector name (`prompt_injection_detector`, `pii_detector`, etc.).
-- `category`: Fine-grained classification ID (e.g. `email`, `api_key`, `instruction_override`).
+- `category`: Fine-grained classification ID (e.g. `email`, `api_key`, `indirect_injection`).
 - `min_severity` / `max_severity`: `low`, `medium`, `high`, or `critical`.
+- `min_confidence`: Minimum confidence threshold in $[0.0, 1.0]$.
 - `min_risk_score` / `max_risk_score`: Score boundary in $[0.0, 1.0]$.
 - `min_findings_count`: Integer threshold for number of detected findings.
 - `direction`: Traffic filter (`"input"` or `"output"`).
+- `source`: Match caller source (`"prompt"`, `"retrieval"`, `"tool_result"`, `"memory"`, `"system"`).
+- `trust_level`: Match trust classification (`"untrusted"`, `"controlled"`, `"trusted"`).
+- `user_id`: Match specific user or tenant identifier.
+- `tool` / `tool_permission`: Agentic tool name and permission constraints.
+- `custom_predicates`: Arbitrary context key-value matching.
 
 ---
 
-## 3. Practical Policy Examples
+## 3. Policy Composition
 
-### Example: Strict Enterprise Policy (`strict.json`)
-```json
-{
-  "name": "strict-enterprise-policy",
-  "version": "1.0",
-  "description": "Zero-tolerance enterprise policy",
-  "rules": [
-    {
-      "id": "strict-block-injection",
-      "name": "Block Injections",
-      "threat_type": "prompt_injection",
-      "action": "block",
-      "priority": 100
-    },
-    {
-      "id": "strict-block-secrets",
-      "name": "Block Credentials",
-      "threat_type": "secret",
-      "action": "block",
-      "priority": 90
-    },
-    {
-      "id": "strict-block-pii",
-      "name": "Block Any PII",
-      "threat_type": "pii",
-      "action": "block",
-      "priority": 85
-    }
-  ],
-  "default_action": "allow"
-}
-```
-
----
-
-## 4. Python API Usage
+Policies can be merged programmatically using `policy.compose()`:
 
 ```python
-from llmfirewall import Firewall, Policy
+from llmfirewall import Policy
 
-# Load policy from version-controlled file
-policy = Policy.from_file("policies/strict.json")
+base_policy = Policy.from_file("policies/base.json")
+sec_override = Policy.from_file("policies/sec_team.json")
 
-# Instantiate firewall with policy
-firewall = Firewall(policy=policy)
+# Strategies: 'override', 'append', 'error_on_conflict', 'keep_existing'
+merged = base_policy.compose(sec_override, strategy="override")
+```
 
-result = firewall.check("My secret key is 12345")
+- **Rule Collisions**: Resolved via the selected strategy.
+- **Tool Controls**: Denylists are unioned; allowlists are intersected.
+- **Default Action**: Most restrictive action wins.
+- **Metadata**: Combined and tagged with `"composed_from"`.
 
-# Inspect structured explanation
-decision = result.decision
-print(f"Action: {decision.action}")
-print(f"Policy: {decision.policy_id} v{decision.policy_version}")
-print(f"Matched Rules: {decision.triggered_rules}")
-for exp in decision.explanations:
-    print(f" - Rule: {exp['rule_name']} (Priority: {exp['priority']})")
+---
+
+## 4. Policy Linting & Static Analysis
+
+Detect misconfigurations, unreachable rules, and contradictions before deploying:
+
+```python
+from llmfirewall.policy import lint_policy
+
+report = lint_policy(policy)
+if not report.valid:
+    for issue in report.issues:
+        print(f"[{issue.severity.value.upper()}] {issue.code}: {issue.message}")
+        print(f"  Recommendation: {issue.recommendation}")
+```
+
+### Static Checks
+- `ERR_TOOL_CONFLICT`: Tool listed in both `allowed_tools` and `denied_tools`.
+- `ERR_INVERTED_SEVERITY`: `min_severity > max_severity`.
+- `ERR_INVERTED_RISK_BOUNDS`: `min_risk_score > max_risk_score`.
+- `WARN_SHADOWED_RULE`: Rule unreachable due to higher priority BLOCK rule with identical criteria.
+- `WARN_UNCONDITIONAL_RULE`: Rule has no criteria and will match all traffic.
+- `WARN_PERMISSIVE_POLICY`: Policy has `default_action=ALLOW` and zero BLOCK rules.
+
+---
+
+## 5. Policy Dry-Run Simulation
+
+Simulate policy outcomes on real findings without enforcement or redaction:
+
+```python
+from llmfirewall.policy import PolicyEngine
+
+engine = PolicyEngine(config=policy)
+sim = engine.simulate(text=prompt, findings=findings, risk_score=risk)
+
+print(f"Simulated Action: {sim.simulated_action.value.upper()}")
+print(f"Winning Rule:     {sim.winning_rule_id}")
+print(f"Triggered Rules:  {sim.triggered_rules}")
+print(f"Shadowed Rules:   {sim.shadowed_rules}")
 ```
 
 ---
 
-## 5. Command-Line Interface (CLI)
+## 6. Policy Explainability & Traces
 
-### Validate Policy Syntax & Invariants
-```bash
-llmfirewall policy validate policies/default.json
-# Policy: default-ai-security
-# Version: 1.0
-# Status: VALID
-# Rules: 5 (Enabled: 5, Disabled: 0)
+Inspect the exact evaluation path for audit compliance:
+
+```python
+explanation = engine.explain(text=prompt, findings=findings, risk_score=risk)
+print(f"Winning Rule: {explanation['winning_rule_id']}")
+for step in explanation["decision_trace"]:
+    status = "MATCH" if step["matched"] else "SKIP"
+    print(f"  [{status}] {step['rule_id']} ({step['action']})")
 ```
-
-### Inspect Policy Rules
-```bash
-llmfirewall policy show policies/default.json
-```
-
-### Run Policy Scan with Dry-Run
-```bash
-llmfirewall scan --policy policies/strict.json --dry-run "My email is user@example.test"
-```
-
----
-
-## 6. Performance Characteristics
-
-- **Baseline Policy Evaluation (5 rules)**: ~0.0035 ms (~280,000 ops/sec).
-- **Scaled Policy Evaluation (50 rules)**: ~0.113 ms (~8,500 ops/sec).
-- **Execution Overhead**: Adding structured explainability adds less than 0.002 ms per request.

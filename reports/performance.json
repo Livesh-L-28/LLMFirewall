@@ -4,18 +4,18 @@
     "mean_ms": 0.0001,
     "p50_ms": 0.0001,
     "p95_ms": 0.0001,
-    "p99_ms": 0.0001,
+    "p99_ms": 0.0002,
     "min_ms": 0.0,
     "max_ms": 0.0004
   },
   "with_firewall": {
-    "mean_ms": 0.0235,
-    "p50_ms": 0.0223,
-    "p95_ms": 0.0263,
-    "p99_ms": 0.059,
-    "min_ms": 0.0219,
-    "max_ms": 0.0929
+    "mean_ms": 0.0276,
+    "p50_ms": 0.0235,
+    "p95_ms": 0.0486,
+    "p99_ms": 0.1291,
+    "min_ms": 0.0225,
+    "max_ms": 0.2334
   },
-  "added_latency_p50_ms": 0.0222,
+  "added_latency_p50_ms": 0.0234,
   "sub_millisecond_overhead": true
 }

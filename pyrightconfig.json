@@ -1,0 +1,12 @@
+{
+  "include": [
+    "src",
+    "tests",
+    "examples",
+    "benchmarks"
+  ],
+  "extraPaths": [
+    "src",
+    "."
+  ]
+}

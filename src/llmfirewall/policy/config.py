@@ -56,12 +56,17 @@ class RuleCondition(BaseModel):
     source_type: Optional[str] = Field(default=None, description="Match context/document source type (e.g. 'retrieved_document', 'memory')")
     trust_level: Optional[str] = Field(default=None, description="Match trust classification (e.g. 'untrusted', 'controlled')")
     source_id: Optional[str] = Field(default=None, description="Match specific source or repository identifier")
+    # Phase 49: Policy-as-Code 2.0 advanced predicates
+    min_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Minimum finding confidence threshold")
+    source: Optional[str] = Field(default=None, description="Match context source (e.g. 'prompt', 'retrieval', 'tool_result', 'memory', 'system')")
+    user_id: Optional[str] = Field(default=None, description="Match specific user, tenant, or caller identity")
+    custom_predicates: Optional[Dict[str, Any]] = Field(default=None, description="Match custom context key-value constraints")
 
-    @field_validator("min_risk_score", "max_risk_score")
+    @field_validator("min_risk_score", "max_risk_score", "min_confidence")
     @classmethod
     def validate_finite_number(cls, v: Optional[float]) -> Optional[float]:
         if v is not None and (math.isnan(v) or math.isinf(v)):
-            raise ValueError("Risk score conditions must be finite numbers, not NaN or Infinity")
+            raise ValueError("Numeric conditions must be finite numbers, not NaN or Infinity")
         return v
 
     @field_validator("direction")
@@ -120,6 +125,26 @@ class RuleCondition(BaseModel):
             if not ctx_sid or str(ctx_sid).strip().lower() != self.source_id.strip().lower():
                 return False
 
+        # 1d. Phase 49: Source, User, and Custom Predicates
+        if self.source is not None:
+            ctx_src = None
+            if context:
+                ctx_src = context.get("source") or context.get("source_type")
+            if not ctx_src or str(ctx_src).strip().lower() != self.source.strip().lower():
+                return False
+
+        if self.user_id is not None:
+            ctx_uid = context.get("user_id") if context else None
+            if not ctx_uid or str(ctx_uid).strip() != self.user_id.strip():
+                return False
+
+        if self.custom_predicates is not None:
+            if not context:
+                return False
+            for k, expected_v in self.custom_predicates.items():
+                if context.get(k) != expected_v:
+                    return False
+
         # 2. Risk Score bounds
         if self.min_risk_score is not None:
             if risk_score.score < self.min_risk_score:
@@ -134,13 +159,14 @@ class RuleCondition(BaseModel):
             if len(findings) < self.min_findings_count:
                 return False
 
-        # 4. Finding-level criteria (threat_type, detector, category, severity)
+        # 4. Finding-level criteria (threat_type, detector, category, severity, confidence)
         has_finding_criteria = (
             self.threat_type is not None
             or self.detector is not None
             or self.category is not None
             or self.min_severity is not None
             or self.max_severity is not None
+            or self.min_confidence is not None
         )
 
         if has_finding_criteria:
@@ -151,8 +177,11 @@ class RuleCondition(BaseModel):
             for f in findings:
                 if self.threat_type is not None and f.threat_type != self.threat_type:
                     continue
-                if self.detector is not None and f.detector_name != self.detector:
-                    continue
+                if self.detector is not None:
+                    d_norm = self.detector.replace("_detector", "").rstrip("s")
+                    f_norm = f.detector_name.replace("_detector", "").rstrip("s")
+                    if f.detector_name != self.detector and f_norm != d_norm:
+                        continue
                 if self.category is not None:
                     cat = f.metadata.get("pii_category") or f.metadata.get("rule_id") or f.category
                     if cat != self.category:
@@ -161,6 +190,9 @@ class RuleCondition(BaseModel):
                     continue
                 if self.max_severity is not None and f.severity > self.max_severity:
                     continue
+                if self.min_confidence is not None:
+                    if f.confidence is None or f.confidence < self.min_confidence:
+                        continue
 
                 matched_any = True
                 break
@@ -237,6 +269,7 @@ class Policy(BaseModel):
     """Versioned, declarative Policy-as-Code document."""
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    id: Optional[str] = Field(default=None, max_length=256, description="Policy identity / URN (e.g. 'urn:llmfirewall:policy:strict')")
     name: str = Field(default="custom_policy", min_length=1, max_length=128, description="Policy name")
     version: str = Field(default="1.0", max_length=32, description="Semantic policy version")
     description: str = Field(default="", description="Purpose and scope of this policy")
@@ -321,6 +354,27 @@ class Policy(BaseModel):
                     f"Unsupported policy format '{ext}'. Supported formats: .json, .yaml, .yml"
                 )
 
+    @classmethod
+    def from_yaml(cls, yaml_content_or_path: Union[str, Path]) -> "Policy":
+        """Load policy from YAML string or file path."""
+        try:
+            p = Path(str(yaml_content_or_path))
+            if p.exists() and p.is_file():
+                return cls.from_file(p)
+        except (OSError, ValueError):
+            pass
+
+        try:
+            import yaml
+            parsed = yaml.safe_load(str(yaml_content_or_path))
+            if not isinstance(parsed, dict):
+                raise PolicyValidationError("YAML policy root must be a mapping/dictionary")
+            return cls.from_dict(parsed)
+        except ImportError:
+            raise PolicyValidationError("YAML parsing requires 'PyYAML'. Install with `pip install PyYAML`.")
+        except Exception as exc:
+            raise PolicyValidationError(f"Failed to parse YAML policy: {exc}") from exc
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize policy to a dictionary."""
         return self.model_dump(mode="json")
@@ -328,6 +382,88 @@ class Policy(BaseModel):
     def to_json(self, indent: int = 2) -> str:
         """Serialize policy to formatted JSON."""
         return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
+
+    def get_checksum(self) -> str:
+        """Compute deterministic SHA-256 checksum of canonical policy content."""
+        import hashlib
+        canonical_json = json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+
+    def compose(self, other: "Policy", strategy: str = "override") -> "Policy":
+        """Compose this policy with another policy.
+
+        Args:
+            other: The policy to merge into this policy.
+            strategy:
+                'override': Rules from `other` with matching IDs override rules in `self`; new rules appended.
+                'append': Append all rules from `other`; raises PolicyValidationError on ID collision.
+                'error_on_conflict': Same as append, strictly disallowing duplicate rule IDs.
+                'keep_existing': Keep existing rules on collision; new rules appended.
+        """
+        valid_strategies = ("override", "append", "error_on_conflict", "keep_existing")
+        if strategy not in valid_strategies:
+            raise PolicyValidationError(
+                f"Invalid composition strategy '{strategy}'. Must be one of: {valid_strategies}"
+            )
+
+        self_rule_ids = {r.id for r in self.rules}
+        other_rule_ids = {r.id for r in other.rules}
+        overlap = self_rule_ids & other_rule_ids
+
+        if strategy in ("append", "error_on_conflict") and overlap:
+            raise PolicyValidationError(
+                f"Policy composition conflict: conflicting rule IDs found: {sorted(overlap)}"
+            )
+
+        if strategy == "override":
+            merged_rules = [r for r in self.rules if r.id not in other_rule_ids] + list(other.rules)
+        elif strategy == "keep_existing":
+            merged_rules = list(self.rules) + [r for r in other.rules if r.id not in self_rule_ids]
+        else:  # append / error_on_conflict
+            merged_rules = list(self.rules) + list(other.rules)
+
+        # Merge denied tools (union)
+        merged_denied = None
+        if self.denied_tools is not None or other.denied_tools is not None:
+            merged_denied = sorted(list(set(self.denied_tools or []) | set(other.denied_tools or [])))
+
+        # Merge allowed tools (intersection if both defined)
+        merged_allowed = None
+        if self.allowed_tools is not None and other.allowed_tools is not None:
+            merged_allowed = sorted(list(set(self.allowed_tools) & set(other.allowed_tools)))
+        elif self.allowed_tools is not None:
+            merged_allowed = list(self.allowed_tools)
+        elif other.allowed_tools is not None:
+            merged_allowed = list(other.allowed_tools)
+
+        # Merge default action: most restrictive action wins
+        from llmfirewall.policy.engine import ACTION_PRECEDENCE
+        prec_self = ACTION_PRECEDENCE.get(self.default_action, 1)
+        prec_other = ACTION_PRECEDENCE.get(other.default_action, 1)
+        merged_default = self.default_action if prec_self >= prec_other else other.default_action
+
+        merged_metadata = dict(self.metadata)
+        merged_metadata.update(other.metadata)
+        merged_metadata["composed_from"] = [self.name, other.name]
+
+        return Policy(
+            id=f"{self.id}+{other.id}" if self.id and other.id else (self.id or other.id),
+            name=f"{self.name}+{other.name}",
+            version=max(self.version, other.version),
+            description=f"Composed policy from '{self.name}' and '{other.name}'",
+            rules=merged_rules,
+            allowed_tools=merged_allowed,
+            denied_tools=merged_denied,
+            default_action=merged_default,
+            auto_redact_on_warn=self.auto_redact_on_warn or other.auto_redact_on_warn,
+            redaction_config=other.redaction_config or self.redaction_config,
+            metadata=merged_metadata,
+        )
+
+    def lint(self) -> Any:
+        """Run static analysis and linting on this policy."""
+        from llmfirewall.policy.linter import lint_policy
+        return lint_policy(self)
 
 
 # Backward compatibility alias

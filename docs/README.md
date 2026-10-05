@@ -1,6 +1,6 @@
 # LLMFirewall Documentation Index
 
-Welcome to the comprehensive documentation for **LLMFirewall v1.0.0**.
+Welcome to the comprehensive documentation for **LLMFirewall v1.1.0**.
 
 ---
 
@@ -14,6 +14,7 @@ Welcome to the comprehensive documentation for **LLMFirewall v1.0.0**.
 ### 2. Architecture & Design
 - **[System Architecture](architecture.md)**: End-to-end request lifecycle, component boundaries, and sub-millisecond execution design.
 - **[System Architecture Specification (Root)](../ARCHITECTURE.md)**: High-level architectural map and milestone history.
+- **[v1.1 Architecture Review Audit](v1.1-architecture-review.md)**: Architecture audit, invariants, and extension review.
 
 ### 3. API & CLI Reference
 - **[Python API Reference](api.md)**: Authoritative reference for `Firewall`, `Scanner`, `FirewallConfig`, models, enums, and exceptions.
@@ -25,35 +26,38 @@ Welcome to the comprehensive documentation for **LLMFirewall v1.0.0**.
 - **[Security Policy & Disclosure (SECURITY.md)](../SECURITY.md)**: Vulnerability disclosure channels, response SLAs, and supported versions.
 - **[Security Audit Report](security-audit.md)**: Comprehensive static analysis, dependency evaluation, and code safety audit.
 - **[Security Checklist](security-checklist.md)**: Pre-deployment operational security checklist.
-- **[Policy-as-Code](policy-as-code.md)**: Declarative JSON/YAML security policies, rule structure, and condition syntax.
+- **[Policy-as-Code & Linter](policy-as-code.md)**: Declarative JSON/YAML security policies, rule structure, static linter, and condition syntax.
 - **[Compliance & Control Mapping](compliance.md)**: Mapping security controls to NIST AI RMF, OWASP Top 10 for LLM, and ISO/IEC 42001.
 
 ### 5. Empirical Benchmarks & Validation
 - **[Benchmark Results](benchmarks.md)**: Empirical 40-case security benchmark corpus results, detection rates, and latency measurements.
-- **[Security Evaluation Engine](security-evaluation.md)**: Adversarial red-teaming simulations, test case generation, and SARIF exports.
+- **[Performance & Caching](performance.md)**: ScanCache LRU/TTL, compiled regex cache, and empirical 8x speedup benchmarks.
+- **[Security Evaluation Engine](security-evaluation.md)**: Adversarial mutations (homoglyphs, BiDi, role confusion), failure clustering, and red-teaming.
 
 ### 6. Subsystem Guides
-- **[AI Runtime Protection](runtime-protection.md)**: Sub-millisecond defense, policy modes, and rate limiting.
-- **[AI Agent & Tool Security](agent-security.md)**: Sandboxing agent tools, SSRF prevention, and parameter limits.
+- **[Detection Engine 2.0](detection-engine.md)**: Unified heuristic/regex evaluation, execution planner, and aggregator.
+- **[Advanced Prompt-Injection Defense](prompt-injection-defense.md)**: Homoglyph normalization, invisible chars, leetspeak, delimiters, and role confusion.
+- **[AI Runtime Security 2.0](runtime-security.md)**: Sub-millisecond defense, multi-turn session tracking, streaming text guard, and rate limiting.
+- **[AI Agent & Tool Security 2.0](agent-tool-security.md)**: Sandboxing agent tools, SSRF/cloud metadata prevention, path traversal defense, and action budgets.
 - **[Agent Capability Security](capability-security.md)**: Action budgets, capability grants, and delegation control.
 - **[RAG Security](rag-security.md)**: Document ingestion scanning, untrusted context tagging, and quarantine store.
+- **[Risk Intelligence & Attack Chains](risk-intelligence.md)**: Cross-detector correlation, multi-stage attack chains, and blast radius estimation.
+- **[Observability & Security Dashboard API](observability.md)**: Zero-leakage metrics, SecurityDashboardAPI, CEF SIEM exporter, and Prometheus telemetry.
 - **[AI Security Posture Management (AI-SPM)](ai-spm.md)**: Asset exposure, security gaps, and posture baselines.
 - **[AI Asset Inventory](asset-inventory.md)**: Discovery providers, cataloging, and inventory diffing.
 - **[AI Security Knowledge Graph](security-knowledge-graph.md)**: In-process graph modeling, impact analysis, and blast radius.
 - **[Attack Graph Analysis](attack-graph.md)**: Multi-step attack path discovery, choke points, and threat modeling.
-- **[Risk & Prioritization Engine](risk.md)**: Multi-factor risk scoring, downstream inheritance, and uncertainty modeling.
 - **[Incident Response & Investigation](incidents.md)**: Security event ingestion, automated correlation, timelines, and containment.
 - **[Supply Chain Security](supply-chain-security.md)**: Model artifact verification, SBOM auditing, and serialization safety.
-- **[Observability & Telemetry](observability.md)**: Zero-leakage metrics, event stores, and Prometheus export.
 - **[Security Governance & Assurance Gates](governance.md)**: Automated CI/CD release readiness gates and cryptographic baselines.
 
-### 7. Examples & Code
-- **[Examples Catalog (examples/README.md)](../examples/README.md)**: Index and execution instructions for all 21 runnable examples.
+### 7. Integrations & Developer Experience
+- **[Developer Integrations 2.0](integrations.md)**: Pure ASGI 3.0 middleware, `StreamingTextGuard` sliding window, sync/async clients.
 - **[FastAPI Web Integration](integrations/overview.md)**: Protecting web services with `FirewallMiddleware`.
+- **[Examples Catalog (examples/README.md)](../examples/README.md)**: Index and execution instructions for all runnable examples.
 
 ### 8. Release Information
-- **[Release Notes (v1.0.0)](releases/v1.0.0.md)**: Official v1.0.0 announcement and GitHub release description.
-- **[Release Report (v1.0.0)](releases/v1.0.0-release-report.md)**: Technical release audit and empirical validation sign-off.
-- **[Release Checklist](v1-release-checklist.md)**: 25-point release readiness checklist.
+- **[Release Notes (v1.0.0)](releases/v1.0.0.md)**: Official v1.0.0 announcement.
+- **[Release Report (v1.0.0)](releases/v1.0.0-release-report.md)**: Technical release audit and empirical validation sign-off for v1.0.0.
 - **[Changelog (CHANGELOG.md)](../CHANGELOG.md)**: Chronological record of features, changes, and fixes.
 - **[Contributing Guidelines (CONTRIBUTING.md)](../CONTRIBUTING.md)**: Code style, testing guidelines, and PR workflow.

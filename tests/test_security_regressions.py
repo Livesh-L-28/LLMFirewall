@@ -1169,7 +1169,7 @@ def test_phase_40_public_api_stability_regressions() -> None:
     )
 
     # V1-001: Version and Public API Stability
-    assert __version__ in ("1.0.0", "1.0.0rc1")
+    assert __version__ in ("1.0.0", "1.0.0rc1", "1.1.0", "1.1.0rc1")
     assert Firewall is not None
     assert Scanner is not None
     assert PolicyEngine is not None

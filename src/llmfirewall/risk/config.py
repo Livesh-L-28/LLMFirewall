@@ -54,6 +54,24 @@ class RiskConfig(BaseModel):
     high_threshold: float = Field(default=0.70, ge=0.0, le=1.0)
     critical_threshold: float = Field(default=0.90, ge=0.0, le=1.0)
 
+    # Risk 2.0: Correlation & Dynamic Context
+    enable_correlation: bool = Field(default=True, description="Enable compound multi-stage attack detection")
+    enable_dynamic_context: bool = Field(default=True, description="Enable context-aware dynamic scoring")
+    environmental_multipliers: Dict[str, float] = Field(
+        default_factory=lambda: {
+            "production": 1.15,
+            "staging": 1.0,
+            "development": 0.85,
+        },
+        description="Environmental risk scaling multipliers",
+    )
+    trust_boundary_multiplier: float = Field(
+        default=1.20,
+        ge=1.0,
+        le=2.0,
+        description="Multiplier when trust boundary traversal is detected",
+    )
+
     def determine_risk_level(self, score: float) -> Severity:
         """Map a normalized risk score [0.0, 1.0] to a Risk Level (Severity)."""
         if score >= self.critical_threshold:

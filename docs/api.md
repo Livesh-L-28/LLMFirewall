@@ -214,7 +214,7 @@ except SecurityBlockError as err:
 
 ---
 
-## 5. Web Framework Integrations
+## 5. Web Framework & Developer Integrations
 
 ### FastAPI Integration (Optional Extra)
 
@@ -224,19 +224,88 @@ Available via `pip install "llmfirewall-core[fastapi]"`.
 - **`scan_response(generation, firewall, raise_on_block=True)`**: Helper verifying model outputs.
 - **`get_scan_result` / `get_firewall_request_id`**: FastAPI dependency injection helpers.
 
-Example:
-```python
-from fastapi import FastAPI
-from llmfirewall import Firewall
-from llmfirewall.integrations.fastapi import FirewallMiddleware
+### Pure ASGI 3.0 Middleware (Zero External Dependencies)
 
-app = FastAPI()
-fw = Firewall()
+- **Import path**: `from llmfirewall.integrations import LLMFirewallASGIMiddleware`
+- **Purpose**: Pure ASGI 3.0 middleware intercepting HTTP requests and WebSockets without FastAPI or Starlette dependencies.
+- **Parameters**: `app`, `firewall`, `protected_paths`, `blocked_status_code`, `fail_closed`.
 
-app.add_middleware(
-    FirewallMiddleware,
-    firewall=fw,
-    paths=["/api/v1/chat"],
-    blocked_status_code=403,
-)
-```
+### Streaming Text Guard (`StreamingTextGuard`)
+
+- **Import path**: `from llmfirewall.integrations import StreamingTextGuard`
+- **Purpose**: Boundary-aware sliding-window guard inspecting continuous LLM token streams.
+- **Methods**: `feed(chunk: str) -> Optional[ScanResult]`, `flush() -> Optional[ScanResult]`.
+
+### Unified Python Client (`LLMFirewallClient` & `AsyncLLMFirewallClient`)
+
+- **Import path**: `from llmfirewall.integrations import LLMFirewallClient, AsyncLLMFirewallClient`
+- **Purpose**: Ergonomic, context-preserving client for sync and async LLM pipelines.
+- **Methods**: `scan_prompt(text)`, `scan_output(text)`, `session(session_id)`.
+
+---
+
+## 6. Performance & Scan Caching (v1.1.0)
+
+### `ScanCache`
+
+High-performance, thread-safe in-memory L1/L2 scan result cache.
+
+- **Import path**: `from llmfirewall.cache import ScanCache, ScanCacheConfig`
+- **Features**: Bounded LRU eviction, configurable TTL, deterministic SHA-256 keys, ephemeral context filtering, metrics collection.
+- **Access via Firewall**: `firewall.cache` property exposes the underlying `ScanCache`.
+- **Methods**: `get(key)`, `set(key, result)`, `compute_key(text, direction, ...)`, `invalidate(prefix)`, `get_metrics()`.
+
+---
+
+## 7. Risk Intelligence 2.0 (v1.1.0)
+
+### `SessionRiskTracker`
+- **Import path**: `from llmfirewall.risk import SessionRiskTracker, SessionRiskSummary`
+- **Purpose**: Multi-turn interaction tracking with exponential temporal decay and low-and-slow probing attack detection.
+- **Methods**: `record_turn(session_id, findings, risk_score)`, `get_session_risk(session_id)`.
+
+### `FindingCorrelationEngine`
+- **Import path**: `from llmfirewall.risk import FindingCorrelationEngine, AttackChainType`
+- **Purpose**: Cross-detector finding correlation identifying multi-stage attack chains (exfiltration, privilege escalation, indirect RAG poisoning).
+- **Methods**: `correlate(findings, context=None) -> CorrelationReport`.
+
+### `BlastRadiusEstimator`
+- **Import path**: `from llmfirewall.risk import BlastRadiusEstimator, BlastRadiusReport`
+- **Purpose**: Quantifies downstream blast radius, reachable systems, data exposure classes, and immediate containment steps.
+- **Methods**: `estimate(findings, context=None) -> BlastRadiusReport`.
+
+---
+
+## 8. Policy-as-Code & Linter (v1.1.0)
+
+### `PolicyLinter`
+- **Import path**: `from llmfirewall.policy import PolicyLinter, PolicyLintReport`
+- **Purpose**: Static policy analyzer detecting unreachable shadowed rules, logical contradictions, cycles, and invalid regexes.
+- **Methods**: `lint(policy: Policy) -> PolicyLintReport`, `lint_file(path) -> PolicyLintReport`.
+
+---
+
+## 9. Security Evaluation & Red-Teaming (v1.1.0)
+
+### `AdversarialMutationEngine`
+- **Import path**: `from llmfirewall.eval import AdversarialMutationEngine, MutationType`
+- **Purpose**: Generates adversarial payload variants (Unicode homoglyphs, zero-width characters, BiDi overrides, leetspeak, delimiters, role confusion, RAG poisoning).
+- **Methods**: `mutate(text, mutation_types=None, count=3) -> List[MutatedPayload]`.
+
+### `AdversarialRedTeamRunner`
+- **Import path**: `from llmfirewall.eval import AdversarialRedTeamRunner, FailureCluster`
+- **Purpose**: Executes red-team mutations against a firewall, clusters failures, and calculates bypass rates.
+- **Methods**: `run(firewall, base_prompts) -> RedTeamEvaluationReport`.
+
+---
+
+## 10. Observability & SIEM Integration (v1.1.0)
+
+### `SecurityDashboardAPI`
+- **Import path**: `from llmfirewall.observability import SecurityDashboardAPI, DashboardSummary`
+- **Purpose**: Privacy-safe programmatic endpoints powering security dashboards and SOC consoles.
+- **Methods**: `get_summary()`, `get_events(offset, limit, severity, action)`, `get_timeseries(window_seconds, bucket_count)`.
+
+### SIEM & Metrics Exporters
+- `export_events_cef(events: List[SecurityEvent]) -> str`: Common Event Format (CEF) for Splunk, ArcSight, QRadar, Microsoft Sentinel.
+- `export_prometheus_metrics(summary: Dict[str, Any]) -> str`: Prometheus exposition format with L1/L2 cache hit/miss counters.

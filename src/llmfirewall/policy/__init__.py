@@ -11,7 +11,15 @@ from llmfirewall.policy.config import (
 from llmfirewall.policy.engine import (
     ACTION_PRECEDENCE,
     PolicyEngine,
+    PolicySimulationResult,
     get_default_policy,
+)
+from llmfirewall.policy.linter import (
+    LintSeverity,
+    PolicyLintIssue,
+    PolicyLintReport,
+    PolicyLinter,
+    lint_policy,
 )
 from llmfirewall.policy.redaction_config import RedactionConfig
 from llmfirewall.policy.redactor import SafeRedactor, default_redactor, redact_text_spans
@@ -24,6 +32,12 @@ __all__ = [
     "RuleCondition",
     "LogicalOperator",
     "PolicyValidationError",
+    "PolicySimulationResult",
+    "PolicyLintReport",
+    "PolicyLintIssue",
+    "LintSeverity",
+    "PolicyLinter",
+    "lint_policy",
     "get_default_policy",
     "RedactionConfig",
     "SafeRedactor",

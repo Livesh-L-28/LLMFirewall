@@ -6,6 +6,7 @@ from llmfirewall.tools.command_security import (
 )
 from llmfirewall.tools.engine import ToolSecurityEngine
 from llmfirewall.tools.models import (
+    ResultTrustLevel,
     ToolCall,
     ToolPermission,
     ToolResult,
@@ -31,6 +32,7 @@ from llmfirewall.tools.validator import (
 __all__ = [
     "ToolCall",
     "ToolResult",
+    "ResultTrustLevel",
     "ToolPermission",
     "ToolSecurityDecision",
     "ToolDefinition",
