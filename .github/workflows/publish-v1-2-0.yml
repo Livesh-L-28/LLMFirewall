@@ -178,7 +178,9 @@ jobs:
 
       # Pin pypa/gh-action-pypi-publish to v1.12.4 (76f52bc884231f62b9a034ebfe128415bbaabdfc)
       # Fail-closed: skip-existing removed to reject duplicate or partial uploads
+      # verify-metadata: false because modern twine check runs in earlier step; container action twine does not recognize Metadata 2.5
       - name: Publish v1.2.0 distributions to PyPI
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
         with:
           packages-dir: dist-ci/
+          verify-metadata: false
