@@ -170,12 +170,11 @@ jobs:
           deactivate
           rm -rf venv_sdist
 
-      # Pin pypa/gh-action-pypi-publish to v1.12.4 (76f52bc884231f62b9a034ebfe128415bbaabdfc)
+      # Pin pypa/gh-action-pypi-publish to v1.14.3 (7245906fb61fa33a13554f9d5fb856fe61758086)
       # Fail-closed: skip-existing removed to reject duplicate or partial uploads
-      # verify-metadata: false because modern twine check runs in earlier step; container action twine does not recognize Metadata 2.5
       - name: Publish distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: dist-ci/
-          verify-metadata: false
+
 
