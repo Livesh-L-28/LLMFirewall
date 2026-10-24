@@ -11,39 +11,168 @@ permissions:
 
 jobs:
   build-and-publish:
-    name: Build, Attest & Publish to PyPI
+    name: Build, Audit & Publish Release
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/llmfirewall-core
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      # Pin actions/checkout to v4.2.2 (11bd71901bbe5b1630ceea73d27597364c9af683)
+      - name: Checkout Triggering Release Tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      # Pin actions/setup-python to v5.4.0 (42375524e23c412d93fb67b49958b491fce71c38)
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: "3.12"
 
-      - name: Install Build Tools
+      - name: Validate Stable SemVer Tag and pyproject.toml Metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          python -m pip install --upgrade pip build twine
+          python -c "
+          import os, re, sys, tomllib
 
-      - name: Build Wheel and Source Distribution
-        run: |
-          python -m build
+          tag = os.environ.get('RELEASE_TAG', '')
+          match = re.match(r'^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$', tag)
+          if not match:
+              print(f'ERROR: Invalid release tag \"{tag}\". Must strictly follow vMAJOR.MINOR.PATCH without prerelease or leading zeros.')
+              sys.exit(1)
 
-      - name: Verify Package Metadata
+          expected_version = f'{match.group(1)}.{match.group(2)}.{match.group(3)}'
+
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+
+          project = data.get('project', {})
+          name = project.get('name')
+          version = project.get('version')
+
+          if name != 'llmfirewall-core':
+              print(f'ERROR: Expected package name \"llmfirewall-core\", got \"{name}\"')
+              sys.exit(1)
+
+          if version != expected_version:
+              print(f'ERROR: pyproject.toml version \"{version}\" does not match tag version \"{expected_version}\"')
+              sys.exit(1)
+
+          print(f'Strict SemVer and pyproject.toml validated: {name} {version} (tag: {tag})')
+          "
+
+      - name: Install Quality and Build Dependencies
         run: |
-          twine check dist/*
+          python -m pip install --upgrade pip build twine pytest ruff
+
+      - name: Run Full Linter Gate
+        run: |
+          ruff check src tests
+
+      - name: Run Full Test Suite Gate
+        run: |
+          pytest -q
+
+      - name: Build Isolated Release Distributions
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+          python -m build --outdir dist-ci
+
+      - name: Verify Exact Artifact Cardinality and Filenames
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          PACKAGE_NAME="llmfirewall_core"
+          EXPECTED_WHEEL="${PACKAGE_NAME}-${VERSION}-py3-none-any.whl"
+          EXPECTED_SDIST="${PACKAGE_NAME}-${VERSION}.tar.gz"
+
+          if [ ! -f "dist-ci/$EXPECTED_WHEEL" ]; then
+              echo "ERROR: Expected wheel missing: dist-ci/$EXPECTED_WHEEL"
+              exit 1
+          fi
+          if [ ! -f "dist-ci/$EXPECTED_SDIST" ]; then
+              echo "ERROR: Expected sdist missing: dist-ci/$EXPECTED_SDIST"
+              exit 1
+          fi
+
+          ACTUAL_ENTRIES=$(ls -1A dist-ci | sort)
+          EXPECTED_ENTRIES=$(printf "%s\n%s" "$EXPECTED_SDIST" "$EXPECTED_WHEEL" | sort)
+          if [ "$ACTUAL_ENTRIES" != "$EXPECTED_ENTRIES" ]; then
+              echo "ERROR: Publishing directory contains unexpected entries!"
+              echo "Expected strictly:"
+              echo "$EXPECTED_ENTRIES"
+              echo "Found:"
+              echo "$ACTUAL_ENTRIES"
+              exit 1
+          fi
+          echo "Cardinality verified: dist-ci contains strictly $EXPECTED_WHEEL and $EXPECTED_SDIST"
+
+      - name: Validate Distribution Metadata with Twine
+        run: |
+          twine check dist-ci/*
+
+      - name: Generate Checksum Manifest Outside Dist Directory
+        run: |
+          mkdir -p dist-manifest
+          (cd dist-ci && sha256sum *.whl *.tar.gz > ../dist-manifest/SHA256SUMS.txt)
+          echo "Generated SHA256SUMS.txt (logged without credentials):"
+          cat dist-manifest/SHA256SUMS.txt
+
+      # Pin actions/upload-artifact to v4.6.1 (4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1)
+      - name: Upload Release Checksum Manifest Artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: SHA256SUMS.txt
+          path: dist-manifest/SHA256SUMS.txt
 
       - name: Test Wheel in Isolated Virtualenv
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          python -m venv test_env
-          . test_env/bin/activate
-          pip install dist/*.whl
-          llmfirewall --version
-          python -c "from llmfirewall import Firewall; fw = Firewall(); res = fw.check('Hello'); assert res.decision.action.value == 'allow'"
+          VERSION="${RELEASE_TAG#v}"
+          python -m venv venv_wheel
+          . venv_wheel/bin/activate
+          pip install "dist-ci/llmfirewall_core-${VERSION}-py3-none-any.whl"
+          CLI_VER=$(llmfirewall --version)
+          test "$CLI_VER" = "llmfirewall ${VERSION}"
+          python -c "import llmfirewall; assert llmfirewall.__version__ == '${VERSION}'"
+          python -c "
+          from llmfirewall import Firewall, Action
+          fw = Firewall()
+          res_scan = fw.scan('Hello safe query')
+          assert res_scan.action == Action.ALLOW and res_scan.is_allowed
+          res_check = fw.check('Hello safe query')
+          assert res_check.decision.action.value == 'allow'
+          "
+          deactivate
+          rm -rf venv_wheel
 
-      # Trusted Publishing with OIDC: PyPI publication (configured for release tags only)
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Test Sdist in Isolated Virtualenv
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          python -m venv venv_sdist
+          . venv_sdist/bin/activate
+          pip install "dist-ci/llmfirewall_core-${VERSION}.tar.gz"
+          CLI_VER=$(llmfirewall --version)
+          test "$CLI_VER" = "llmfirewall ${VERSION}"
+          python -c "import llmfirewall; assert llmfirewall.__version__ == '${VERSION}'"
+          python -c "
+          from llmfirewall import Firewall, Action
+          fw = Firewall()
+          res_scan = fw.scan('Hello safe query')
+          assert res_scan.action == Action.ALLOW and res_scan.is_allowed
+          res_check = fw.check('Hello safe query')
+          assert res_check.decision.action.value == 'allow'
+          "
+          deactivate
+          rm -rf venv_sdist
+
+      # Pin pypa/gh-action-pypi-publish to v1.12.4 (76f52bc884231f62b9a034ebfe128415bbaabdfc)
+      # Fail-closed: skip-existing removed to reject duplicate or partial uploads
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
         with:
-          skip-existing: true
+          packages-dir: dist-ci/
+

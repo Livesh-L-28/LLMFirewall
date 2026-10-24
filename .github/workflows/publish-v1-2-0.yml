@@ -1,0 +1,183 @@
+name: Publish LLMFirewall Core v1.2.0
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_publish:
+        description: 'Type "PUBLISH-v1.2.0" to guard against accidental execution'
+        required: true
+        default: 'PUBLISH-v1.2.0'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-v1-2-0:
+    name: Build, Audit & Publish v1.2.0
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/llmfirewall-core
+    steps:
+      - name: Verify Accidental-Trigger Guard
+        env:
+          CONFIRM_TOKEN: ${{ github.event.inputs.confirm_publish }}
+        run: |
+          if [ "$CONFIRM_TOKEN" != "PUBLISH-v1.2.0" ]; then
+              echo "ERROR: Accidental-trigger guard failed. Expected 'PUBLISH-v1.2.0', received '$CONFIRM_TOKEN'"
+              exit 1
+          fi
+
+      # Pin actions/checkout to v4.2.2 (11bd71901bbe5b1630ceea73d27597364c9af683)
+      - name: Checkout Tag v1.2.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: refs/tags/v1.2.0
+
+      - name: Verify Tag Commit SHA Provenance
+        run: |
+          EXPECTED_COMMIT="4a1a351d18238d65d6d888acb5c08ddfa6b1fbce"
+          ACTUAL_COMMIT=$(git rev-parse HEAD)
+          echo "Expected release commit: $EXPECTED_COMMIT"
+          echo "Checked out commit:      $ACTUAL_COMMIT"
+          if [ "$ACTUAL_COMMIT" != "$EXPECTED_COMMIT" ]; then
+              echo "ERROR: Checked out commit does not match audited v1.2.0 release commit!"
+              exit 1
+          fi
+          if [ -n "$(git status --porcelain)" ]; then
+              echo "ERROR: Checked out working tree contains uncommitted modifications!"
+              git status --short
+              exit 1
+          fi
+          echo "Commit provenance verified."
+
+      # Pin actions/setup-python to v5.4.0 (42375524e23c412d93fb67b49958b491fce71c38)
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate Metadata with tomllib
+        run: |
+          python -c "
+          import tomllib, sys
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          project = data.get('project', {})
+          name = project.get('name')
+          version = project.get('version')
+          if name != 'llmfirewall-core':
+              print(f'ERROR: Expected package name \"llmfirewall-core\", got \"{name}\"')
+              sys.exit(1)
+          if version != '1.2.0':
+              print(f'ERROR: Expected package version \"1.2.0\", got \"{version}\"')
+              sys.exit(1)
+          print('pyproject.toml metadata verified: llmfirewall-core 1.2.0')
+          "
+
+      - name: Install Quality and Build Dependencies
+        run: |
+          python -m pip install --upgrade pip build twine pytest ruff
+
+      - name: Run Full Linter Gate
+        run: |
+          ruff check src tests
+
+      - name: Run Full Test Suite Gate
+        run: |
+          pytest -q
+
+      - name: Build Isolated Release Distributions
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+          python -m build --outdir dist-ci
+
+      - name: Verify Exact Artifact Cardinality and Filenames
+        run: |
+          EXPECTED_WHEEL="llmfirewall_core-1.2.0-py3-none-any.whl"
+          EXPECTED_SDIST="llmfirewall_core-1.2.0.tar.gz"
+
+          if [ ! -f "dist-ci/$EXPECTED_WHEEL" ]; then
+              echo "ERROR: Expected wheel missing: dist-ci/$EXPECTED_WHEEL"
+              exit 1
+          fi
+          if [ ! -f "dist-ci/$EXPECTED_SDIST" ]; then
+              echo "ERROR: Expected sdist missing: dist-ci/$EXPECTED_SDIST"
+              exit 1
+          fi
+
+          ACTUAL_ENTRIES=$(ls -1A dist-ci | sort)
+          EXPECTED_ENTRIES=$(printf "%s\n%s" "$EXPECTED_SDIST" "$EXPECTED_WHEEL" | sort)
+          if [ "$ACTUAL_ENTRIES" != "$EXPECTED_ENTRIES" ]; then
+              echo "ERROR: Publishing directory contains unexpected entries!"
+              echo "Expected strictly:"
+              echo "$EXPECTED_ENTRIES"
+              echo "Found:"
+              echo "$ACTUAL_ENTRIES"
+              exit 1
+          fi
+          echo "Cardinality verified: dist-ci contains strictly $EXPECTED_WHEEL and $EXPECTED_SDIST"
+
+      - name: Validate Distribution Metadata with Twine
+        run: |
+          twine check dist-ci/*
+
+      - name: Generate Checksum Manifest Outside Dist Directory
+        run: |
+          mkdir -p dist-manifest
+          (cd dist-ci && sha256sum *.whl *.tar.gz > ../dist-manifest/SHA256SUMS.txt)
+          echo "Generated SHA256SUMS.txt (logged without credentials):"
+          cat dist-manifest/SHA256SUMS.txt
+
+      # Pin actions/upload-artifact to v4.6.1 (4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1)
+      - name: Upload Release Checksum Manifest Artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: SHA256SUMS.txt
+          path: dist-manifest/SHA256SUMS.txt
+
+      - name: Test Wheel in Isolated Virtualenv
+        run: |
+          python -m venv venv_wheel
+          . venv_wheel/bin/activate
+          pip install dist-ci/llmfirewall_core-1.2.0-py3-none-any.whl
+          CLI_VER=$(llmfirewall --version)
+          test "$CLI_VER" = "llmfirewall 1.2.0"
+          python -c "import llmfirewall; assert llmfirewall.__version__ == '1.2.0'"
+          python -c "
+          from llmfirewall import Firewall, Action
+          fw = Firewall()
+          res_scan = fw.scan('Hello safe query')
+          assert res_scan.action == Action.ALLOW and res_scan.is_allowed
+          res_check = fw.check('Hello safe query')
+          assert res_check.decision.action.value == 'allow'
+          "
+          deactivate
+          rm -rf venv_wheel
+
+      - name: Test Sdist in Isolated Virtualenv
+        run: |
+          python -m venv venv_sdist
+          . venv_sdist/bin/activate
+          pip install dist-ci/llmfirewall_core-1.2.0.tar.gz
+          CLI_VER=$(llmfirewall --version)
+          test "$CLI_VER" = "llmfirewall 1.2.0"
+          python -c "import llmfirewall; assert llmfirewall.__version__ == '1.2.0'"
+          python -c "
+          from llmfirewall import Firewall, Action
+          fw = Firewall()
+          res_scan = fw.scan('Hello safe query')
+          assert res_scan.action == Action.ALLOW and res_scan.is_allowed
+          res_check = fw.check('Hello safe query')
+          assert res_check.decision.action.value == 'allow'
+          "
+          deactivate
+          rm -rf venv_sdist
+
+      # Pin pypa/gh-action-pypi-publish to v1.12.4 (76f52bc884231f62b9a034ebfe128415bbaabdfc)
+      # Fail-closed: skip-existing removed to reject duplicate or partial uploads
+      - name: Publish v1.2.0 distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        with:
+          packages-dir: dist-ci/
