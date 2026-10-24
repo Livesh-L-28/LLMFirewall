@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-24
+
+### Added
+- **Advanced Security Intelligence (Phase 58)**:
+  - Added `AdvancedSecurityCorrelator` synthesizing explainable incident context without creating a divergent risk engine.
+  - Connects atomic findings to affected assets, attack paths, evidence timelines, and attack progression stages (`RECONNAISSANCE`, `DELIVERY`, `EXPLOITATION`, `ESCALATION`, `EXFILTRATION`).
+  - Added comprehensive test suite `tests/test_advanced_security_intelligence_phase58.py`.
+- **Adaptive Threat Detection (Phase 59)**:
+  - Added optional contextual and historical threat signals (`AdaptiveThreatEngine`, `HistoricalSignalTracker`, `ContextualSignal`).
+  - Shannon entropy (`compute_shannon_entropy`) and token repetition ratio (`compute_token_repetition_ratio`) anomaly detectors with zero heavyweight model dependencies.
+  - Safe default: disabled by default (`AdaptiveThreatConfig.enabled=False`) preserving deterministic baseline performance.
+  - Added comprehensive test suite `tests/test_adaptive_threat_detection_phase59.py`.
+- **AI Threat Intelligence (Phase 60)**:
+  - Added structured, versioned AI threat intelligence subsystem (`AIThreatIndicator`, `ThreatIntelFeed`, `ThreatIntelManager`).
+  - Strict ReDoS-safe feed validation (`ThreatFeedValidator`) and zero-automatic-trust promotion gates (`ThreatIntelTrustLevel`).
+  - Added comprehensive test suite `tests/test_ai_threat_intelligence_phase60.py`.
+- **Advanced Agent Security (Phase 61)**:
+  - Added granular capability authorization scopes (`ResourceScope`, `ScopeType`).
+  - Added delegation depth and hop validation (`DelegationChainValidator`), step-up approval provider (`StepUpApprovalProvider`), and sliding-window rate limiters (`SlidingWindowRateLimiter`).
+  - Added `ToolResultTrustAnalyzer` detecting canary token leakage and indirect prompt injection attacks in external tool outputs.
+  - Added comprehensive test suite `tests/test_advanced_agent_security_phase61.py`.
+- **Advanced Memory Security (Phase 62)**:
+  - Added memory trust classification (`MemoryTrustLabel`) and SHA-256 provenance tracking (`MemoryProvenanceRecord`).
+  - Added sleeper injection attack detection (`MemoryPoisoningDetector`) and cross-session/cross-tenant memory boundary isolation (`SessionMemoryBoundary`, `AdvancedMemorySecurityGuard`).
+  - Added comprehensive test suite `tests/test_advanced_memory_security_phase62.py`.
+- **Enterprise Multi-Tenancy (Phase 63)**:
+  - Added explicit tenant context (`TenantContext`, `TenantTier`) and tenant-aware policy layering (`TenantPolicyManager`).
+  - Partitioned cache isolation in `ScanCache`: tenant IDs are cryptographically bound to cache keys to prevent cross-tenant data leakage or probing.
+  - Added per-tenant token bucket / sliding window rate limiting (`TenantRateLimiter`) for noisy neighbor isolation.
+  - Added comprehensive test suite `tests/test_enterprise_multi_tenancy_phase63.py`.
+- **Security Data Persistence (Phase 64)**:
+  - Added lightweight, pluggable storage adapters (`BasePersistenceAdapter`, `InMemoryPersistenceAdapter`, `JSONLPersistenceAdapter`, `SQLitePersistenceAdapter`).
+  - Added `EncryptedStorageAdapter` protecting sensitive audit telemetry at rest with HMAC authenticated envelopes.
+  - Bounded memory buffers and zero external database requirements for core library usage.
+  - Added comprehensive test suite `tests/test_security_data_persistence_phase64.py`.
+- **Advanced SIEM/SOC Integration (Phase 65)**:
+  - Added standard RFC 5424 Syslog exporter (`export_events_syslog_rfc5424`) with priority mapping and structured security metadata.
+  - Added OpenTelemetry (OTLP) LogRecords schema exporter (`export_events_opentelemetry`) with standard GenAI semantic conventions.
+  - Added `WebhookAlertSink` supporting HMAC-SHA256 request signing and alert-storm rate limiting.
+  - Added comprehensive test suite `tests/test_siem_soc_integration_phase65.py`.
+- **Security Operations Automation (Phase 66)**:
+  - Added automated response playbooks (`SecurityPlaybook`, `PlaybookStep`, `PlaybookEngine`).
+  - Consequential containment actions (`REVOKE_AGENT_CAPABILITY`, `QUARANTINE_SESSION`, `ROTATE_CACHE`) require explicit policy authorization and fail closed.
+  - Full dry-run / simulation support (`dry_run=True`) for safe change preview.
+  - Added comprehensive test suite `tests/test_secops_automation_phase66.py`.
+- **Advanced Red Teaming & Attack Chains (Phase 67)**:
+  - Added multi-turn attack chain scenario evaluation (`MultiTurnAttackScenario`, `AttackTurn`, `MultiTurnRedTeamRunner`).
+  - Standard attack chain suites for crescendo escalation and confused deputy agent tool injection.
+  - Bounded execution and deterministic reproducible evaluation when seeded.
+  - Added comprehensive test suite `tests/test_advanced_red_teaming_phase67.py`.
+- **Performance & Distributed Execution (Phase 68)**:
+  - Added `DistributedCacheAdapter` supporting two-tier L1 (memory) and L2 (remote distributed store) caching with fault-tolerant fail-open fallbacks.
+  - Added bounded concurrent batch scanner `ParallelScanPool` preserving strict input ordering and fail-closed isolation.
+  - Verified sub-millisecond warm cache lookup latency (< 0.05ms average).
+  - Added comprehensive test suite `tests/test_performance_distributed_phase68.py`.
+- **End-to-End Pipeline & Integration (Phase 69)**:
+  - Added complete runnable pipeline example `examples/v1_2_end_to_end_pipeline.py`.
+  - Added comprehensive cross-component test `tests/test_v1_2_integration.py`.
+
+### Compatibility
+- 100% backward compatible with v1.1.0 baseline across all 475 public exports, signatures, and default behaviors.
+- Verified with 756 total passing tests (up from 692 baseline).
+
 ## [1.1.0] - 2026-10-05
 
 ### Added

@@ -12,6 +12,14 @@ from llmfirewall.detectors.registry import DetectorRegistry, default_detector_re
 from llmfirewall.detectors.secrets import SecretDetector
 from llmfirewall.detectors.heuristics import TokenHeuristics, compute_token_heuristics
 from llmfirewall.detectors.aggregator import FindingAggregator
+from llmfirewall.detectors.adaptive import (
+    AdaptiveThreatConfig,
+    AdaptiveThreatEngine,
+    ContextualSignal,
+    HistoricalSignalTracker,
+    compute_shannon_entropy,
+    compute_token_repetition_ratio,
+)
 
 __all__ = [
     "Detector",
@@ -29,5 +37,11 @@ __all__ = [
     "TokenHeuristics",
     "compute_token_heuristics",
     "FindingAggregator",
+    "AdaptiveThreatConfig",
+    "AdaptiveThreatEngine",
+    "ContextualSignal",
+    "HistoricalSignalTracker",
+    "compute_shannon_entropy",
+    "compute_token_repetition_ratio",
 ]
 

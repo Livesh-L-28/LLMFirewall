@@ -45,6 +45,7 @@ class DetectorEngine:
         fail_fast: bool = False,
         enable_prefilter: bool = True,
         enable_heuristics: bool = True,
+        adaptive_engine: Optional[Any] = None,
     ) -> None:
         """
         Args:
@@ -53,11 +54,17 @@ class DetectorEngine:
                        If False (default), capture error and continue other detectors.
             enable_prefilter: If True, use trigger hints and direction pre-filters.
             enable_heuristics: If True, extract token heuristics for contextual enrichment.
+            adaptive_engine: Optional AdaptiveThreatEngine for contextual & historical calibration.
         """
         self._detectors: List[Union[Detector, DetectorProtocol]] = list(detectors or [])
         self._fail_fast = fail_fast
         self._enable_prefilter = enable_prefilter
         self._enable_heuristics = enable_heuristics
+        self._adaptive_engine = adaptive_engine
+
+    @property
+    def adaptive_engine(self) -> Optional[Any]:
+        return self._adaptive_engine
 
     @property
     def detectors(self) -> List[Union[Detector, DetectorProtocol]]:
@@ -105,6 +112,12 @@ class DetectorEngine:
             context=ctx,
         )
 
+        adaptive_signals = (
+            self._adaptive_engine.evaluate_signals(text, context=ctx)
+            if self._adaptive_engine is not None
+            else []
+        )
+
         # Stage 3: Staged Detector Execution & Failure Isolation
         for detector in candidates:
             try:
@@ -113,6 +126,8 @@ class DetectorEngine:
                     for f in results:
                         # Stage 4: Confidence Calibration
                         calibrated = calibrate_finding_confidence(f, context=ctx)
+                        if self._adaptive_engine is not None and adaptive_signals:
+                            calibrated = self._adaptive_engine.calibrate_finding(calibrated, adaptive_signals)
                         collected_findings.append(calibrated)
             except Exception as exc:
                 err_msg = f"Detector '{detector.name}' failed with error: {str(exc)}"
@@ -122,6 +137,9 @@ class DetectorEngine:
                 collected_errors.append(
                     {"detector": detector.name, "error": str(exc)}
                 )
+
+        if self._adaptive_engine is not None and collected_findings and ctx.get("session_id"):
+            self._adaptive_engine.tracker.record_violation(str(ctx["session_id"]))
 
         # Stage 5: Finding Aggregation & Deduplication
         aggregated_findings = FindingAggregator.aggregate(collected_findings)

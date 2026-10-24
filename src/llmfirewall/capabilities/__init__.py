@@ -27,6 +27,15 @@ from llmfirewall.capabilities.models import (
     SideEffectType,
 )
 
+from llmfirewall.capabilities.advanced_security import (
+    DelegationChainValidator,
+    ResourceScope,
+    ScopeType,
+    SlidingWindowRateLimiter,
+    StepUpApprovalProvider,
+    TimeWindowBudget,
+)
+
 __all__ = [
     # Data Models & Enums
     "ActionClassification",
@@ -46,10 +55,17 @@ __all__ = [
     "DenyAllApprovalProvider",
     "CallbackApprovalProvider",
     "MemoryApprovalProvider",
+    "StepUpApprovalProvider",
     # Budget Manager
     "BudgetManager",
+    "TimeWindowBudget",
+    "SlidingWindowRateLimiter",
     # Capability Engine
     "CapabilityEngine",
     "DEFAULT_CAPABILITIES",
     "DEFAULT_TOOL_CAPABILITY_MAP",
+    # Advanced Agent Security (Phase 61)
+    "ScopeType",
+    "ResourceScope",
+    "DelegationChainValidator",
 ]

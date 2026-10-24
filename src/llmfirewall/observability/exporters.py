@@ -171,3 +171,109 @@ def export_events_csv(events: List[SecurityEvent]) -> str:
         ])
 
     return output.getvalue()
+
+
+def export_events_syslog_rfc5424(
+    events: List[SecurityEvent],
+    app_name: str = "llmfirewall",
+    hostname: str = "localhost",
+    facility: int = 10,  # 10 = security/authorization messages
+) -> str:
+    """Export security events formatted according to RFC 5424 (The Syslog Protocol).
+    
+    Format: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID STRUCTURED-DATA MSG
+    """
+    lines: List[str] = []
+    # RFC 5424 severity codes: 2=Critical, 3=Error, 4=Warning, 5=Notice, 6=Informational
+    sev_codes = {
+        "critical": 2,
+        "high": 3,
+        "medium": 4,
+        "low": 5,
+        "info": 6,
+    }
+
+    for e in events:
+        sev_code = sev_codes.get(e.severity.value.lower(), 5)
+        pri = facility * 8 + sev_code
+        ts = e.timestamp.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        procid = "-"
+        msgid = e.event_type.value
+        act = e.action.value if e.action else "none"
+        det = e.detector_name or "none"
+        score = f"{e.risk_score:.3f}" if e.risk_score is not None else "0.000"
+
+        sd = (
+            f'[llmfirewall@41123 eventId="{e.event_id}" '
+            f'traceId="{e.trace_id}" '
+            f'action="{act}" '
+            f'detector="{det}" '
+            f'riskScore="{score}"]'
+        )
+        msg = f"Security event {e.event_type.value} action={act} detector={det}"
+        lines.append(f"<{pri}>1 {ts} {hostname} {app_name} {procid} {msgid} {sd} {msg}")
+
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def export_events_opentelemetry(events: List[SecurityEvent]) -> Dict[str, Any]:
+    """Export security events conforming to OpenTelemetry (OTLP) LogRecords schema."""
+    # Mapping to OTel severity numbers (1..24)
+    otel_sev_numbers = {
+        "info": 9,      # INFO
+        "low": 10,     # INFO2
+        "medium": 13,  # WARN
+        "high": 17,    # ERROR
+        "critical": 21 # FATAL
+    }
+
+    log_records = []
+    for e in events:
+        sev_str = e.severity.value.lower()
+        sev_num = otel_sev_numbers.get(sev_str, 9)
+        time_nano = int(e.timestamp.timestamp() * 1_000_000_000)
+
+        attrs = [
+            {"key": "gen_ai.system", "value": {"stringValue": "llmfirewall"}},
+            {"key": "security.event_id", "value": {"stringValue": e.event_id}},
+            {"key": "security.event_type", "value": {"stringValue": e.event_type.value}},
+            {"key": "security.action", "value": {"stringValue": e.action.value if e.action else "none"}},
+            {"key": "security.environment", "value": {"stringValue": e.environment}},
+        ]
+        if e.detector_name:
+            attrs.append({"key": "security.detector_name", "value": {"stringValue": e.detector_name}})
+        if e.risk_score is not None:
+            attrs.append({"key": "security.risk_score", "value": {"doubleValue": float(e.risk_score)}})
+        if e.tool_name:
+            attrs.append({"key": "security.tool_name", "value": {"stringValue": e.tool_name}})
+        if e.payload_hash:
+            attrs.append({"key": "security.payload_hash", "value": {"stringValue": e.payload_hash}})
+
+        log_records.append({
+            "timeUnixNano": time_nano,
+            "severityNumber": sev_num,
+            "severityText": e.severity.value.upper(),
+            "body": {"stringValue": f"LLMFirewall event: {e.event_type.value} -> {e.action.value if e.action else 'none'}"},
+            "attributes": attrs,
+            "traceId": e.trace_id,
+        })
+
+    return {
+        "resourceLogs": [
+            {
+                "resource": {
+                    "attributes": [
+                        {"key": "service.name", "value": {"stringValue": "llmfirewall"}},
+                        {"key": "service.version", "value": {"stringValue": "1.2.0"}},
+                    ]
+                },
+                "scopeLogs": [
+                    {
+                        "scope": {"name": "llmfirewall.observability", "version": "1.2.0"},
+                        "logRecords": log_records,
+                    }
+                ],
+            }
+        ]
+    }
+

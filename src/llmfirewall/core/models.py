@@ -148,6 +148,7 @@ class ScanRequest(BaseModel):
     text: str = Field(..., max_length=MAX_SCAN_TEXT_LENGTH, description="The content to scan (prompt or LLM output)")
     direction: str = Field(default="input", description="'input' or 'output'")
     user_id: Optional[str] = Field(default=None, max_length=256, description="Identifier of calling user or tenant")
+    tenant_id: Optional[str] = Field(default=None, max_length=256, description="Identifier of calling tenant or organization")
     session_id: Optional[str] = Field(default=None, max_length=256, description="Session or conversation identifier")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Contextual metadata for detectors")
 
@@ -171,6 +172,7 @@ class ScanResult(BaseModel):
     findings: List[Finding] = Field(default_factory=list, description="All individual detector findings")
     original_text: str = Field(default="", description="Original unscanned content")
     processed_text: str = Field(default="", description="Sanitized/redacted text safe for downstream")
+    tenant_id: Optional[str] = Field(default=None, description="Associated tenant identifier")
     execution_time_ms: float = Field(default=0.0, ge=0.0, description="Pipeline latency in milliseconds")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="UTC timestamp")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Result metadata")
@@ -198,6 +200,11 @@ class ScanResult(BaseModel):
     @property
     def text(self) -> str:
         """The final safe text to pass downstream."""
+        return self.processed_text
+
+    @property
+    def sanitized_text(self) -> str:
+        """Backward-compatible alias for processed_text."""
         return self.processed_text
 
     def safe_dict(self) -> Dict[str, Any]:
@@ -240,6 +247,7 @@ class AuditEvent(BaseModel):
     )
     findings_count: int = Field(default=0, ge=0, description="Total number of findings")
     user_id: Optional[str] = Field(default=None, description="User/tenant identifier")
+    tenant_id: Optional[str] = Field(default=None, description="Tenant/organization identifier")
     session_id: Optional[str] = Field(default=None, description="Session ID")
     triggered_rules: List[str] = Field(default_factory=list, description="List of policy rules triggered")
     policy_id: Optional[str] = Field(default=None, description="Identifier of evaluated security policy")

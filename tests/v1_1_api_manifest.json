@@ -1,0 +1,1884 @@
+{
+  "ACTION_PRECEDENCE": {
+    "type": "dict"
+  },
+  "AI_SECURITY_BASELINE_CONTROLS": {
+    "type": "list"
+  },
+  "AbnormalAgentBehaviorRule": {
+    "type": "ABCMeta",
+    "signature": "(name: 'str' = 'abnormal_agent_behavior') -> 'None'"
+  },
+  "Action": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ActionBudget": {
+    "type": "ModelMetaclass",
+    "signature": "(*, max_actions: Annotated[int, Ge(ge=1)] = 50, max_runtime_seconds: Annotated[float, Ge(ge=1.0)] = 300.0, per_capability_limits: Dict[str, int] = <factory>, max_tokens: Annotated[Optional[int], Ge(ge=1)] = None, max_cost: Annotated[Optional[float], Ge(ge=0.0)] = None) -> None"
+  },
+  "ActionChain": {
+    "type": "ModelMetaclass",
+    "signature": "(*, root_action_id: str, parent_action_id: Optional[str] = None, depth: Annotated[int, Ge(ge=1)] = 1, history: List[str] = <factory>) -> None"
+  },
+  "ActionClassification": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ActionDecision": {
+    "type": "ModelMetaclass",
+    "signature": "(*, decision: llmfirewall.capabilities.models.ActionDecisionStatus, action_id: str, agent_id: str, capability_name: str, resource: Optional[str] = None, reason: str = 'Authorized by capability security policy.', approval_request: Optional[llmfirewall.capabilities.models.ApprovalRequest] = None, findings: List[llmfirewall.core.models.Finding] = <factory>, policy_rule: Optional[str] = None) -> None"
+  },
+  "ActionDecisionStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ActionRequest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, action_id: str = <factory>, parent_action_id: Optional[str] = None, agent_id: str = 'default_agent', parent_agent_id: Optional[str] = None, session_id: str = 'default_session', capability_name: str, tool_name: str = 'unknown_tool', resource: Optional[str] = None, arguments_metadata: Dict[str, Any] = <factory>, timestamp: float = <factory>) -> None"
+  },
+  "AgentAdapter": {
+    "type": "ABCMeta",
+    "signature": "(agent_callable: Callable[[str], Dict[str, Any]]) -> None"
+  },
+  "AgentCapabilitiesConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, default_agent_capabilities: List[str] = <factory>, max_delegation_depth: Annotated[int, Ge(ge=1)] = 3, max_action_depth: Annotated[int, Ge(ge=1)] = 20, default_max_actions: Annotated[int, Ge(ge=1)] = 50, default_max_runtime_seconds: Annotated[float, Ge(ge=1.0)] = 300.0) -> None"
+  },
+  "AgentCapabilityGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "AnomalyEvent": {
+    "type": "ModelMetaclass",
+    "signature": "(*, anomaly_id: str = <factory>, timestamp: datetime.datetime = <factory>, metric_name: str, observed_value: float, baseline_value: float, deviation_percent: float, window_minutes: int = 60, severity: llmfirewall.observability.models.EventSeverity = <EventSeverity.WARNING: 'WARNING'>, description: str) -> None"
+  },
+  "ApplicabilityStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ApprovalProvider": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "ApprovalRequest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, approval_id: str = <factory>, action_id: str, agent_id: str, capability_name: str, resource: Optional[str] = None, reason: str = 'Action requires explicit administrative approval.', approved: bool = False, approved_by: Optional[str] = None, created_at: float = <factory>, expires_at: float = <factory>) -> None"
+  },
+  "ArgumentLimits": {
+    "type": "ModelMetaclass",
+    "signature": "(*, max_string_length: Annotated[int, Ge(ge=1)] = 100000, max_object_depth: Annotated[int, Ge(ge=1)] = 10, max_array_length: Annotated[int, Ge(ge=1)] = 1000, max_total_bytes: Annotated[int, Ge(ge=1)] = 1000000) -> None"
+  },
+  "AssertionType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "Asset": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=256)], type: str = 'custom', name: str, version: Optional[str] = None, environment: str = 'unknown', source: llmfirewall.inventory.models.AssetSource = <AssetSource.USER_REGISTERED: 'USER_REGISTERED'>, status: llmfirewall.inventory.models.AssetStatus = <AssetStatus.ACTIVE: 'ACTIVE'>, metadata: Dict[str, Any] = <factory>, first_seen: float = <factory>, last_seen: float = <factory>, tags: List[str] = <factory>, owner: Optional[str] = None, confidence: llmfirewall.inventory.models.DiscoveryConfidence = <DiscoveryConfidence.HIGH: 'HIGH'>, provenance: List[llmfirewall.inventory.models.AssetProvenance] = <factory>, conflicts: List[llmfirewall.inventory.models.AssetConflict] = <factory>, fingerprint: str = '') -> None"
+  },
+  "AssetConflict": {
+    "type": "ModelMetaclass",
+    "signature": "(*, field: str, configured_value: Any = None, observed_value: Any = None, detected_at: float = <factory>, description: str = '') -> None"
+  },
+  "AssetExposure": {
+    "type": "ModelMetaclass",
+    "signature": "(*, asset_id: str, asset_type: str, environment: str = 'unknown', sources: List[str] = <factory>, entry_points: List[str] = <factory>, tools: List[str] = <factory>, capabilities: List[str] = <factory>, attack_paths: List[Dict[str, Any]] = <factory>, security_controls: List[str] = <factory>, findings: List[Dict[str, Any]] = <factory>, assumptions: List[str] = <factory>, last_seen: float = <factory>) -> None"
+  },
+  "AssetInventory": {
+    "type": "type",
+    "signature": "(kg: Optional[llmfirewall.graph.engine.KnowledgeGraph] = None, attack_graph: Optional[llmfirewall.attack_graph.engine.AttackGraph] = None, max_assets: int = 50000, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None) -> None"
+  },
+  "AssetProvenance": {
+    "type": "ModelMetaclass",
+    "signature": "(*, source: llmfirewall.inventory.models.AssetSource, provider_name: str, reference: str = '', observed_at: float = <factory>, details: Dict[str, Any] = <factory>) -> None"
+  },
+  "AssetSource": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "AssetStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "AssetType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "AttackCategory": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "AttackEvidence": {
+    "type": "ModelMetaclass",
+    "signature": "(*, evidence_type: llmfirewall.attack_graph.models.EvidenceType, source_id: str, description: str, verified: bool = False, timestamp: float = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "AttackGraph": {
+    "type": "type",
+    "signature": "(kg: Optional[llmfirewall.graph.engine.KnowledgeGraph] = None, rules_registry: Optional[llmfirewall.attack_graph.rules.AttackRuleRegistry] = None, graph_version: str = '1.0', audit_logger: Optional[llmfirewall.audit.AuditLogger] = None) -> None"
+  },
+  "AttackGraphDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, paths_added: List[str] = <factory>, paths_removed: List[str] = <factory>, paths_changed: List[str] = <factory>, new_entry_points: List[str] = <factory>, new_techniques: List[str] = <factory>, new_trust_boundaries: List[str] = <factory>, is_identical: bool = False) -> None"
+  },
+  "AttackGraphMetrics": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "AttackGraphSnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1.0.0', graph_version: str = '1.0', rules_version: str = '1.0', created_at: float = <factory>, source_graph_hash: str = '', paths: List[llmfirewall.attack_graph.models.AttackPath] = <factory>, entry_points: List[llmfirewall.attack_graph.models.EntryPoint] = <factory>, trust_boundaries: List[llmfirewall.attack_graph.models.TrustBoundary] = <factory>, snapshot_hash: str = '') -> None"
+  },
+  "AttackNode": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=256)], type: str = 'attack_node', asset_id: str, technique: Optional[str] = None, preconditions: List[str] = <factory>, evidence: List[llmfirewall.attack_graph.models.AttackEvidence] = <factory>, properties: Dict[str, Any] = <factory>) -> None"
+  },
+  "AttackPath": {
+    "type": "ModelMetaclass",
+    "signature": "(*, path_id: str, source: str, target: str, steps: List[llmfirewall.attack_graph.models.AttackStep] = <factory>, status: llmfirewall.attack_graph.models.PathStatus = <PathStatus.CANDIDATE: 'CANDIDATE'>, evidence: List[llmfirewall.attack_graph.models.AttackEvidence] = <factory>, mitigations: List[str] = <factory>, mitigation_status: llmfirewall.attack_graph.models.MitigationStatus = <MitigationStatus.UNKNOWN: 'UNKNOWN'>, assumptions: List[str] = <factory>, confidence: llmfirewall.attack_graph.models.ConfidenceLevel = <ConfidenceLevel.LOW: 'LOW'>, created_at: float = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "AttackRule": {
+    "type": "ModelMetaclass",
+    "signature": "(*, rule_id: str, name: str, description: str, source_type: str, target_type: str, technique: str, requires: List[str] = <factory>, postconditions: List[str] = <factory>, mitigations: List[str] = <factory>, assumptions: List[str] = <factory>, confidence: llmfirewall.attack_graph.models.ConfidenceLevel = <ConfidenceLevel.LOW: 'LOW'>) -> None"
+  },
+  "AttackRuleRegistry": {
+    "type": "type",
+    "signature": "(rules_version: str = '1.0') -> None"
+  },
+  "AttackStep": {
+    "type": "ModelMetaclass",
+    "signature": "(*, step_id: str = <factory>, technique: str, technique_name: str = '', source: str, target: str, preconditions: List[str] = <factory>, postconditions: List[str] = <factory>, evidence: List[llmfirewall.attack_graph.models.AttackEvidence] = <factory>, confidence: llmfirewall.attack_graph.models.ConfidenceLevel = <ConfidenceLevel.LOW: 'LOW'>, mitigations: List[str] = <factory>, mitigation_status: llmfirewall.attack_graph.models.MitigationStatus = <MitigationStatus.UNKNOWN: 'UNKNOWN'>, assumptions: List[str] = <factory>) -> None"
+  },
+  "AttackSurfaceRecord": {
+    "type": "ModelMetaclass",
+    "signature": "(*, tools_count: Annotated[int, Ge(ge=0)] = 0, tools: List[str] = <factory>, external_apis_count: Annotated[int, Ge(ge=0)] = 0, external_apis: List[str] = <factory>, memory_stores_count: Annotated[int, Ge(ge=0)] = 0, memory_stores: List[str] = <factory>, rag_sources_count: Annotated[int, Ge(ge=0)] = 0, rag_sources: List[str] = <factory>, entry_points_count: Annotated[int, Ge(ge=0)] = 0, entry_points: List[str] = <factory>, entry_point_postures: Dict[str, Dict[str, str]] = <factory>) -> None"
+  },
+  "AttackTechnique": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str, name: str, description: str, prerequisites: List[str] = <factory>, affected_assets: List[str] = <factory>, detection_methods: List[str] = <factory>, mitigations: List[str] = <factory>) -> None"
+  },
+  "AttackTechniqueRegistry": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "AuditConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = False, logger_name: str = 'llmfirewall.audit', min_level: str = 'INFO', structured_json: bool = True, redact_sensitive_data: bool = True) -> None"
+  },
+  "AuditEvent": {
+    "type": "ModelMetaclass",
+    "signature": "(*, event_id: str = <factory>, timestamp: datetime.datetime = <factory>, scan_id: str, request_id: Optional[str] = None, action_taken: llmfirewall.core.models.Action, risk_score: Annotated[float, Ge(ge=0.0), Le(le=1.0)], max_severity: llmfirewall.core.models.Severity, threat_types: List[llmfirewall.core.models.ThreatType] = <factory>, detection_categories: List[str] = <factory>, detector_names: List[str] = <factory>, findings_count: Annotated[int, Ge(ge=0)] = 0, user_id: Optional[str] = None, session_id: Optional[str] = None, triggered_rules: List[str] = <factory>, policy_id: Optional[str] = None, policy_version: Optional[str] = None, latency_ms: Annotated[float, Ge(ge=0)] = 0.0, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "AuditLogger": {
+    "type": "type",
+    "signature": "(name: str = 'llmfirewall.audit', sink: Optional[TextIO] = None, min_level: int = 20, formatter: Optional[Callable[[Dict[str, Any]], str]] = None) -> None"
+  },
+  "BUILTIN_SUITES": {
+    "type": "dict"
+  },
+  "BaseDetector": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "BasePolicyEngine": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "BaseRiskEngine": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "BaselineCategory": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "BaselineDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, baseline_id: str, new_findings: List[llmfirewall.governance.findings.GovernanceFinding] = <factory>, resolved_findings: List[llmfirewall.governance.findings.GovernanceFinding] = <factory>, unchanged_findings: List[llmfirewall.governance.findings.GovernanceFinding] = <factory>, changed_findings: List[Dict[str, Any]] = <factory>, regressions: List[str] = <factory>, is_identical: bool = False) -> None"
+  },
+  "BlastRadiusResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, source_asset_id: str, source_asset_type: str, impacted_applications: List[str] = <factory>, impacted_agents: List[str] = <factory>, impacted_tools: List[str] = <factory>, impacted_models: List[str] = <factory>, impacted_policies: List[str] = <factory>, impacted_findings: List[str] = <factory>, total_impacted_nodes: Annotated[int, Ge(ge=0)] = 0, max_depth_reached: Annotated[int, Ge(ge=0)] = 0, propagation_paths: List[llmfirewall.graph.models.GraphPath] = <factory>) -> None"
+  },
+  "BlockedOutputError": {
+    "type": "type",
+    "signature": "(message: str, decision: Any = None)"
+  },
+  "BlockedPromptError": {
+    "type": "type",
+    "signature": "(message: str, decision: Any = None)"
+  },
+  "BoundedFuzzer": {
+    "type": "type",
+    "signature": "(max_cases: int = 10, max_input_size: int = 4096, seed: int = 42) -> None"
+  },
+  "BudgetManager": {
+    "type": "type",
+    "signature": "(budget: Optional[llmfirewall.capabilities.models.ActionBudget] = None) -> None"
+  },
+  "CallableAdapter": {
+    "type": "ABCMeta",
+    "signature": "(target_callable: Callable[[str], Any]) -> None"
+  },
+  "CallbackApprovalProvider": {
+    "type": "ABCMeta",
+    "signature": "(callback: Callable[[llmfirewall.capabilities.models.ApprovalRequest], bool]) -> None"
+  },
+  "Capability": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], action: llmfirewall.capabilities.models.ActionClassification = <ActionClassification.READ: 'READ'>, resource_pattern: str = '*', risk_class: llmfirewall.capabilities.models.CapabilityRiskClass = <CapabilityRiskClass.LOW: 'LOW'>, side_effects: llmfirewall.capabilities.models.SideEffectType = <SideEffectType.READ_ONLY: 'READ_ONLY'>, destructive: bool = False, requires_approval: bool = False, description: str = '') -> None"
+  },
+  "CapabilityEngine": {
+    "type": "type",
+    "signature": "(capabilities: Optional[Dict[str, llmfirewall.capabilities.models.Capability]] = None, tool_map: Optional[Dict[str, List[str]]] = None, approval_provider: Optional[llmfirewall.capabilities.approval.ApprovalProvider] = None, max_delegation_depth: int = 3, max_action_depth: int = 20, max_repeated_actions: Optional[int] = None) -> None"
+  },
+  "CapabilityGrant": {
+    "type": "ModelMetaclass",
+    "signature": "(*, grant_id: str = <factory>, capability_name: str, resource_scope: List[str] = <factory>, max_uses: Annotated[Optional[int], Ge(ge=1)] = None, expires_at: Optional[float] = None, created_at: float = <factory>) -> None"
+  },
+  "CapabilityRiskClass": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "CitationValidator": {
+    "type": "type",
+    "signature": "()"
+  },
+  "CodeDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "(target_path: Optional[str] = None, max_files: int = 100, root_dir: Optional[str] = None) -> None"
+  },
+  "ComplianceControl": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str, framework_id: str, control_id: str, title: str, description: str = '', category: str = 'general', domain: str = 'General Security', requirements: List[str] = <factory>, evidence_requirements: List[str] = <factory>, applicability: Dict[str, Any] = <factory>) -> None"
+  },
+  "ComplianceDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, is_identical: bool = False, control_status_changed: List[str] = <factory>, regressions: List[str] = <factory>, new_gaps: List[llmfirewall.compliance.models.ComplianceGap] = <factory>, resolved_gaps: List[llmfirewall.compliance.models.ComplianceGap] = <factory>, evidence_expired: List[str] = <factory>, controls_added: List[str] = <factory>, controls_removed: List[str] = <factory>, framework_changed: List[str] = <factory>, summary: Dict[str, Any] = <factory>) -> None"
+  },
+  "ComplianceEngine": {
+    "type": "type",
+    "signature": "(catalog: Optional[llmfirewall.compliance.catalog.ControlCatalog] = None, rule_registry: Optional[llmfirewall.compliance.rules.ComplianceRuleRegistry] = None, inventory: Optional[Any] = None, kg: Optional[Any] = None, attack_graph: Optional[Any] = None, spm: Optional[Any] = None, governance: Optional[Any] = None, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None) -> None"
+  },
+  "ComplianceEvidence": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, type: llmfirewall.compliance.models.EvidenceType, source: str, asset_id: str, control_id: str, collected_at: float = <factory>, expires_at: Optional[float] = None, last_verified: float = <factory>, content_reference: str, status: llmfirewall.compliance.models.EvidenceValidity = <EvidenceValidity.VALID: 'VALID'>, attestation: Optional[Dict[str, Any]] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ComplianceEvidenceType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ComplianceException": {
+    "type": "ModelMetaclass",
+    "signature": "(*, exception_id: str = <factory>, control_id: str, asset_id: str, reason: str, approved_by: str, created_at: float = <factory>, expires_at: float, status: llmfirewall.compliance.models.ExceptionStatus = <ExceptionStatus.ACTIVE: 'ACTIVE'>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ComplianceFramework": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str, name: str, version: str = '1.0.0', description: str = '', source: str = 'LLMFirewall', publisher: Optional[str] = None, domains: List[str] = <factory>, controls: Dict[str, llmfirewall.compliance.models.ComplianceControl] = <factory>, checksum: str = '', metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ComplianceGap": {
+    "type": "ModelMetaclass",
+    "signature": "(*, gap_id: str = <factory>, framework_id: str, control_id: str, asset_id: str, title: str, description: str, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, missing_evidence: List[str] = <factory>, related_findings: List[str] = <factory>, related_posture_gaps: List[str] = <factory>, related_attack_paths: List[str] = <factory>, status: llmfirewall.compliance.models.RemediationStatus = <RemediationStatus.OPEN: 'OPEN'>, remediation_guidance: Optional[str] = None, created_at: float = <factory>, updated_at: float = <factory>) -> None"
+  },
+  "ComplianceMetrics": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "ComplianceRule": {
+    "type": "type",
+    "signature": "(rule_id: str, name: str, description: str, evaluator: Callable[[llmfirewall.compliance.rules.ComplianceRuleContext], Optional[llmfirewall.compliance.models.ControlAssessment]], enabled: bool = True) -> None"
+  },
+  "ComplianceRuleContext": {
+    "type": "type",
+    "signature": "(control: llmfirewall.compliance.models.ComplianceControl, asset: Any, evidence: List[llmfirewall.compliance.models.ComplianceEvidence] = <factory>, security_controls: Dict[str, Any] = <factory>, posture: Optional[Any] = None, tests: List[Dict[str, Any]] = <factory>, findings: List[Dict[str, Any]] = <factory>, attack_paths: List[Dict[str, Any]] = <factory>, policy_status: Dict[str, Any] = <factory>, exceptions: List[llmfirewall.compliance.models.ComplianceException] = <factory>, kg: Optional[Any] = None) -> None"
+  },
+  "ComplianceRuleRegistry": {
+    "type": "type",
+    "signature": "(rules_version: str = '1.0.0', load_defaults: bool = True) -> None"
+  },
+  "ComplianceSnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1.0.0', framework_versions: Dict[str, str] = <factory>, catalog_version: str = '1.0.0', inventory_version: str = '1.0', posture_version: str = '1.0', graph_version: str = '1.0', rules_version: str = '1.0.0', created_at: float = <factory>, assessments: Dict[str, llmfirewall.compliance.models.ControlAssessment] = <factory>, gaps: List[llmfirewall.compliance.models.ComplianceGap] = <factory>, evidence: List[llmfirewall.compliance.models.ComplianceEvidence] = <factory>, exceptions: List[llmfirewall.compliance.models.ComplianceException] = <factory>, summary: Dict[str, Any] = <factory>, snapshot_hash: str = '') -> None"
+  },
+  "ConfidenceLevel": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ConfigArtifact": {
+    "type": "ModelMetaclass",
+    "signature": "(*, config_type: str, sha256: str, source: str = 'FILE', keys_present: List[str] = <factory>, timestamp: float = <factory>) -> None"
+  },
+  "ConfigDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "(config: Optional[Any] = None, firewall_instance: Optional[Any] = None, raw_config_dict: Optional[Dict[str, Any]] = None, firewall: Optional[Any] = None) -> None"
+  },
+  "ConfigurationError": {
+    "type": "type"
+  },
+  "ContentItem": {
+    "type": "ModelMetaclass",
+    "signature": "(*, text: str, source: llmfirewall.runtime.models.TrustLevel = <TrustLevel.UNTRUSTED: 'untrusted'>, name: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ContextBudgetConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, max_items: Annotated[int, Ge(ge=1)] = 10, max_tokens: Annotated[int, Ge(ge=100)] = 8000, max_bytes: Annotated[int, Ge(ge=100)] = 100000, drop_on_overflow: bool = True) -> None"
+  },
+  "ContextItem": {
+    "type": "ModelMetaclass",
+    "signature": "(*, content: str, source_type: str = 'retrieved_document', trust_level: llmfirewall.runtime.models.TrustLevel = <TrustLevel.UNTRUSTED: 'untrusted'>, instruction_authority: llmfirewall.rag.models.InstructionAuthority = <InstructionAuthority.NONE: 'none'>, provenance: llmfirewall.rag.models.SourceProvenance = <factory>, status: llmfirewall.rag.models.DocumentSecurityStatus = <DocumentSecurityStatus.APPROVED: 'approved'>, findings: List[llmfirewall.core.models.Finding] = <factory>, content_hash: str = '', is_instructional: bool = False) -> None"
+  },
+  "ContextOrchestrator": {
+    "type": "type",
+    "signature": "(firewall: 'Firewall', quarantine_store: 'Optional[QuarantineStore]' = None, max_items: 'int' = 10, max_tokens: 'int' = 8000, max_bytes: 'int' = 100000, drop_on_overflow: 'bool' = True) -> 'None'"
+  },
+  "ContextSecurityDecision": {
+    "type": "ModelMetaclass",
+    "signature": "(*, decision_id: str = <factory>, action: llmfirewall.core.models.Action, reason: str, approved_items: List[llmfirewall.rag.models.ContextItem] = <factory>, filtered_items: List[llmfirewall.rag.models.ContextItem] = <factory>, quarantined_items: List[llmfirewall.rag.models.ContextItem] = <factory>, findings: List[llmfirewall.core.models.Finding] = <factory>, total_tokens: int = 0, total_bytes: int = 0, conflict_detected: bool = False, budget_exceeded: bool = False, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ControlAssessment": {
+    "type": "ModelMetaclass",
+    "signature": "(*, assessment_id: str = <factory>, framework_id: str, control_id: str, asset_id: str, status: llmfirewall.compliance.models.ControlState = <ControlState.UNKNOWN: 'UNKNOWN'>, applicability: llmfirewall.compliance.models.ApplicabilityStatus = <ApplicabilityStatus.APPLICABLE: 'APPLICABLE'>, applicability_reason: str = '', evidence: List[llmfirewall.compliance.models.ComplianceEvidence] = <factory>, missing_evidence: List[str] = <factory>, gaps: List[llmfirewall.compliance.models.ComplianceGap] = <factory>, exceptions: List[llmfirewall.compliance.models.ComplianceException] = <factory>, related_attack_paths: List[Dict[str, Any]] = <factory>, related_findings: List[Dict[str, Any]] = <factory>, related_security_controls: List[str] = <factory>, evidence_chain: Dict[str, Any] = <factory>, assessed_at: float = <factory>, rules_version: str = '1.0.0', fingerprint: str = '') -> None"
+  },
+  "ControlCatalog": {
+    "type": "type",
+    "signature": "(catalog_version: str = '1.0.0', load_defaults: bool = True) -> None"
+  },
+  "ControlCoverageItem": {
+    "type": "ModelMetaclass",
+    "signature": "(*, control_id: str, control_name: str, status: llmfirewall.graph.models.ControlStatus = <ControlStatus.UNKNOWN: 'unknown'>, verified_by_test: Optional[str] = None, evidence: Optional[str] = None) -> None"
+  },
+  "ControlCoverageResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, asset_id: str, asset_type: str, controls: List[llmfirewall.graph.models.ControlCoverageItem] = <factory>, total_controls: Annotated[int, Ge(ge=0)] = 0, passing_controls: Annotated[int, Ge(ge=0)] = 0, failing_controls: Annotated[int, Ge(ge=0)] = 0, coverage_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0) -> None"
+  },
+  "ControlEffectiveness": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ControlMapping": {
+    "type": "ModelMetaclass",
+    "signature": "(*, mapping_id: str = <factory>, control_id: str, asset_id: Optional[str] = None, posture_dimension: Optional[str] = None, security_control_id: Optional[str] = None, finding_id: Optional[str] = None, test_id: Optional[str] = None, attack_path_id: Optional[str] = None, evidence_ids: List[str] = <factory>, rationale: str = '') -> None"
+  },
+  "ControlPostureRecord": {
+    "type": "ModelMetaclass",
+    "signature": "(*, control_id: str, name: str, presence: llmfirewall.spm.models.ControlPresence = <ControlPresence.UNKNOWN: 'UNKNOWN'>, effectiveness: llmfirewall.spm.models.ControlEffectiveness = <ControlEffectiveness.UNKNOWN: 'UNKNOWN'>, tested: bool = False, last_tested: Optional[float] = None, test_freshness: llmfirewall.spm.models.TestFreshness = <TestFreshness.UNTESTED: 'UNTESTED'>, evidence: List[str] = <factory>) -> None"
+  },
+  "ControlPresence": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ControlState": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ControlStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "CrossFrameworkMapping": {
+    "type": "ModelMetaclass",
+    "signature": "(*, mapping_id: str = <factory>, source_control_id: str, target_control_id: str, mapping_type: llmfirewall.compliance.models.MappingType = <MappingType.RELATED: 'RELATED'>, confidence: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 1.0, rationale: str, source: str = 'LLMFirewall') -> None"
+  },
+  "DEFAULT_CAPABILITIES": {
+    "type": "dict"
+  },
+  "DEFAULT_TOOL_CAPABILITY_MAP": {
+    "type": "dict"
+  },
+  "DecisionAction": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "DecisionTrace": {
+    "type": "ModelMetaclass",
+    "signature": "(*, trace_id: str, request_id: str, final_action: llmfirewall.core.models.Action, explanation: str, steps: List[llmfirewall.observability.models.DecisionTraceStep] = <factory>, risk_summary: Dict[str, Any] = <factory>, policy_summary: Dict[str, Any] = <factory>, total_duration_ms: float = 0.0) -> None"
+  },
+  "DecisionTraceStep": {
+    "type": "ModelMetaclass",
+    "signature": "(*, step_number: int, component: str, action_or_finding: str, details: Dict[str, Any] = <factory>, duration_ms: float = 0.0) -> None"
+  },
+  "DeclarativeAssertion": {
+    "type": "ModelMetaclass",
+    "signature": "(*, assertion_type: llmfirewall.eval.models.AssertionType, expected_value: Any = None, field_path: Optional[str] = None, negate: bool = False, description: str = '') -> None"
+  },
+  "DelegationGrant": {
+    "type": "ModelMetaclass",
+    "signature": "(*, delegation_id: str = <factory>, parent_agent_id: str, child_agent_id: str, capabilities: List[llmfirewall.capabilities.models.CapabilityGrant] = <factory>, depth: Annotated[int, Ge(ge=1)] = 1, created_at: float = <factory>, expires_at: Optional[float] = None) -> None"
+  },
+  "DenyAllApprovalProvider": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "DependencyArtifact": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str, version: str, source: llmfirewall.supply_chain.models.DependencySourceType = <DependencySourceType.UNKNOWN: 'unknown'>, scope: llmfirewall.supply_chain.models.DependencyScope = <DependencyScope.UNKNOWN: 'UNKNOWN'>, installed_location: Optional[str] = None, sha256: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "DependencyDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "(ai_only: bool = True, custom_packages: Optional[List[str]] = None, max_packages: int = 1000) -> None"
+  },
+  "DependencyScanner": {
+    "type": "type",
+    "signature": "(vulnerability_provider: Optional[llmfirewall.supply_chain.dependencies.VulnerabilityProvider] = None, allowed_packages: Optional[List[str]] = None, blocked_packages: Optional[List[str]] = None) -> None"
+  },
+  "DependencyScope": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "DependencySecurityConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, allowed_packages: Optional[List[str]] = None, blocked_packages: Optional[List[str]] = None) -> None"
+  },
+  "DependencySourceType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "DeploymentMetadata": {
+    "type": "ModelMetaclass",
+    "signature": "(*, application_version: str = '0.1.0', container_image: Optional[str] = None, container_tag: Optional[str] = None, container_digest: Optional[str] = None, deployment_id: Optional[str] = None) -> None"
+  },
+  "Detector": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "DetectorConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, prompt_injection: llmfirewall.config.models.PromptInjectionConfig = <factory>, pii: llmfirewall.config.models.PIIConfig = <factory>, secrets: llmfirewall.config.models.SecretConfig = <factory>, fail_fast: bool = False, enable_prefilter: bool = True, enable_heuristics: bool = True) -> None"
+  },
+  "DetectorCost": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "DetectorEngine": {
+    "type": "type",
+    "signature": "(detectors: Optional[Sequence[Union[llmfirewall.detectors.base.Detector, llmfirewall.detectors.protocols.DetectorProtocol]]] = None, fail_fast: bool = False, enable_prefilter: bool = True, enable_heuristics: bool = True) -> None"
+  },
+  "DetectorMetadata": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: Annotated[str, MinLen(min_length=1)], description: Annotated[str, MinLen(min_length=1)], version: str = '0.1.0', supported_threats: List[llmfirewall.core.models.ThreatType] = <factory>, supported_directions: List[str] = <factory>, is_enabled_by_default: bool = True, author: Optional[str] = None, cost: str = 'normal', trigger_hints: List[str] = <factory>) -> None"
+  },
+  "DetectorProtocol": {
+    "type": "_ProtocolMeta",
+    "signature": "(*args, **kwargs)"
+  },
+  "DetectorRegistry": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "DiscoveryConfidence": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "DiscoveryEngine": {
+    "type": "type",
+    "signature": "(providers: Optional[List[llmfirewall.inventory.providers.base.DiscoveryProvider]] = None) -> None"
+  },
+  "DiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "DiscoveryResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, status: llmfirewall.inventory.models.DiscoveryStatus, provider_results: Dict[str, Dict[str, Any]] = <factory>, assets_discovered: Annotated[int, Ge(ge=0)] = 0, assets_added: Annotated[int, Ge(ge=0)] = 0, assets_changed: Annotated[int, Ge(ge=0)] = 0, assets_removed: Annotated[int, Ge(ge=0)] = 0, warnings: List[str] = <factory>, duration_ms: Annotated[float, Ge(ge=0)] = 0.0, timestamp: float = <factory>) -> None"
+  },
+  "DiscoveryStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "DocumentIngestionResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, document_id: str, status: llmfirewall.rag.models.DocumentSecurityStatus, action: llmfirewall.core.models.Action, content_hash: str, findings: List[llmfirewall.core.models.Finding] = <factory>, quarantine_reason: Optional[str] = None, execution_time_ms: float = 0.0, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "DocumentIngestionScanner": {
+    "type": "type",
+    "signature": "(firewall: 'Firewall', quarantine_store: 'Optional[QuarantineStore]' = None, cache: 'Optional[SecurityScanCache]' = None) -> 'None'"
+  },
+  "DocumentSecurityStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "EntryPoint": {
+    "type": "ModelMetaclass",
+    "signature": "(*, entry_point_id: str, name: str, type: llmfirewall.attack_graph.models.EntryPointType = <EntryPointType.CHAT_INPUT: 'CHAT_INPUT'>, target_asset_id: str, description: str = '', untrusted: bool = True) -> None"
+  },
+  "EntryPointType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "EnvironmentDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "(env_dict: Optional[Dict[str, str]] = None) -> None"
+  },
+  "ErrorCategory": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "EvaluationTarget": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "EventFilter": {
+    "type": "type",
+    "signature": "(event_types: 'Optional[List[SecurityEventType]]' = None, actions: 'Optional[List[Action]]' = None, severities: 'Optional[List[EventSeverity]]' = None, detector_name: 'Optional[str]' = None, tool_name: 'Optional[str]' = None, policy_id: 'Optional[str]' = None, min_risk_score: 'Optional[float]' = None, since: 'Optional[datetime]' = None, until: 'Optional[datetime]' = None, limit: 'int' = 100, offset: 'int' = 0) -> 'None'"
+  },
+  "EventSeverity": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "EventStore": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "EvidenceArtifactRecord": {
+    "type": "ModelMetaclass",
+    "signature": "(*, artifact_name: str, sha256: str, timestamp: float = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "EvidenceItem": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, event_id: Optional[str] = None, timestamp: datetime.datetime = <factory>, asset_id: Optional[str] = None, source: str = 'runtime_inspection', evidence_hash: str, collection_time: datetime.datetime = <factory>, details: Dict[str, Any] = <factory>) -> None"
+  },
+  "EvidenceManifest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1', release_id: str, decision: llmfirewall.governance.decisions.GovernanceDecision, evidence: List[llmfirewall.governance.manifest.EvidenceArtifactRecord] = <factory>, retention_days: int = 90, generated_at: float = <factory>) -> None"
+  },
+  "EvidenceType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "EvidenceValidity": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ExceptionStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "FailBehavior": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "Finding": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, detector_name: Annotated[str, MinLen(min_length=1)], threat_type: llmfirewall.core.models.ThreatType, description: Annotated[str, MinLen(min_length=1)], severity: llmfirewall.core.models.Severity, confidence: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 1.0, start_pos: Annotated[Optional[int], Ge(ge=0)] = None, end_pos: Annotated[Optional[int], Ge(ge=0)] = None, matched_text: Optional[str] = None, replacement_text: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "FindingCollection": {
+    "type": "ModelMetaclass",
+    "signature": "(*, findings: List[llmfirewall.core.models.Finding] = <factory>, errors: List[Dict[str, str]] = <factory>) -> None"
+  },
+  "FindingStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "Firewall": {
+    "type": "type",
+    "signature": "(config: Optional[ForwardRef('FirewallConfig')] = None, detectors: Optional[List[llmfirewall.detectors.base.Detector]] = None, risk_engine: Optional[llmfirewall.risk.engine.RiskEngine] = None, policy_engine: Union[llmfirewall.policy.engine.PolicyEngine, llmfirewall.policy.config.Policy, NoneType] = None, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None, telemetry_sink: Optional[llmfirewall.telemetry.sink.TelemetrySink] = None, policy: Union[llmfirewall.policy.engine.PolicyEngine, llmfirewall.policy.config.Policy, NoneType] = None, fail_fast_detectors: bool = False, tool_registry: Optional[llmfirewall.tools.registry.ToolRegistry] = None, tool_security_engine: Optional[llmfirewall.tools.engine.ToolSecurityEngine] = None, event_store: Optional[llmfirewall.observability.store.EventStore] = None, enable_cache: bool = True, cache: Optional[llmfirewall.cache.scan_cache.ScanCache] = None, cache_size: int = 5000, cache_ttl: float = 1800.0) -> None"
+  },
+  "FirewallAdapter": {
+    "type": "ABCMeta",
+    "signature": "(firewall: Optional[llmfirewall.firewall.Firewall] = None) -> None"
+  },
+  "FirewallConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, detectors: llmfirewall.config.models.DetectorConfig = <factory>, risk: llmfirewall.risk.config.RiskConfig = <factory>, policy: llmfirewall.policy.config.Policy = <factory>, redaction: llmfirewall.policy.redaction_config.RedactionConfig = <factory>, audit: llmfirewall.config.models.AuditConfig = <factory>, telemetry: llmfirewall.config.models.TelemetryConfig = <factory>, observability: llmfirewall.config.models.ObservabilityConfig = <factory>, integrations: llmfirewall.config.models.IntegrationsConfig = <factory>, runtime: llmfirewall.config.models.RuntimeConfig = <factory>, rag: llmfirewall.config.models.RAGConfig = <factory>, supply_chain: llmfirewall.config.models.SupplyChainConfig = <factory>, capabilities: llmfirewall.config.models.AgentCapabilitiesConfig = <factory>) -> None"
+  },
+  "FirewallIntegration": {
+    "type": "type",
+    "signature": "(firewall: 'Optional[Firewall]' = None) -> 'None'"
+  },
+  "FirewallResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, request_id: str, decision: llmfirewall.core.models.PolicyDecision, risk_score: llmfirewall.core.models.RiskScore, findings: List[llmfirewall.core.models.Finding] = <factory>, original_text: str = '', processed_text: str = '', execution_time_ms: Annotated[float, Ge(ge=0)] = 0.0, created_at: datetime.datetime = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "FirewallTarget": {
+    "type": "ABCMeta",
+    "signature": "(firewall: Optional[llmfirewall.firewall.Firewall] = None) -> None"
+  },
+  "GateEvaluationResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, gate_id: str, gate_type: str, decision: llmfirewall.governance.decisions.GovernanceDecision, passed: bool, reason: str, reason_codes: List[llmfirewall.governance.decisions.ReasonCode] = <factory>, evidence_used: List[str] = <factory>, policy_rule: Optional[str] = None, details: Dict[str, Any] = <factory>) -> None"
+  },
+  "GateType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "GenericProviderAdapter": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "GovernanceDecision": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "GovernanceEngine": {
+    "type": "type",
+    "signature": "(audit_logger: Optional[llmfirewall.audit.AuditLogger] = None, default_policy: Optional[llmfirewall.governance.policy.GovernancePolicy] = None) -> None"
+  },
+  "GovernanceFinding": {
+    "type": "ModelMetaclass",
+    "signature": "(*, finding_id: str = <factory>, fingerprint: str, status: llmfirewall.governance.findings.FindingStatus = <FindingStatus.OPEN: 'OPEN'>, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, category: str, test_id: Optional[str] = None, rule_id: Optional[str] = None, resource: Optional[str] = None, description: str, first_seen: float = <factory>, last_seen: float = <factory>, owner: Optional[str] = None, baseline_id: Optional[str] = None, related_tests: List[str] = <factory>, waiver_id: Optional[str] = None, acceptance_reason: Optional[str] = None, acceptance_expires_at: Optional[float] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "GovernanceMetrics": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "GovernanceOverride": {
+    "type": "type",
+    "signature": "(owner: str, reason: str, emergency: bool = False, approved_by: Optional[str] = None, timestamp: Optional[float] = None) -> None"
+  },
+  "GovernancePolicy": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str = 'default-governance-policy', version: str = '1.0', profile: llmfirewall.governance.policy.ReleaseProfile = <ReleaseProfile.PRODUCTION: 'production'>, gates: List[llmfirewall.governance.gates.SecurityGate] = <factory>, block_on: List[llmfirewall.core.models.Severity] = <factory>, review_on: List[llmfirewall.core.models.Severity] = <factory>, require: List[str] = <factory>, waivers: List[llmfirewall.governance.waivers.SecurityWaiver] = <factory>, change_requirements: Dict[str, List[str]] = <factory>, evidence_retention_days: Annotated[int, Ge(ge=1), Le(le=3650)] = 90, allow_emergency_override: bool = True) -> None"
+  },
+  "GovernanceResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, release_id: str, decision: llmfirewall.governance.decisions.GovernanceDecision, passed: bool, blocked: bool, review_required: bool, failed_gates: List[llmfirewall.governance.decisions.GateEvaluationResult] = <factory>, passed_gates: List[llmfirewall.governance.decisions.GateEvaluationResult] = <factory>, review_items: List[llmfirewall.governance.decisions.GateEvaluationResult] = <factory>, missing_evidence: List[str] = <factory>, findings: List[Any] = <factory>, baseline_changes: Optional[Any] = None, reason_codes: List[llmfirewall.governance.decisions.ReasonCode] = <factory>, override: Optional[Dict[str, Any]] = None, manifest: Optional[Any] = None, evaluated_at: float = <factory>, policy_version: str = 'unknown', profile: str = 'production') -> None"
+  },
+  "GraphDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, nodes_added: List[str] = <factory>, nodes_removed: List[str] = <factory>, nodes_changed: List[str] = <factory>, relationships_added: List[str] = <factory>, relationships_removed: List[str] = <factory>, is_identical: bool = False) -> None"
+  },
+  "GraphMetrics": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "GraphPath": {
+    "type": "ModelMetaclass",
+    "signature": "(*, source_id: str, target_id: str, nodes: List[str] = <factory>, relationships: List[str] = <factory>, length: Annotated[int, Ge(ge=0)] = 0) -> None"
+  },
+  "GraphSnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1.0.0', graph_version: str = '1.0', timestamp: float = <factory>, node_count: Annotated[int, Ge(ge=0)] = 0, relationship_count: Annotated[int, Ge(ge=0)] = 0, nodes: List[llmfirewall.graph.models.Node] = <factory>, relationships: List[llmfirewall.graph.models.Relationship] = <factory>, graph_hash: str = '') -> None"
+  },
+  "GraphStore": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "HASH_CHUNK_SIZE": {
+    "type": "int"
+  },
+  "HTTPTargetAdapter": {
+    "type": "ABCMeta",
+    "signature": "(endpoint: str, headers: Optional[Dict[str, str]] = None, timeout_seconds: float = 30.0) -> None"
+  },
+  "HookPipeline": {
+    "type": "type",
+    "signature": "(hooks: 'Optional[List[RuntimeHook]]' = None) -> 'None'"
+  },
+  "ImportDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "(file_path: Optional[str] = None, content: Optional[str] = None, format_type: str = 'auto') -> None"
+  },
+  "InMemoryEventStore": {
+    "type": "ABCMeta",
+    "signature": "(max_events: 'int' = 10000) -> 'None'"
+  },
+  "InMemoryGraphStore": {
+    "type": "ABCMeta",
+    "signature": "() -> None"
+  },
+  "InMemoryTelemetrySink": {
+    "type": "ABCMeta",
+    "signature": "(enable_events: bool = True, enable_metrics: bool = True, max_buffered_events: int = 1000, logger_name: Optional[str] = None, log_level: int = 20) -> None"
+  },
+  "IncidentAction": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "IncidentActionRecord": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, action: llmfirewall.incidents.models.IncidentAction, actor: str = 'security_analyst', timestamp: datetime.datetime = <factory>, notes: str = '', details: Dict[str, Any] = <factory>) -> None"
+  },
+  "IncidentCandidate": {
+    "type": "ModelMetaclass",
+    "signature": "(*, title: str, description: str, severity: llmfirewall.incidents.models.IncidentSeverity, assets: List[str] = <factory>, event_ids: List[str] = <factory>, evidence: List[Dict[str, Any]] = <factory>, rule_name: str, root_cause_indicator: str) -> None"
+  },
+  "IncidentDetectionRule": {
+    "type": "ABCMeta",
+    "signature": "(name: 'str', description: 'str', enabled: 'bool' = True) -> 'None'"
+  },
+  "IncidentError": {
+    "type": "type"
+  },
+  "IncidentManager": {
+    "type": "type",
+    "signature": "(rules: 'Optional[List[IncidentDetectionRule]]' = None, attack_graph_engine: 'Optional[Any]' = None, containment_handlers: 'Optional[Dict[str, Callable[..., Any]]]' = None) -> 'None'"
+  },
+  "IncidentSeverity": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "IncidentStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "IngestionConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, scan_documents: bool = True, quarantine_on_injection: bool = True, deduplicate_chunks: bool = True) -> None"
+  },
+  "InstructionAuthority": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "IntegrationRegistry": {
+    "type": "type",
+    "signature": "()"
+  },
+  "IntegrationsConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, fastapi_enabled: bool = True, input_fields: List[str] = <factory>, scan_output: bool = False) -> None"
+  },
+  "IntegrityManager": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "IntegrityResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, status: llmfirewall.supply_chain.models.IntegrityStatus, algorithm: str = 'sha256', expected_hash: Optional[str] = None, actual_hash: Optional[str] = None, details: Optional[str] = None) -> None"
+  },
+  "IntegrityStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "InventoryDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, assets_added: List[str] = <factory>, assets_removed: List[str] = <factory>, assets_changed: List[str] = <factory>, relationships_changed: List[str] = <factory>, sources_changed: List[str] = <factory>, configurations_changed: List[str] = <factory>, is_identical: bool = False) -> None"
+  },
+  "InventoryMetrics": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "InventorySnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1.0.0', inventory_version: str = '1.0', created_at: float = <factory>, assets_count: Annotated[int, Ge(ge=0)] = 0, assets: List[llmfirewall.inventory.models.Asset] = <factory>, sources: List[str] = <factory>, graph_hash: str = '', snapshot_hash: str = '') -> None"
+  },
+  "JSONLEventStore": {
+    "type": "ABCMeta",
+    "signature": "(file_path: 'str') -> 'None'"
+  },
+  "KeywordDetector": {
+    "type": "ABCMeta",
+    "signature": "(keywords: Optional[List[str]] = None, severity: llmfirewall.core.models.Severity = <Severity.HIGH: 'high'>, threat_type: llmfirewall.core.models.ThreatType = <ThreatType.CUSTOM: 'custom'>) -> None"
+  },
+  "KnowledgeGraph": {
+    "type": "type",
+    "signature": "(store: Optional[llmfirewall.graph.stores.base.GraphStore] = None, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None, max_nodes: int = 100000, max_relationships: int = 500000, max_depth: int = 8, max_query_results: int = 10000) -> None"
+  },
+  "LLMFirewallError": {
+    "type": "type"
+  },
+  "LLMFirewallMiddleware": {
+    "type": "type",
+    "signature": "(app: 'Any', firewall: 'Any', path_prefix: 'str' = '/api') -> 'None'"
+  },
+  "LLMMessage": {
+    "type": "ModelMetaclass",
+    "signature": "(*, role: str = 'user', content: str = '', trust: llmfirewall.runtime.models.TrustLevel = <TrustLevel.USER: 'user'>, tool_calls: Optional[List[Dict[str, Any]]] = None, name: Optional[str] = None) -> None"
+  },
+  "LLMProviderAdapter": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "LLMRequest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, messages: List[llmfirewall.runtime.models.LLMMessage] = <factory>, model: str = 'default-model', parameters: Dict[str, Any] = <factory>, provider: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "LLMResponse": {
+    "type": "ModelMetaclass",
+    "signature": "(*, content: str = '', tool_calls: List[llmfirewall.tools.models.ToolCall] = <factory>, model: Optional[str] = None, usage: Dict[str, int] = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "LogicalOperator": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "LoopGuard": {
+    "type": "type",
+    "signature": "(max_iterations: 'int' = 25, max_tool_calls: 'int' = 30, max_runtime_seconds: 'float' = 120.0, max_repeated_tool_calls: 'int' = 3, max_tokens: 'Optional[int]' = None, max_cost: 'Optional[float]' = None, block_on_loop: 'bool' = True, runtime_id: 'Optional[str]' = None, trace_id: 'Optional[str]' = None) -> 'None'"
+  },
+  "MAX_SCAN_TEXT_LENGTH": {
+    "type": "int"
+  },
+  "ManualDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "() -> None"
+  },
+  "MappingType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "MemoryApprovalProvider": {
+    "type": "ABCMeta",
+    "signature": "() -> None"
+  },
+  "MemorySecurityGuard": {
+    "type": "type",
+    "signature": "(firewall: 'Firewall') -> 'None'"
+  },
+  "MetricSummary": {
+    "type": "type",
+    "signature": "(scans_total: int = 0, allowed_total: int = 0, warned_total: int = 0, blocked_total: int = 0, redacted_total: int = 0, errors_total: int = 0, detector_findings_total: Dict[str, int] = <factory>, total_duration_ms: float = 0.0, scan_count_with_duration: int = 0) -> None"
+  },
+  "MetricsCollector": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "MitigationStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "MockAdapter": {
+    "type": "ABCMeta",
+    "signature": "(default_action: llmfirewall.core.models.Action = <Action.ALLOW: 'allow'>, blocked_keywords: Optional[List[str]] = None, mock_response: str = 'Mocked AI response.') -> None"
+  },
+  "MockToolRegistry": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "ModelApprovalStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ModelArtifact": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str, version: str = 'unknown', provider: Optional[str] = None, source_type: llmfirewall.supply_chain.models.ModelSourceType = <ModelSourceType.UNKNOWN: 'UNKNOWN'>, source: str = 'unknown', location: Optional[str] = None, format: llmfirewall.supply_chain.models.ModelFormat = <ModelFormat.UNKNOWN: 'unknown'>, size_bytes: Optional[int] = None, sha256: Optional[str] = None, sha512: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ModelFormat": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ModelLoadingGuard": {
+    "type": "type",
+    "signature": "(verifier: Optional[llmfirewall.supply_chain.verifier.ModelVerifier] = None, registry: Optional[llmfirewall.supply_chain.manifest.ModelSecurityRegistry] = None) -> None"
+  },
+  "ModelManifest": {
+    "type": "type",
+    "signature": "(version: str = '1.0', models: Optional[Dict[str, llmfirewall.supply_chain.models.ModelArtifact]] = None, raw_metadata: Optional[Dict[str, Any]] = None) -> None"
+  },
+  "ModelProvenance": {
+    "type": "ModelMetaclass",
+    "signature": "(*, model_name: str, model_version: str, provider: Optional[str] = None, source: str = 'unknown', download_location: Optional[str] = None, artifact_hash: Optional[str] = None, loaded_at: float = <factory>, scanner_version: str = '0.1.0', policy_version: Optional[str] = None, trust_level: llmfirewall.supply_chain.models.ModelTrustLevel = <ModelTrustLevel.UNKNOWN: 'UNKNOWN'>, approval_status: llmfirewall.supply_chain.models.ModelApprovalStatus = <ModelApprovalStatus.UNKNOWN: 'UNKNOWN'>) -> None"
+  },
+  "ModelSecurityConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, require_hash: bool = True, allow_unknown_source: bool = False, allow_unsafe_serialization: bool = False, allowed_sources: Optional[List[str]] = None) -> None"
+  },
+  "ModelSecurityDecision": {
+    "type": "ModelMetaclass",
+    "signature": "(*, action: llmfirewall.core.models.Action, model: str, version: str, source: str, hash_status: llmfirewall.supply_chain.models.IntegrityStatus, format: llmfirewall.supply_chain.models.ModelFormat, findings: List[llmfirewall.core.models.Finding] = <factory>, policy: str = 'default', trace_id: Optional[str] = None) -> None"
+  },
+  "ModelSecurityRegistry": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "ModelSourceType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ModelTrustLevel": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ModelVerifier": {
+    "type": "type",
+    "signature": "(require_hash: bool = True, allow_unknown_source: bool = False, allow_unsafe_serialization: bool = False, allowed_sources: Optional[List[str]] = None, allowed_base_dirs: Optional[List[str]] = None) -> None"
+  },
+  "MultiTurnSecurityState": {
+    "type": "ModelMetaclass",
+    "signature": "(*, session_id: str, max_history_turns: Annotated[int, Ge(ge=1)] = 10, turn_count: Annotated[int, Ge(ge=0)] = 0, flagged_turn_count: Annotated[int, Ge(ge=0)] = 0, detected_threats_history: List[str] = <factory>, last_action: Optional[str] = None, created_at: datetime.datetime = <factory>) -> None"
+  },
+  "NoOpTelemetry": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "Node": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=256)], type: str = 'custom', properties: Dict[str, Any] = <factory>, created_at: float = <factory>, updated_at: float = <factory>) -> None"
+  },
+  "NodeType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ObservabilityConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = False, backend: str = 'memory', storage_path: Optional[str] = None, retention_days: Annotated[int, Ge(ge=1)] = 30, store_raw_content: bool = False, application_id: Optional[str] = None, environment: str = 'production') -> None"
+  },
+  "OfflineVulnerabilityProvider": {
+    "type": "ABCMeta",
+    "signature": "(local_advisories: Optional[Dict[str, List[Dict[str, Any]]]] = None) -> None"
+  },
+  "PIIConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, categories: Optional[Set[str]] = None, store_matched_text: bool = False) -> None"
+  },
+  "PIIDetector": {
+    "type": "ABCMeta",
+    "signature": "(enabled_categories: Optional[Set[str]] = None, custom_sub_detectors: Optional[List[llmfirewall.detectors.pii.sub_detectors.PIISubDetector]] = None, store_matched_text: bool = False) -> None"
+  },
+  "PIIGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "PathStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "Policy": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[Optional[str], MaxLen(max_length=256)] = None, name: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)] = 'custom_policy', version: Annotated[str, MaxLen(max_length=32)] = '1.0', description: str = '', rules: List[llmfirewall.policy.config.PolicyRule] = <factory>, allowed_tools: Optional[List[str]] = None, denied_tools: Optional[List[str]] = None, default_action: llmfirewall.core.models.Action = <Action.ALLOW: 'allow'>, auto_redact_on_warn: bool = True, redaction_config: Optional[llmfirewall.policy.redaction_config.RedactionConfig] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "PolicyArtifact": {
+    "type": "ModelMetaclass",
+    "signature": "(*, policy_id: str, version: str = '1', sha256: str, loaded_at: float = <factory>) -> None"
+  },
+  "PolicyBypassRule": {
+    "type": "ABCMeta",
+    "signature": "(name: 'str' = 'policy_bypass') -> 'None'"
+  },
+  "PolicyConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[Optional[str], MaxLen(max_length=256)] = None, name: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)] = 'custom_policy', version: Annotated[str, MaxLen(max_length=32)] = '1.0', description: str = '', rules: List[llmfirewall.policy.config.PolicyRule] = <factory>, allowed_tools: Optional[List[str]] = None, denied_tools: Optional[List[str]] = None, default_action: llmfirewall.core.models.Action = <Action.ALLOW: 'allow'>, auto_redact_on_warn: bool = True, redaction_config: Optional[llmfirewall.policy.redaction_config.RedactionConfig] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "PolicyDecision": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "PolicyEngine": {
+    "type": "ABCMeta",
+    "signature": "(config: Optional[llmfirewall.policy.config.Policy] = None) -> None"
+  },
+  "PolicyMode": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "PolicyRule": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], name: Optional[str] = None, description: str = '', action: llmfirewall.core.models.Action, priority: Annotated[int, Ge(ge=1), Le(le=1000)] = 100, enabled: bool = True, threat_type: Optional[llmfirewall.core.models.ThreatType] = None, min_severity: Optional[llmfirewall.core.models.Severity] = None, min_risk_score: Annotated[Optional[float], Ge(ge=0.0), Le(le=1.0)] = None, direction: Optional[str] = None, conditions: List[llmfirewall.policy.config.RuleCondition] = <factory>, operator: llmfirewall.policy.config.LogicalOperator = <LogicalOperator.AND: 'and'>) -> None"
+  },
+  "PolicyValidationError": {
+    "type": "type"
+  },
+  "PostureDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, is_identical: bool = False, posture_improved: List[str] = <factory>, posture_degraded: List[str] = <factory>, controls_added: List[str] = <factory>, controls_removed: List[str] = <factory>, tests_became_stale: List[str] = <factory>, new_security_gaps: List[llmfirewall.spm.models.SecurityGap] = <factory>, gaps_resolved: List[llmfirewall.spm.models.SecurityGap] = <factory>, attack_surface_changed: List[str] = <factory>, policy_conflicts_detected: List[str] = <factory>, regressions: List[str] = <factory>, summary: Dict[str, Any] = <factory>) -> None"
+  },
+  "PostureDimension": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "PostureEngine": {
+    "type": "type",
+    "signature": "(inventory: Optional[Any] = None, kg: Optional[llmfirewall.graph.engine.KnowledgeGraph] = None, attack_graph: Optional[Any] = None, governance: Optional[Any] = None, rule_registry: Optional[llmfirewall.spm.rules.PostureRuleRegistry] = None, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None, metrics: Optional[llmfirewall.spm.engine.PostureMetrics] = None, max_assets: int = 50000) -> None"
+  },
+  "PostureMetrics": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "PostureRule": {
+    "type": "type",
+    "signature": "(rule_id: str, name: str, dimension: llmfirewall.spm.models.PostureDimension, severity: llmfirewall.core.models.Severity, description: str, evaluator: Callable[[llmfirewall.spm.rules.PostureRuleContext], Optional[llmfirewall.spm.models.SecurityGap]], remediation_guidance: Optional[str] = None, enabled: bool = True) -> None"
+  },
+  "PostureRuleContext": {
+    "type": "type",
+    "signature": "(asset: Any = None, controls: Dict[str, Any] = <factory>, findings: Dict[str, List[Dict[str, Any]]] = <factory>, attack_paths: Dict[str, List[Dict[str, Any]]] = <factory>, test_coverage: Any = None, attack_surface: Any = None, configuration: Dict[str, Any] = <factory>, policy_status: Dict[str, Any] = <factory>, drift: Dict[str, Any] = <factory>, kg: Optional[Any] = None, asset_id: Optional[str] = None, asset_type: Optional[str] = None) -> None"
+  },
+  "PostureRuleRegistry": {
+    "type": "type",
+    "signature": "(rules_version: str = '1.0.0', load_defaults: bool = True) -> None"
+  },
+  "PostureSnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1.0.0', posture_version: str = '1.0', inventory_version: str = '1.0', graph_version: str = '1.0', rules_version: str = '1.0.0', created_at: float = <factory>, postures: Dict[str, llmfirewall.spm.models.SecurityPosture] = <factory>, gaps: List[llmfirewall.spm.models.SecurityGap] = <factory>, summary: Dict[str, Any] = <factory>, snapshot_hash: str = '') -> None"
+  },
+  "PostureState": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "PreconditionEvaluator": {
+    "type": "type",
+    "signature": "()"
+  },
+  "PromptArtifact": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str, version: str = '1', sha256: str, length_chars: int, loaded_at: float = <factory>) -> None"
+  },
+  "PromptInjectionConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, rules: Optional[List[str]] = None) -> None"
+  },
+  "PromptInjectionDetector": {
+    "type": "ABCMeta",
+    "signature": "(rules: Optional[List[llmfirewall.detectors.prompt_injection.rules.InjectionRule]] = None) -> None"
+  },
+  "PromptInjectionFollowedByPrivilegedToolRule": {
+    "type": "ABCMeta",
+    "signature": "(name: 'str' = 'prompt_injection_privileged_tool') -> 'None'"
+  },
+  "PromptInjectionGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "PromptSecurityContext": {
+    "type": "ModelMetaclass",
+    "signature": "(*, source_type: llmfirewall.detectors.prompt_injection.context.PromptSourceType = <PromptSourceType.USER: 'user'>, trust_level: llmfirewall.runtime.models.TrustLevel = <TrustLevel.USER: 'user'>, source_id: Optional[str] = None, turn_index: Annotated[int, Ge(ge=0)] = 0, accumulated_threats: List[str] = <factory>, is_sandboxed: bool = False, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "PromptSourceType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ProtectionAuditEntry": {
+    "type": "ModelMetaclass",
+    "signature": "(*, request_id: str, decision: str, effective_decision: str, mode: str, policy: str, reason: str, asset: Optional[str] = None, agent: Optional[str] = None, tool: Optional[str] = None, latency_ms: float, timestamp: datetime.datetime = <factory>) -> None"
+  },
+  "ProtectionCondition": {
+    "type": "ModelMetaclass",
+    "signature": "(*, tool: Union[str, List[str], NoneType] = None, agent: Union[str, List[str], NoneType] = None, data_classification: Union[str, List[str], NoneType] = None, max_input_length: Optional[int] = None, max_rag_chunks: Optional[int] = None, action_type: Optional[str] = None, pattern: Optional[str] = None, custom: Optional[Dict[str, Any]] = None) -> None"
+  },
+  "ProtectionPolicy": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str, description: Optional[str] = None, version: str = '1.0.0', mode: llmfirewall.protection.models.PolicyMode = <PolicyMode.ENFORCE: 'ENFORCE'>, rules: List[llmfirewall.protection.policy.ProtectionRule] = <factory>, rate_limits: List[llmfirewall.protection.policy.RateLimitRule] = <factory>, max_input_length: int = 50000, inspect_input: bool = True, inspect_tools: bool = True, inspect_output: bool = True, inspect_rag: bool = True, inspect_memory: bool = True) -> None"
+  },
+  "ProtectionRule": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str, description: Optional[str] = None, when: llmfirewall.protection.policy.ProtectionCondition = <factory>, action: llmfirewall.protection.models.PolicyDecision = <PolicyDecision.BLOCK: 'BLOCK'>, reason: Optional[str] = None, enabled: bool = True) -> None"
+  },
+  "QuarantineStore": {
+    "type": "type",
+    "signature": "(max_items: 'int' = 5000) -> 'None'"
+  },
+  "RAGAdapter": {
+    "type": "ABCMeta",
+    "signature": "(rag_callable: Callable[[str, List[str]], Dict[str, Any]]) -> None"
+  },
+  "RAGConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, ingestion: llmfirewall.config.models.IngestionConfig = <factory>, context: llmfirewall.config.models.ContextBudgetConfig = <factory>, scan_retrieved: bool = True, enable_cache: bool = True, cache_ttl_seconds: Annotated[float, Ge(ge=60.0)] = 3600.0) -> None"
+  },
+  "RAGPoisoningGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "RateLimitRule": {
+    "type": "ModelMetaclass",
+    "signature": "(*, key_by: str = 'user', max_requests: int = 60, window_seconds: int = 60, enabled: bool = True) -> None"
+  },
+  "RateLimiter": {
+    "type": "type",
+    "signature": "() -> 'None'"
+  },
+  "ReasonCode": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RedactionConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, category_tokens: Dict[str, str] = <factory>, default_token: str = '[REDACTED]') -> None"
+  },
+  "Relationship": {
+    "type": "ModelMetaclass",
+    "signature": "(*, source: Annotated[str, MinLen(min_length=1), MaxLen(max_length=256)], type: Annotated[str, MinLen(min_length=1), MaxLen(max_length=64)], target: Annotated[str, MinLen(min_length=1), MaxLen(max_length=256)], properties: Dict[str, Any] = <factory>, created_at: float = <factory>) -> None"
+  },
+  "RelationshipType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ReleaseProfile": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RemediationStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RepeatedUnauthorizedToolCallsRule": {
+    "type": "ABCMeta",
+    "signature": "(threshold: 'int' = 2, name: 'str' = 'repeated_unauthorized_tool_calls') -> 'None'"
+  },
+  "ResultTrustLevel": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RiskAssessment": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, asset_id: str, finding_id: Optional[str] = None, attack_path_id: Optional[str] = None, control_id: Optional[str] = None, title: str, level: llmfirewall.risk.models.RiskLevel = <RiskLevel.UNKNOWN: 'UNKNOWN'>, impact: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.5, exposure: str = 'internal', exploitability: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.5, evidence_confidence: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.5, asset_criticality: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.5, business_context: Dict[str, Any] = <factory>, uncertainty: llmfirewall.risk.models.RiskUncertainty = <RiskUncertainty.UNKNOWN: 'UNKNOWN'>, factors: List[llmfirewall.risk.models.RiskFactor] = <factory>, rationale: str, treatment: llmfirewall.risk.models.RiskTreatment = <RiskTreatment.OPEN: 'OPEN'>, inherited_from: Optional[str] = None, remediation_guidance: Optional[str] = None, created_at: float = <factory>, updated_at: float = <factory>) -> None"
+  },
+  "RiskConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, severity_weights: Dict[llmfirewall.core.models.Severity, float] = <factory>, category_multipliers: Dict[llmfirewall.core.models.ThreatType, float] = <factory>, decay_factor: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.5, info_threshold: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0, low_threshold: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.15, medium_threshold: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.4, high_threshold: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.7, critical_threshold: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.9, enable_correlation: bool = True, enable_dynamic_context: bool = True, environmental_multipliers: Dict[str, float] = <factory>, trust_boundary_multiplier: Annotated[float, Ge(ge=1.0), Le(le=2.0)] = 1.2) -> None"
+  },
+  "RiskDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, is_identical: bool = False, regressions: List[str] = <factory>, level_changes: List[str] = <factory>, new_risks: List[llmfirewall.risk.models.RiskAssessment] = <factory>, resolved_risks: List[llmfirewall.risk.models.RiskAssessment] = <factory>, summary: Dict[str, Any] = <factory>) -> None"
+  },
+  "RiskEngine": {
+    "type": "ABCMeta",
+    "signature": "(config: Optional[llmfirewall.risk.config.RiskConfig] = None, inventory: Optional[Any] = None, kg: Optional[Any] = None, attack_graph: Optional[Any] = None, spm: Optional[Any] = None, compliance: Optional[Any] = None, governance: Optional[Any] = None, audit_logger: Optional[Any] = None) -> None"
+  },
+  "RiskFactor": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str, factor_type: llmfirewall.risk.models.RiskFactorType, score: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.5, weight: Annotated[float, Ge(ge=0)] = 1.0, description: str = '', evidence_references: List[str] = <factory>, rationale: str = '') -> None"
+  },
+  "RiskFactorType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RiskHistoryEntry": {
+    "type": "ModelMetaclass",
+    "signature": "(*, entry_id: str = <factory>, risk_id: str, asset_id: str, timestamp: float = <factory>, event_type: str, previous_level: Optional[llmfirewall.risk.models.RiskLevel] = None, new_level: llmfirewall.risk.models.RiskLevel, reason: str) -> None"
+  },
+  "RiskLevel": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RiskPrioritizationEngine": {
+    "type": "type",
+    "signature": "(inventory: Optional[Any] = None, kg: Optional[Any] = None, attack_graph: Optional[Any] = None, spm: Optional[Any] = None, compliance: Optional[Any] = None, governance: Optional[Any] = None, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None) -> None"
+  },
+  "RiskScore": {
+    "type": "ModelMetaclass",
+    "signature": "(*, score: Annotated[float, Ge(ge=0.0), Le(le=1.0)], max_severity: llmfirewall.core.models.Severity, category_scores: Dict[str, float] = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "RiskSnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, snapshot_id: str = <factory>, schema_version: str = '1.0.0', created_at: float = <factory>, risks: Dict[str, llmfirewall.risk.models.RiskAssessment] = <factory>, summary: Dict[str, Any] = <factory>, snapshot_hash: str = '') -> None"
+  },
+  "RiskTreatment": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RiskUncertainty": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RuleCondition": {
+    "type": "ModelMetaclass",
+    "signature": "(*, threat_type: Optional[llmfirewall.core.models.ThreatType] = None, detector: Optional[str] = None, category: Optional[str] = None, min_severity: Optional[llmfirewall.core.models.Severity] = None, max_severity: Optional[llmfirewall.core.models.Severity] = None, min_risk_score: Annotated[Optional[float], Ge(ge=0.0), Le(le=1.0)] = None, max_risk_score: Annotated[Optional[float], Ge(ge=0.0), Le(le=1.0)] = None, min_findings_count: Annotated[Optional[int], Ge(ge=1)] = None, direction: Optional[str] = None, tool: Optional[str] = None, tool_permission: Optional[str] = None, destination_class: Optional[str] = None, source_type: Optional[str] = None, trust_level: Optional[str] = None, source_id: Optional[str] = None, min_confidence: Annotated[Optional[float], Ge(ge=0.0), Le(le=1.0)] = None, source: Optional[str] = None, user_id: Optional[str] = None, custom_predicates: Optional[Dict[str, Any]] = None) -> None"
+  },
+  "RuntimeBoundary": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RuntimeConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, limits: llmfirewall.config.models.RuntimeLimitsConfig = <factory>, inspect_llm_input: bool = True, inspect_llm_output: bool = True, inspect_tool_calls: bool = True, inspect_tool_results: bool = True) -> None"
+  },
+  "RuntimeContext": {
+    "type": "ModelMetaclass",
+    "signature": "(*, runtime_id: str = <factory>, trace_id: str = <factory>, session_id: Optional[str] = None, user_id: Optional[str] = None, agent_id: Optional[str] = 'default_agent', application_id: Optional[str] = None, environment: str = 'production', created_at: datetime.datetime = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "RuntimeDecision": {
+    "type": "ModelMetaclass",
+    "signature": "(*, decision: llmfirewall.protection.models.PolicyDecision, effective_decision: llmfirewall.protection.models.PolicyDecision, reason: str, matched_policies: List[str] = <factory>, risk_factors: List[str] = <factory>, evidence: List[Dict[str, Any]] = <factory>, latency_ms: float = 0.0, redacted_content: Optional[str] = None, mode: llmfirewall.protection.models.PolicyMode = <PolicyMode.ENFORCE: 'ENFORCE'>, request_id: str = '', timestamp: datetime.datetime = <factory>) -> None"
+  },
+  "RuntimeDiscoveryProvider": {
+    "type": "ABCMeta",
+    "signature": "(events: Optional[List[Dict[str, Any]]] = None) -> None"
+  },
+  "RuntimeEngine": {
+    "type": "type",
+    "signature": "(firewall: \"Optional['Firewall']\" = None) -> 'None'"
+  },
+  "RuntimeEventType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RuntimeHook": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "RuntimeLimitExceeded": {
+    "type": "type",
+    "signature": "(limit_name: 'str', configured_limit: 'Any', observed_value: 'Any', runtime_id: 'Optional[str]' = None, trace_id: 'Optional[str]' = None) -> 'None'"
+  },
+  "RuntimeLimitsConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, max_iterations: Annotated[int, Ge(ge=1)] = 25, max_tool_calls: Annotated[int, Ge(ge=1)] = 30, max_runtime_seconds: Annotated[float, Ge(ge=1.0)] = 120.0, max_repeated_tool_calls: Annotated[int, Ge(ge=1)] = 3, block_on_loop: bool = True) -> None"
+  },
+  "RuntimeProtectionEngine": {
+    "type": "type",
+    "signature": "(policy: 'Optional[ProtectionPolicy]' = None, mode: 'PolicyMode' = <PolicyMode.ENFORCE: 'ENFORCE'>, fail_behavior: 'FailBehavior' = <FailBehavior.FAIL_CLOSED: 'FAIL_CLOSED'>, incident_manager: 'Optional[Any]' = None) -> 'None'"
+  },
+  "RuntimeRequest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, request_id: str = <factory>, session_id: Optional[str] = None, agent_id: Optional[str] = None, user_context: Dict[str, Any] = <factory>, input: Optional[str] = None, tool: Optional[Dict[str, Any]] = None, output: Optional[str] = None, rag_context: Optional[List[Dict[str, Any]]] = None, memory_item: Optional[Dict[str, Any]] = None, metadata: Dict[str, Any] = <factory>, timestamp: datetime.datetime = <factory>) -> None"
+  },
+  "RuntimeSecurityError": {
+    "type": "type",
+    "signature": "(message: 'str', boundary: 'RuntimeBoundary' = <RuntimeBoundary.AGENT_LOOP: 'agent_loop'>, decision: 'Optional[Any]' = None, runtime_id: 'Optional[str]' = None, trace_id: 'Optional[str]' = None) -> 'None'"
+  },
+  "RuntimeSecurityState": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "RuntimeSession": {
+    "type": "type",
+    "signature": "(firewall: 'Firewall', context: 'Optional[RuntimeContext]' = None, max_iterations: 'int' = 25, max_tool_calls: 'int' = 30, max_runtime_seconds: 'float' = 120.0, max_repeated_tool_calls: 'int' = 3, max_tokens: 'Optional[int]' = None, max_cost: 'Optional[float]' = None, block_on_loop: 'bool' = True, raise_on_block: 'bool' = True, hooks: 'Optional[List[RuntimeHook]]' = None) -> 'None'"
+  },
+  "SQLiteEventStore": {
+    "type": "ABCMeta",
+    "signature": "(db_path: 'str' = ':memory:') -> 'None'"
+  },
+  "SQLiteGraphStore": {
+    "type": "ABCMeta",
+    "signature": "(db_path: str = ':memory:') -> None"
+  },
+  "STANDARD_COMPLIANCE_RULES": {
+    "type": "list"
+  },
+  "STANDARD_RULES": {
+    "type": "list"
+  },
+  "SafeRedactor": {
+    "type": "type",
+    "signature": "(config: Optional[llmfirewall.policy.redaction_config.RedactionConfig] = None) -> None"
+  },
+  "ScanRequest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, text: Annotated[str, MaxLen(max_length=5242880)], direction: str = 'input', user_id: Annotated[Optional[str], MaxLen(max_length=256)] = None, session_id: Annotated[Optional[str], MaxLen(max_length=256)] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ScanResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, request_id: str, decision: llmfirewall.core.models.PolicyDecision, risk_score: llmfirewall.core.models.RiskScore, findings: List[llmfirewall.core.models.Finding] = <factory>, original_text: str = '', processed_text: str = '', execution_time_ms: Annotated[float, Ge(ge=0)] = 0.0, created_at: datetime.datetime = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "Scanner": {
+    "type": "type",
+    "signature": "(firewall: Optional[llmfirewall.firewall.Firewall] = None) -> None"
+  },
+  "SecretConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, rules: Optional[List[str]] = None) -> None"
+  },
+  "SecretDetector": {
+    "type": "ABCMeta",
+    "signature": "(rules: Optional[List[llmfirewall.detectors.secrets.rules.SecretRule]] = None) -> None"
+  },
+  "SecretExposureRule": {
+    "type": "ABCMeta",
+    "signature": "(name: 'str' = 'secret_exposure') -> 'None'"
+  },
+  "SecretGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "SecurityBaseline": {
+    "type": "ModelMetaclass",
+    "signature": "(*, baseline_id: str = <factory>, version: str = '1.0', created_at: float = <factory>, created_by: str = 'system', test_configuration: Dict[str, Any] = <factory>, policy_version: str = 'unknown', model_identity: Dict[str, Any] = <factory>, dependency_state: Dict[str, Any] = <factory>, configuration_hash: str = '', required_gates: List[str] = <factory>, accepted_findings: List[Dict[str, Any]] = <factory>, findings: List[llmfirewall.governance.findings.GovernanceFinding] = <factory>, integrity_hash: str = '') -> None"
+  },
+  "SecurityBlockError": {
+    "type": "type",
+    "signature": "(reason: 'str', decision: 'Any' = None) -> 'None'"
+  },
+  "SecurityChangeClassification": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "SecurityCoverage": {
+    "type": "ModelMetaclass",
+    "signature": "(*, categories_tested: Dict[str, int] = <factory>, suites_tested: Dict[str, int] = <factory>, detectors_covered: Dict[str, int] = <factory>, total_test_definitions: int = 0, tested_policies: List[str] = <factory>) -> None"
+  },
+  "SecurityDetectionCoverage": {
+    "type": "ModelMetaclass",
+    "signature": "(*, detector_name: str, tests_evaluated: Annotated[int, Ge(ge=0)] = 0, tests_triggered: Annotated[int, Ge(ge=0)] = 0, coverage_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0) -> None"
+  },
+  "SecurityDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, new_tool_access: List[Dict[str, str]] = <factory>, new_capabilities: List[str] = <factory>, model_changes: List[Dict[str, str]] = <factory>, new_dependencies: List[str] = <factory>, new_policies: List[str] = <factory>, new_findings: List[str] = <factory>, removed_controls: List[str] = <factory>, has_security_impact: bool = False) -> None"
+  },
+  "SecurityEvaluationEngine": {
+    "type": "type",
+    "signature": "(target: Optional[llmfirewall.eval.targets.EvaluationTarget] = None, firewall: Optional[llmfirewall.firewall.Firewall] = None, policy: Optional[llmfirewall.policy.config.Policy] = None) -> None"
+  },
+  "SecurityEvaluationReport": {
+    "type": "ModelMetaclass",
+    "signature": "(*, report_id: str = <factory>, suite_name: str = 'core-security-suite', suite_version: str = '1.0', created_at: datetime.datetime = <factory>, framework_version: str = '0.1.0', policy_name: str = 'default', policy_version: str = '1.0', metrics: llmfirewall.eval.models.SecurityMetrics, detection_coverage: List[llmfirewall.eval.models.SecurityDetectionCoverage] = <factory>, results: List[llmfirewall.eval.models.SecurityTestResult] = <factory>, failed_test_ids: List[str] = <factory>, regressions_detected: bool = False, regression_summary: Dict[str, Any] = <factory>, metadata: Dict[str, Any] = <factory>, findings: List[llmfirewall.eval.models.SecurityFinding] = <factory>, security_coverage: Optional[llmfirewall.eval.models.SecurityCoverage] = None, seed: Optional[int] = None, target_info: Dict[str, Any] = <factory>) -> None"
+  },
+  "SecurityEvent": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, timestamp: datetime.datetime = <factory>, event_type: str, source: str = 'llmfirewall.runtime', asset_id: Optional[str] = None, agent_id: Optional[str] = None, tool_id: Optional[str] = None, request_id: Optional[str] = None, session_id: Optional[str] = None, severity: llmfirewall.incidents.models.IncidentSeverity = <IncidentSeverity.MEDIUM: 'MEDIUM'>, metadata: Dict[str, Any] = <factory>, evidence: List[Dict[str, Any]] = <factory>) -> None"
+  },
+  "SecurityEventType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "SecurityEvidence": {
+    "type": "ModelMetaclass",
+    "signature": "(*, release_id: str = <factory>, evaluation_report: Optional[llmfirewall.eval.models.SecurityEvaluationReport] = None, test_results: List[llmfirewall.eval.models.SecurityTestResult] = <factory>, snapshot: Optional[llmfirewall.supply_chain.models.SecuritySnapshot] = None, snapshot_diff: Optional[llmfirewall.supply_chain.models.SnapshotDiff] = None, model_identity: Optional[Dict[str, Any]] = None, prompt_hash: Optional[str] = None, policy_version: Optional[str] = None, policy_hash: Optional[str] = None, configuration_hash: Optional[str] = None, dependency_hash: Optional[str] = None, agent_capabilities: List[str] = <factory>, rag_provenance_records: List[Dict[str, Any]] = <factory>, findings: List[llmfirewall.governance.findings.GovernanceFinding] = <factory>, metadata: Dict[str, Any] = <factory>, collected_at: float = <factory>) -> None"
+  },
+  "SecurityFinding": {
+    "type": "ModelMetaclass",
+    "signature": "(*, finding_id: str = <factory>, test_id: str, category: str, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, description: str, evidence: str = '', recommendation: str = '', metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "SecurityGap": {
+    "type": "ModelMetaclass",
+    "signature": "(*, gap_id: str = <factory>, asset_id: str, dimension: str, title: str, description: str, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, evidence: List[str] = <factory>, related_control: Optional[str] = None, related_attack_path: Optional[str] = None, status: llmfirewall.spm.models.SecurityGapStatus = <SecurityGapStatus.OPEN: 'OPEN'>, remediation_guidance: Optional[str] = None, created_at: float = <factory>, updated_at: float = <factory>) -> None"
+  },
+  "SecurityGapStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "SecurityGate": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], type: llmfirewall.governance.gates.GateType = <GateType.TEST_GATE: 'test'>, name: str = '', description: str = '', required: bool = True, block_on: List[llmfirewall.core.models.Severity] = <factory>, review_on: List[llmfirewall.core.models.Severity] = <factory>, max_allowed_severity: Optional[llmfirewall.core.models.Severity] = None, minimum_pass_rate: Annotated[Optional[float], Ge(ge=0.0), Le(le=1.0)] = None, required_tests: List[str] = <factory>, change_classification: Optional[str] = None, enabled: bool = True, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "SecurityGateFailure": {
+    "type": "type",
+    "signature": "(result: llmfirewall.governance.decisions.GovernanceResult) -> None"
+  },
+  "SecurityImpactResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, asset_id: str, asset_type: str, findings: List[str] = <factory>, controls: List[str] = <factory>, policies: List[str] = <factory>, tests: List[str] = <factory>, threats: List[str] = <factory>, dependencies: List[str] = <factory>, finding_details: List[Dict[str, Any]] = <factory>, control_details: List[Dict[str, Any]] = <factory>, policy_details: List[Dict[str, Any]] = <factory>, test_details: List[Dict[str, Any]] = <factory>, threat_details: List[Dict[str, Any]] = <factory>, dependency_details: List[Dict[str, Any]] = <factory>, directly_connected_count: Annotated[int, Ge(ge=0)] = 0, total_impact_count: Annotated[int, Ge(ge=0)] = 0) -> None"
+  },
+  "SecurityIncident": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, title: str, description: str, status: llmfirewall.incidents.models.IncidentStatus = <IncidentStatus.DETECTED: 'DETECTED'>, severity: llmfirewall.incidents.models.IncidentSeverity = <IncidentSeverity.MEDIUM: 'MEDIUM'>, created_at: datetime.datetime = <factory>, detected_at: datetime.datetime = <factory>, resolved_at: Optional[datetime.datetime] = None, assets: List[str] = <factory>, events: List[str] = <factory>, attack_paths: List[str] = <factory>, findings: List[str] = <factory>, evidence: List[Dict[str, Any]] = <factory>, actions: List[llmfirewall.incidents.models.IncidentActionRecord] = <factory>, owner: Optional[str] = None) -> None"
+  },
+  "SecurityIntelligenceEngine": {
+    "type": "type",
+    "signature": "(store: 'EventStore') -> 'None'"
+  },
+  "SecurityMetrics": {
+    "type": "ModelMetaclass",
+    "signature": "(*, total_tests: Annotated[int, Ge(ge=0)] = 0, passed_tests: Annotated[int, Ge(ge=0)] = 0, failed_tests: Annotated[int, Ge(ge=0)] = 0, skipped_tests: Annotated[int, Ge(ge=0)] = 0, false_positives: Annotated[int, Ge(ge=0)] = 0, false_negatives: Annotated[int, Ge(ge=0)] = 0, blocked_count: Annotated[int, Ge(ge=0)] = 0, allowed_count: Annotated[int, Ge(ge=0)] = 0, redacted_count: Annotated[int, Ge(ge=0)] = 0, warned_count: Annotated[int, Ge(ge=0)] = 0, error_count: Annotated[int, Ge(ge=0)] = 0, pass_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 1.0, detection_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 1.0, false_positive_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0, false_negative_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0, mean_latency_ms: Annotated[float, Ge(ge=0)] = 0.0, p95_latency_ms: Annotated[float, Ge(ge=0)] = 0.0, p99_latency_ms: Annotated[float, Ge(ge=0)] = 0.0, category_counts: Dict[str, int] = <factory>, severity_counts: Dict[str, int] = <factory>) -> None"
+  },
+  "SecurityObservation": {
+    "type": "ModelMetaclass",
+    "signature": "(*, status: str = 'SUCCESS', response: str = '', action: llmfirewall.core.models.Action = <Action.ALLOW: 'allow'>, action_decision: Optional[str] = None, tool_calls: List[Dict[str, Any]] = <factory>, detected_threats: List[str] = <factory>, detector_names: List[str] = <factory>, matched_rules: List[str] = <factory>, risk_score: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0, latency_ms: Annotated[float, Ge(ge=0)] = 0.0, tokens_used: Optional[int] = None, errors: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "SecurityPosture": {
+    "type": "ModelMetaclass",
+    "signature": "(*, asset_id: str, asset_type: str = 'agent', asset_name: str = '', environment: str = 'unknown', state: llmfirewall.spm.models.PostureState = <PostureState.UNKNOWN: 'UNKNOWN'>, state_reason: str = '', evaluated_at: float = <factory>, controls: Dict[str, llmfirewall.spm.models.ControlPostureRecord] = <factory>, findings: Dict[str, List[Dict[str, Any]]] = <factory>, attack_paths: Dict[str, List[Dict[str, Any]]] = <factory>, test_coverage: llmfirewall.spm.models.TestCoverageRecord = <factory>, attack_surface: llmfirewall.spm.models.AttackSurfaceRecord = <factory>, configuration: Dict[str, Any] = <factory>, policy_status: Dict[str, Any] = <factory>, drift: Dict[str, Any] = <factory>, dimensions: Dict[str, Dict[str, Any]] = <factory>, security_gaps: List[llmfirewall.spm.models.SecurityGap] = <factory>, unknowns: List[str] = <factory>, evidence: List[str] = <factory>, fingerprint: str = '') -> None"
+  },
+  "SecurityReleaseManifest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, release_id: str = <factory>, application_version: str = 'unknown', llmfirewall_version: str = '1.1.0', model: Dict[str, Any] = <factory>, prompt_hash: Optional[str] = None, policy_hash: Optional[str] = None, configuration_hash: Optional[str] = None, dependency_hash: Optional[str] = None, test_suite_version: Optional[str] = None, baseline_id: Optional[str] = None, timestamp: float = <factory>, decision: llmfirewall.governance.decisions.GovernanceDecision = <GovernanceDecision.NOT_EVALUATED: 'NOT_EVALUATED'>, gate_summary: Dict[str, Any] = <factory>, manifest_hash: str = '') -> None"
+  },
+  "SecurityScanCache": {
+    "type": "type",
+    "signature": "(max_entries: 'int' = 10000, ttl_seconds: 'float' = 3600.0) -> 'None'"
+  },
+  "SecuritySnapshot": {
+    "type": "ModelMetaclass",
+    "signature": "(*, schema_version: str = '1', timestamp: float = <factory>, deployment: llmfirewall.supply_chain.models.DeploymentMetadata = <factory>, models: List[llmfirewall.supply_chain.models.ModelArtifact] = <factory>, dependencies: List[llmfirewall.supply_chain.models.DependencyArtifact] = <factory>, configurations: List[llmfirewall.supply_chain.models.ConfigArtifact] = <factory>, policies: List[llmfirewall.supply_chain.models.PolicyArtifact] = <factory>, prompts: List[llmfirewall.supply_chain.models.PromptArtifact] = <factory>, snapshot_hash: str = '') -> None"
+  },
+  "SecurityTest": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], name: str = '', category: llmfirewall.eval.models.AttackCategory, target_type: llmfirewall.eval.models.TargetType = <TargetType.PROMPT: 'prompt'>, input_payload: str = '', tool_name: Optional[str] = None, tool_arguments: Optional[Dict[str, Any]] = None, expected_action: llmfirewall.core.models.Action = <Action.BLOCK: 'block'>, expected_threat: Optional[llmfirewall.core.models.ThreatType] = None, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, description: str = '', tags: List[str] = <factory>, metadata: Dict[str, Any] = <factory>, assertions: List[llmfirewall.eval.models.DeclarativeAssertion] = <factory>, context_documents: List[str] = <factory>, agent_capability: Optional[str] = None, agent_resource: Optional[str] = None, timeout_seconds: Annotated[float, Ge(ge=0.1)] = 30.0, retries: Annotated[int, Ge(ge=0)] = 0, runs: Annotated[int, Ge(ge=1)] = 1, minimum_pass_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 1.0, requires_network: bool = False, requires_credentials: bool = False, test_version: str = '1.0') -> None"
+  },
+  "SecurityTestCase": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], name: str = '', category: llmfirewall.eval.models.AttackCategory, target_type: llmfirewall.eval.models.TargetType = <TargetType.PROMPT: 'prompt'>, input_payload: str = '', tool_name: Optional[str] = None, tool_arguments: Optional[Dict[str, Any]] = None, expected_action: llmfirewall.core.models.Action = <Action.BLOCK: 'block'>, expected_threat: Optional[llmfirewall.core.models.ThreatType] = None, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, description: str = '', tags: List[str] = <factory>, metadata: Dict[str, Any] = <factory>, assertions: List[llmfirewall.eval.models.DeclarativeAssertion] = <factory>, context_documents: List[str] = <factory>, agent_capability: Optional[str] = None, agent_resource: Optional[str] = None, timeout_seconds: Annotated[float, Ge(ge=0.1)] = 30.0, retries: Annotated[int, Ge(ge=0)] = 0, runs: Annotated[int, Ge(ge=1)] = 1, minimum_pass_rate: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 1.0, requires_network: bool = False, requires_credentials: bool = False, test_version: str = '1.0') -> None"
+  },
+  "SecurityTestGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "SecurityTestResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, test_id: str, category: llmfirewall.eval.models.AttackCategory, target_type: llmfirewall.eval.models.TargetType, severity: llmfirewall.core.models.Severity, passed: bool, actual_action: llmfirewall.core.models.Action, expected_action: llmfirewall.core.models.Action, is_false_positive: bool = False, is_false_negative: bool = False, detected_threats: List[str] = <factory>, detector_names: List[str] = <factory>, matched_rules: List[str] = <factory>, risk_score: float = 0.0, latency_ms: Annotated[float, Ge(ge=0)] = 0.0, error: Optional[str] = None, metadata: Dict[str, Any] = <factory>, status: llmfirewall.eval.models.TestStatus = <TestStatus.PASS: 'PASS'>, finding: Optional[llmfirewall.eval.models.SecurityFinding] = None, observation: Optional[llmfirewall.eval.models.SecurityObservation] = None, error_category: Optional[llmfirewall.eval.models.ErrorCategory] = None, evidence: Optional[str] = None, assertion_results: List[Dict[str, Any]] = <factory>) -> None"
+  },
+  "SecurityTestSuite": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: str, version: str = '1.0', description: str = '', tests: List[llmfirewall.eval.models.SecurityTest] = <factory>) -> None"
+  },
+  "SecurityViolation": {
+    "type": "type",
+    "signature": "(message: 'str', scan_result: 'Optional[ScanResult]' = None, request_id: 'Optional[str]' = None, status_code: 'int' = 403) -> 'None'"
+  },
+  "SecurityWaiver": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, owner: Annotated[str, MinLen(min_length=2)], reason: Annotated[str, MinLen(min_length=5)], created_at: float = <factory>, expires_at: float, test_id: Optional[str] = None, rule_id: Optional[str] = None, category: Optional[str] = None, resource: Optional[str] = None, finding_fingerprint: Optional[str] = None, sha256: str = '') -> None"
+  },
+  "Severity": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "SideEffectType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "SnapshotDiff": {
+    "type": "ModelMetaclass",
+    "signature": "(*, models_added: List[str] = <factory>, models_removed: List[str] = <factory>, models_changed: List[str] = <factory>, dependencies_added: List[str] = <factory>, dependencies_removed: List[str] = <factory>, dependencies_changed: List[str] = <factory>, configs_changed: List[str] = <factory>, policies_changed: List[str] = <factory>, prompts_changed: List[str] = <factory>, is_identical: bool = True) -> None"
+  },
+  "SourceProvenance": {
+    "type": "ModelMetaclass",
+    "signature": "(*, source_id: str = <factory>, document_id: Optional[str] = None, chunk_id: Optional[str] = None, connector: Optional[str] = 'direct', repository: Optional[str] = None, url_or_domain: Optional[str] = None, author: Optional[str] = None, timestamp: datetime.datetime = <factory>, version: str = '1.0', metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "SupplyChainConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = True, models: llmfirewall.config.models.ModelSecurityConfig = <factory>, dependencies: llmfirewall.config.models.DependencySecurityConfig = <factory>, detect_config_drift: bool = True) -> None"
+  },
+  "TargetAdapter": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "TargetType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "TelemetryConfig": {
+    "type": "ModelMetaclass",
+    "signature": "(*, enabled: bool = False, events_enabled: bool = True, metrics_enabled: bool = True, max_buffered_events: Annotated[int, Ge(ge=1)] = 1000, logger_name: Optional[str] = None, min_level: str = 'INFO') -> None"
+  },
+  "TelemetryEvent": {
+    "type": "ModelMetaclass",
+    "signature": "(*, event_id: str = <factory>, event_type: llmfirewall.telemetry.events.TelemetryEventType, timestamp: datetime.datetime = <factory>, request_id: str, action: llmfirewall.core.models.Action, risk_score: Annotated[float, Ge(ge=0.0), Le(le=1.0)], risk_level: llmfirewall.core.models.Severity, threat_types: List[str] = <factory>, detection_categories: List[str] = <factory>, findings_count: Annotated[int, Ge(ge=0)] = 0, detector_names: List[str] = <factory>, latency_ms: Annotated[float, Ge(ge=0)] = 0.0, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "TelemetryEventType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "TelemetrySink": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "TestCoverageRecord": {
+    "type": "ModelMetaclass",
+    "signature": "(*, total_tests: Annotated[int, Ge(ge=0)] = 0, passed: Annotated[int, Ge(ge=0)] = 0, failed: Annotated[int, Ge(ge=0)] = 0, not_executed: Annotated[int, Ge(ge=0)] = 0, last_tested: Optional[float] = None, is_stale: bool = False, stale_reason: Optional[str] = None, test_details: List[Dict[str, Any]] = <factory>) -> None"
+  },
+  "TestFreshness": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "TestOrchestrator": {
+    "type": "type",
+    "signature": "(target: Union[llmfirewall.eval.adapters.TargetAdapter, llmfirewall.eval.targets.EvaluationTarget, NoneType] = None, firewall: Optional[llmfirewall.firewall.Firewall] = None, policy: Optional[llmfirewall.policy.config.Policy] = None, audit_logger: Optional[llmfirewall.audit.AuditLogger] = None) -> None"
+  },
+  "TestStatus": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ThreatModel": {
+    "type": "ModelMetaclass",
+    "signature": "(*, model_id: str = <factory>, name: str = 'AI System Threat Model', version: str = '1.0', created_at: float = <factory>, assets: List[str] = <factory>, entry_points: List[llmfirewall.attack_graph.models.EntryPoint] = <factory>, trust_boundaries: List[llmfirewall.attack_graph.models.TrustBoundary] = <factory>, attack_paths: List[llmfirewall.attack_graph.models.AttackPath] = <factory>, security_controls: List[str] = <factory>, assumptions: List[str] = <factory>, security_gaps_count: Annotated[int, Ge(ge=0)] = 0) -> None"
+  },
+  "ThreatType": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "TimelineEntry": {
+    "type": "ModelMetaclass",
+    "signature": "(*, timestamp: datetime.datetime, stage: str, title: str, description: str, event_id: Optional[str] = None, asset_id: Optional[str] = None, evidence_hash: Optional[str] = None, observed: bool = True) -> None"
+  },
+  "TokenHeuristics": {
+    "type": "ModelMetaclass",
+    "signature": "(*, char_count: Annotated[int, Ge(ge=0)] = 0, token_count_approx: Annotated[int, Ge(ge=0)] = 0, non_ascii_ratio: Annotated[float, Ge(ge=0.0), Le(le=1.0)] = 0.0, control_char_count: Annotated[int, Ge(ge=0)] = 0, delimiter_density: Annotated[float, Ge(ge=0)] = 0.0, has_role_markers: bool = False, has_instruction_markers: bool = False, has_code_blocks: bool = False, has_hex_or_base64_tokens: bool = False, suspicious_token_count: Annotated[int, Ge(ge=0)] = 0) -> None"
+  },
+  "ToolCall": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, tool_name: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], arguments: Dict[str, Any] = <factory>, request_id: Optional[str] = None, user_id: Optional[str] = None, session_id: Optional[str] = None, agent_id: Optional[str] = None, parent_action_id: Optional[str] = None, chain_id: Optional[str] = None, call_provenance: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ToolDefinition": {
+    "type": "ModelMetaclass",
+    "signature": "(*, name: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], description: str = '', permissions: Set[llmfirewall.tools.models.ToolPermission] = <factory>, parameters_schema: Optional[Dict[str, Any]] = None, allowed_domains: Optional[Set[str]] = None, allowed_paths: Optional[List[str]] = None, requires_approval: bool = False, is_dangerous: bool = False) -> None"
+  },
+  "ToolPermission": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "ToolRegistry": {
+    "type": "type",
+    "signature": "() -> None"
+  },
+  "ToolResult": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, tool_name: Annotated[str, MinLen(min_length=1), MaxLen(max_length=128)], output: str, tool_call_id: Optional[str] = None, request_id: Optional[str] = None, agent_id: Optional[str] = None, session_id: Optional[str] = None, chain_id: Optional[str] = None, trust_level: llmfirewall.tools.models.ResultTrustLevel = <ResultTrustLevel.UNTRUSTED: 'untrusted'>, result_provenance: Optional[str] = None, success: bool = True, error: Optional[str] = None, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ToolSecurityDecision": {
+    "type": "ModelMetaclass",
+    "signature": "(*, id: str = <factory>, tool_name: str, action: llmfirewall.core.models.Action, reason: str, triggered_rules: List[str] = <factory>, findings: List[llmfirewall.core.models.Finding] = <factory>, risk_score: Optional[llmfirewall.core.models.RiskScore] = None, sanitized_arguments: Optional[Dict[str, Any]] = None, sanitized_output: Optional[str] = None, require_approval: bool = False, trust_level: Optional[llmfirewall.tools.models.ResultTrustLevel] = None, chain_id: Optional[str] = None, explanation: Optional[str] = None, policy_id: Optional[str] = None, policy_version: Optional[str] = None, explanations: List[Dict[str, Any]] = <factory>, execution_time_ms: Annotated[float, Ge(ge=0)] = 0.0, created_at: datetime.datetime = <factory>, metadata: Dict[str, Any] = <factory>) -> None"
+  },
+  "ToolSecurityEngine": {
+    "type": "type",
+    "signature": "(registry: Optional[llmfirewall.tools.registry.ToolRegistry] = None, policy_engine: Optional[llmfirewall.policy.engine.PolicyEngine] = None, detector_engine: Optional[llmfirewall.detectors.engine.DetectorEngine] = None, risk_engine: Optional[llmfirewall.risk.engine.RiskEngine] = None, capability_engine: Optional[llmfirewall.capabilities.engine.CapabilityEngine] = None, enforce_registry: bool = False, enforce_capabilities: Optional[bool] = None, argument_limits: Optional[llmfirewall.tools.validator.ArgumentLimits] = None, enable_replay_protection: bool = False) -> None"
+  },
+  "ToolSecurityGenerator": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "TrustBoundary": {
+    "type": "ModelMetaclass",
+    "signature": "(*, boundary_id: str, name: str, source_entity: str, target_entity: str, trust_level_from: str = 'untrusted', trust_level_to: str = 'trusted', description: str = '') -> None"
+  },
+  "TrustLevel": {
+    "type": "EnumType",
+    "signature": "(*values)"
+  },
+  "VulnerabilityFinding": {
+    "type": "ModelMetaclass",
+    "signature": "(*, package: str, version: str, identifier: str, severity: llmfirewall.core.models.Severity = <Severity.MEDIUM: 'medium'>, summary: Optional[str] = None, source: str = 'provider', published_at: Optional[str] = None, fixed_versions: List[str] = <factory>) -> None"
+  },
+  "VulnerabilityProvider": {
+    "type": "ABCMeta",
+    "signature": "()"
+  },
+  "compute_evidence_hash": {
+    "type": "function",
+    "signature": "(data: 'Any') -> 'str'"
+  },
+  "compute_streaming_hash": {
+    "type": "function",
+    "signature": "(file_path: Union[str, pathlib.Path], algorithm: str = 'sha256', chunk_size: int = 65536) -> str"
+  },
+  "create_mutations": {
+    "type": "function",
+    "signature": "(base_text: str, seed: Optional[int] = 42) -> List[str]"
+  },
+  "default_audit_logger": {
+    "type": "AuditLogger"
+  },
+  "default_detector_registry": {
+    "type": "DetectorRegistry"
+  },
+  "default_redactor": {
+    "type": "SafeRedactor"
+  },
+  "default_technique_registry": {
+    "type": "AttackTechniqueRegistry"
+  },
+  "default_tool_registry": {
+    "type": "ToolRegistry"
+  },
+  "detect_model_format": {
+    "type": "function",
+    "signature": "(file_path: Union[str, pathlib.Path]) -> llmfirewall.supply_chain.models.ModelFormat"
+  },
+  "evaluate_assertion": {
+    "type": "function",
+    "signature": "(assertion: llmfirewall.eval.models.DeclarativeAssertion, observation: llmfirewall.eval.models.SecurityObservation) -> Tuple[bool, str]"
+  },
+  "evaluate_assertions": {
+    "type": "function",
+    "signature": "(assertions: List[llmfirewall.eval.models.DeclarativeAssertion], observation: llmfirewall.eval.models.SecurityObservation) -> Tuple[bool, List[Dict[str, Any]], Optional[str]]"
+  },
+  "export_events_csv": {
+    "type": "function",
+    "signature": "(events: 'List[SecurityEvent]') -> 'str'"
+  },
+  "export_events_json": {
+    "type": "function",
+    "signature": "(events: 'List[SecurityEvent]', indent: 'Optional[int]' = None) -> 'str'"
+  },
+  "export_events_jsonl": {
+    "type": "function",
+    "signature": "(events: 'List[SecurityEvent]') -> 'str'"
+  },
+  "export_prometheus_metrics": {
+    "type": "function",
+    "signature": "(summary: 'Dict[str, Any]') -> 'str'"
+  },
+  "format_asset_show_human": {
+    "type": "function",
+    "signature": "(asset: llmfirewall.inventory.models.Asset, exposure: Optional[llmfirewall.inventory.models.AssetExposure] = None) -> str"
+  },
+  "format_attack_graph_sarif": {
+    "type": "function",
+    "signature": "(paths: List[llmfirewall.attack_graph.models.AttackPath]) -> Dict[str, Any]"
+  },
+  "format_attack_paths_human": {
+    "type": "function",
+    "signature": "(paths: List[llmfirewall.attack_graph.models.AttackPath], asset_id: Optional[str] = None, entry_points: Optional[List[str]] = None) -> str"
+  },
+  "format_attack_paths_json": {
+    "type": "function",
+    "signature": "(paths: List[llmfirewall.attack_graph.models.AttackPath], indent: int = 2) -> str"
+  },
+  "format_blast_radius_human": {
+    "type": "function",
+    "signature": "(blast: llmfirewall.graph.models.BlastRadiusResult) -> str"
+  },
+  "format_compliance_human": {
+    "type": "function",
+    "signature": "(assessments: List[llmfirewall.compliance.models.ControlAssessment], framework_name: str = 'AI Security Baseline', framework_version: str = '1.0', exceptions: Optional[List[llmfirewall.compliance.models.ComplianceException]] = None, regressions: int = 0) -> str"
+  },
+  "format_compliance_json": {
+    "type": "function",
+    "signature": "(data: Any, indent: int = 2) -> str"
+  },
+  "format_compliance_yaml": {
+    "type": "function",
+    "signature": "(data: Any) -> str"
+  },
+  "format_control_detail_human": {
+    "type": "function",
+    "signature": "(assessment: llmfirewall.compliance.models.ControlAssessment, control: Optional[llmfirewall.compliance.models.ComplianceControl] = None) -> str"
+  },
+  "format_coverage_human": {
+    "type": "function",
+    "signature": "(cov: llmfirewall.graph.models.ControlCoverageResult) -> str"
+  },
+  "format_discovery_result_human": {
+    "type": "function",
+    "signature": "(res: llmfirewall.inventory.models.DiscoveryResult) -> str"
+  },
+  "format_discovery_result_json": {
+    "type": "function",
+    "signature": "(res: llmfirewall.inventory.models.DiscoveryResult, indent: int = 2) -> str"
+  },
+  "format_evidence_human": {
+    "type": "function",
+    "signature": "(evidence_list: List[llmfirewall.compliance.models.ComplianceEvidence]) -> str"
+  },
+  "format_gaps_human": {
+    "type": "function",
+    "signature": "(gaps: List[llmfirewall.compliance.models.ComplianceGap]) -> str"
+  },
+  "format_governance_human": {
+    "type": "function",
+    "signature": "(result: llmfirewall.governance.decisions.GovernanceResult) -> str"
+  },
+  "format_governance_json": {
+    "type": "function",
+    "signature": "(result: llmfirewall.governance.decisions.GovernanceResult, indent: int = 2) -> str"
+  },
+  "format_governance_sarif": {
+    "type": "function",
+    "signature": "(result: llmfirewall.governance.decisions.GovernanceResult) -> Dict[str, Any]"
+  },
+  "format_graph_diff_human": {
+    "type": "function",
+    "signature": "(diff: llmfirewall.graph.models.GraphDiff) -> str"
+  },
+  "format_html_report": {
+    "type": "function",
+    "signature": "(report: llmfirewall.eval.models.SecurityEvaluationReport) -> str"
+  },
+  "format_human_report": {
+    "type": "function",
+    "signature": "(report: llmfirewall.eval.models.SecurityEvaluationReport) -> str"
+  },
+  "format_impact_human": {
+    "type": "function",
+    "signature": "(impact: llmfirewall.graph.models.SecurityImpactResult) -> str"
+  },
+  "format_incident_detail_human": {
+    "type": "function",
+    "signature": "(incident: 'SecurityIncident', timeline: 'Optional[List[TimelineEntry]]' = None) -> 'str'"
+  },
+  "format_incident_timeline_human": {
+    "type": "function",
+    "signature": "(incident: 'SecurityIncident', timeline: 'List[TimelineEntry]') -> 'str'"
+  },
+  "format_incidents_table_human": {
+    "type": "function",
+    "signature": "(incidents: 'List[SecurityIncident]') -> 'str'"
+  },
+  "format_inventory_diff_human": {
+    "type": "function",
+    "signature": "(diff: llmfirewall.inventory.models.InventoryDiff) -> str"
+  },
+  "format_inventory_json": {
+    "type": "function",
+    "signature": "(assets: List[llmfirewall.inventory.models.Asset], indent: int = 2) -> str"
+  },
+  "format_inventory_list_human": {
+    "type": "function",
+    "signature": "(assets: List[llmfirewall.inventory.models.Asset]) -> str"
+  },
+  "format_json_report": {
+    "type": "function",
+    "signature": "(report: llmfirewall.eval.models.SecurityEvaluationReport, indent: int = 2) -> str"
+  },
+  "format_junit_report": {
+    "type": "function",
+    "signature": "(report: llmfirewall.eval.models.SecurityEvaluationReport) -> str"
+  },
+  "format_node_show_human": {
+    "type": "function",
+    "signature": "(node: llmfirewall.graph.models.Node, in_edges: List[llmfirewall.graph.models.Relationship], out_edges: List[llmfirewall.graph.models.Relationship]) -> str"
+  },
+  "format_path_human": {
+    "type": "function",
+    "signature": "(path: llmfirewall.graph.models.GraphPath) -> str"
+  },
+  "format_posture_diff_human": {
+    "type": "function",
+    "signature": "(diff: llmfirewall.spm.models.PostureDiff) -> str"
+  },
+  "format_posture_human": {
+    "type": "function",
+    "signature": "(posture: llmfirewall.spm.models.SecurityPosture) -> str"
+  },
+  "format_posture_json": {
+    "type": "function",
+    "signature": "(data: Any, indent: int = 2) -> str"
+  },
+  "format_posture_sarif": {
+    "type": "function",
+    "signature": "(sarif_data: Dict[str, Any], indent: int = 2) -> str"
+  },
+  "format_posture_summary_human": {
+    "type": "function",
+    "signature": "(summary: Dict[str, Any]) -> str"
+  },
+  "format_risk_detail_human": {
+    "type": "function",
+    "signature": "(r: llmfirewall.risk.models.RiskAssessment) -> str"
+  },
+  "format_risk_diff_human": {
+    "type": "function",
+    "signature": "(diff: llmfirewall.risk.models.RiskDiff) -> str"
+  },
+  "format_risk_human": {
+    "type": "function",
+    "signature": "(risks: List[llmfirewall.risk.models.RiskAssessment]) -> str"
+  },
+  "format_risk_json": {
+    "type": "function",
+    "signature": "(data: Any, indent: int = 2) -> str"
+  },
+  "format_risk_yaml": {
+    "type": "function",
+    "signature": "(data: Any) -> str"
+  },
+  "format_sarif_report": {
+    "type": "function",
+    "signature": "(report: llmfirewall.eval.models.SecurityEvaluationReport) -> str"
+  },
+  "format_threat_model_human": {
+    "type": "function",
+    "signature": "(tm: llmfirewall.attack_graph.models.ThreatModel) -> str"
+  },
+  "generate_post_incident_report": {
+    "type": "function",
+    "signature": "(incident: 'SecurityIncident', timeline: 'Optional[List[TimelineEntry]]' = None, format_type: 'str' = 'markdown') -> 'str'"
+  },
+  "get_agent_capability_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_builtin_security_test_cases": {
+    "type": "function",
+    "signature": "() -> List[llmfirewall.eval.models.SecurityTest]"
+  },
+  "get_configuration_integrity_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_core_firewall_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_default_incident_rules": {
+    "type": "function",
+    "signature": "() -> 'List[IncidentDetectionRule]'"
+  },
+  "get_default_policy": {
+    "type": "function",
+    "signature": "() -> llmfirewall.policy.config.Policy"
+  },
+  "get_default_production_policy": {
+    "type": "function",
+    "signature": "() -> 'ProtectionPolicy'"
+  },
+  "get_full_red_team_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_memory_security_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_pii_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_prompt_injection_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_rag_security_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_regression_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_secret_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_supply_chain_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "get_tool_security_suite": {
+    "type": "function",
+    "signature": "() -> llmfirewall.eval.suites.SecurityTestSuite"
+  },
+  "hash_configuration": {
+    "type": "function",
+    "signature": "(config_data: Dict[str, Any], config_type: str = 'firewall', source: str = 'FILE') -> llmfirewall.supply_chain.models.ConfigArtifact"
+  },
+  "hash_content": {
+    "type": "function",
+    "signature": "(content: 'str') -> 'str'"
+  },
+  "hash_policy_artifact": {
+    "type": "function",
+    "signature": "(policy_rules_or_yaml: Any, policy_id: str = 'default', version: str = '1') -> llmfirewall.supply_chain.models.PolicyArtifact"
+  },
+  "hash_prompt_artifact": {
+    "type": "function",
+    "signature": "(prompt_text: str, name: str, version: str = '1') -> llmfirewall.supply_chain.models.PromptArtifact"
+  },
+  "inspect_command_safety": {
+    "type": "function",
+    "signature": "(command_str: str) -> Optional[llmfirewall.core.models.Finding]"
+  },
+  "inspect_sql_safety": {
+    "type": "function",
+    "signature": "(query_str: str) -> Optional[llmfirewall.core.models.Finding]"
+  },
+  "is_unsafe_serialization": {
+    "type": "function",
+    "signature": "(format_type: llmfirewall.supply_chain.models.ModelFormat) -> bool"
+  },
+  "normalize_asset_id": {
+    "type": "function",
+    "signature": "(first_arg: str, second_arg: Optional[str] = None) -> str"
+  },
+  "protect": {
+    "type": "function",
+    "signature": "(engine_or_fw: 'Any', agent_id: 'Optional[str]' = None, raise_on_block: 'bool' = True) -> 'Callable'"
+  },
+  "protect_tool": {
+    "type": "function",
+    "signature": "(engine_or_fw: 'Any', tool_fn: 'Callable', tool_name: 'Optional[str]' = None, policy_name: 'Optional[str]' = None, raise_on_block: 'bool' = True) -> 'Callable'"
+  },
+  "redact_text_spans": {
+    "type": "function",
+    "signature": "(text: str, findings: List[llmfirewall.core.models.Finding], config: Optional[llmfirewall.policy.redaction_config.RedactionConfig] = None) -> str"
+  },
+  "sanitize_compliance_metadata": {
+    "type": "function",
+    "signature": "(data: Any) -> Any"
+  },
+  "sanitize_config_dict": {
+    "type": "function",
+    "signature": "(data: Any) -> Any"
+  },
+  "sanitize_metadata_secrets": {
+    "type": "function",
+    "signature": "(data: Any) -> Any"
+  },
+  "sanitize_posture_metadata": {
+    "type": "function",
+    "signature": "(data: Any) -> Any"
+  },
+  "validate_argument_limits": {
+    "type": "function",
+    "signature": "(arguments: Dict[str, Any], limits: Optional[llmfirewall.tools.validator.ArgumentLimits] = None) -> Optional[llmfirewall.core.models.Finding]"
+  },
+  "validate_json_schema": {
+    "type": "function",
+    "signature": "(arguments: Dict[str, Any], schema: Dict[str, Any]) -> Optional[llmfirewall.core.models.Finding]"
+  },
+  "validate_path_safety": {
+    "type": "function",
+    "signature": "(path_str: str, allowed_base_dirs: Optional[List[str]] = None, allow_absolute: bool = True) -> Optional[llmfirewall.core.models.Finding]"
+  },
+  "validate_url_safety": {
+    "type": "function",
+    "signature": "(url: str, allow_private_network: bool = False, allowed_schemes: Optional[Set[str]] = None) -> Optional[llmfirewall.core.models.Finding]"
+  }
+}

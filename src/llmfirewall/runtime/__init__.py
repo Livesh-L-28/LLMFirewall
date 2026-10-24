@@ -43,4 +43,7 @@ __all__ = [
     "HookPipeline",
     "LLMProviderAdapter",
     "GenericProviderAdapter",
+    "ParallelScanPool",
 ]
+
+from llmfirewall.runtime.parallel import ParallelScanPool

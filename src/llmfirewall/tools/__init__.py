@@ -29,6 +29,11 @@ from llmfirewall.tools.validator import (
     validate_json_schema,
 )
 
+from llmfirewall.tools.result_analysis import (
+    ToolResultSecurityAssessment,
+    ToolResultTrustAnalyzer,
+)
+
 __all__ = [
     "ToolCall",
     "ToolResult",
@@ -46,4 +51,7 @@ __all__ = [
     "validate_path_safety",
     "inspect_command_safety",
     "inspect_sql_safety",
+    # Tool Result Trust Analysis (Phase 61)
+    "ToolResultSecurityAssessment",
+    "ToolResultTrustAnalyzer",
 ]

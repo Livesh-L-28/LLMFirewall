@@ -77,17 +77,25 @@ class ScanCache:
         policy_checksum: str = "default",
         detector_suite_id: str = "default",
         context: Optional[Dict[str, Any]] = None,
+        tenant_id: Optional[str] = None,
     ) -> str:
         """Compute deterministic SHA-256 cache key binding content, direction, and security state."""
         # Sanitize context by filtering out ephemeral keys
         safe_ctx: Dict[str, Any] = {}
+        ctx_tenant = context.get("tenant_id") if context else None
+        if tenant_id and ctx_tenant and tenant_id != ctx_tenant:
+            raise ValueError(
+                f"Conflicting tenant context in cache key computation: "
+                f"tenant_id='{tenant_id}' does not match context['tenant_id']='{ctx_tenant}'"
+            )
+        effective_tenant = tenant_id or ctx_tenant or "global"
         if context:
             for k, v in sorted(context.items()):
                 if k.lower() not in self.EPHEMERAL_CONTEXT_KEYS and isinstance(v, (str, int, float, bool)):
                     safe_ctx[k] = v
 
         ctx_json = json.dumps(safe_ctx, sort_keys=True, separators=(",", ":"))
-        canonical_content = f"{direction}:{policy_checksum}:{detector_suite_id}:{ctx_json}:{text.strip()}"
+        canonical_content = f"{effective_tenant}:{direction}:{policy_checksum}:{detector_suite_id}:{ctx_json}:{text.strip()}"
         return hashlib.sha256(canonical_content.encode("utf-8")).hexdigest()
 
     def get(self, key: str) -> Optional[ScanResult]:

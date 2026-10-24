@@ -190,11 +190,17 @@ class Firewall:
             effective_prefilter = True
             effective_heuristics = True
 
+        adaptive_eng = None
+        if config is not None and getattr(config.detectors, "adaptive", None) and config.detectors.adaptive.enabled:
+            from llmfirewall.detectors.adaptive import AdaptiveThreatEngine
+            adaptive_eng = AdaptiveThreatEngine(config=config.detectors.adaptive)
+
         self._detector_engine = DetectorEngine(
             detectors=active_detectors,
             fail_fast=effective_fail_fast,
             enable_prefilter=effective_prefilter,
             enable_heuristics=effective_heuristics,
+            adaptive_engine=adaptive_eng,
         )
 
         # 2. Build Risk Engine
@@ -283,6 +289,11 @@ class Firewall:
     @property
     def detector_engine(self) -> DetectorEngine:
         return self._detector_engine
+
+    @property
+    def adaptive_engine(self) -> Optional[Any]:
+        """Active AdaptiveThreatEngine if enabled in configuration."""
+        return self._detector_engine.adaptive_engine
 
     @property
     def risk_engine(self) -> RiskEngine:
@@ -617,6 +628,7 @@ class Firewall:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
+        tenant_id: Optional[str] = None,
     ) -> ScanResult:
         """Scan and enforce security policy on a prompt or model output (alias for check)."""
         return self.check(
@@ -625,7 +637,12 @@ class Firewall:
             user_id=user_id,
             session_id=session_id,
             context=context,
+            tenant_id=tenant_id,
         )
+
+    def scan_request(self, request: ScanRequest) -> ScanResult:
+        """Scan a structured ScanRequest object."""
+        return self.scan(text_or_request=request)
 
     def scan_prompt(
         self,
@@ -676,6 +693,7 @@ class Firewall:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
+        tenant_id: Optional[str] = None,
     ) -> ScanResult:
         """Primary public entrypoint to scan and enforce security policy on a text prompt or LLM output.
         
@@ -693,6 +711,7 @@ class Firewall:
             user_id: Optional user/tenant identifier for audit correlation.
             session_id: Optional session/conversation identifier.
             context: Optional arbitrary dictionary passed to detectors and policy rules.
+            tenant_id: Optional enterprise tenant identifier for multi-tenant isolation.
             
         Returns:
             ScanResult: Fully populated scan outcome containing decision, risk score,
@@ -703,20 +722,43 @@ class Firewall:
         # Step 1: Normalize input to ScanRequest
         if isinstance(text_or_request, ScanRequest):
             request = text_or_request
+            if tenant_id and not request.tenant_id:
+                request = request.model_copy(update={"tenant_id": tenant_id})
+            elif tenant_id and request.tenant_id and tenant_id != request.tenant_id:
+                raise ValueError(
+                    f"Conflicting tenant context: request.tenant_id='{request.tenant_id}' "
+                    f"does not match parameter tenant_id='{tenant_id}'"
+                )
         else:
             request = ScanRequest(
                 text=str(text_or_request),
                 direction=direction,
                 user_id=user_id,
+                tenant_id=tenant_id,
                 session_id=session_id,
                 metadata=dict(context or {}),
             )
 
-        # Ensure direction is in context for direction-aware rules and detectors
+        # Ensure direction, session_id, user_id, and tenant_id are in context
         scan_context = dict(request.metadata)
         scan_context["direction"] = request.direction
+        if request.session_id and "session_id" not in scan_context:
+            scan_context["session_id"] = request.session_id
+        if request.user_id and "user_id" not in scan_context:
+            scan_context["user_id"] = request.user_id
 
-        # Step 1.5: High-Performance Scan Cache (Phase 52)
+        meta_tenant = scan_context.get("tenant_id")
+        if meta_tenant and request.tenant_id and meta_tenant != request.tenant_id:
+            raise ValueError(
+                f"Conflicting tenant context: metadata tenant_id='{meta_tenant}' "
+                f"does not match request.tenant_id='{request.tenant_id}'"
+            )
+        if request.tenant_id and "tenant_id" not in scan_context:
+            scan_context["tenant_id"] = request.tenant_id
+        elif not request.tenant_id and meta_tenant:
+            request = request.model_copy(update={"tenant_id": meta_tenant})
+
+        # Step 1.5: High-Performance Scan Cache (Phase 52 & Phase 63 Tenant Isolation)
         cache_key = None
         if self._scan_cache is not None and not scan_context.get("no_cache"):
             policy_ck = (
@@ -731,6 +773,7 @@ class Firewall:
                 policy_checksum=policy_ck,
                 detector_suite_id=detector_suite_id,
                 context=scan_context,
+                tenant_id=request.tenant_id,
             )
             cached_res = self._scan_cache.get(cache_key)
             if cached_res is not None:
@@ -785,10 +828,12 @@ class Firewall:
             findings=finding_collection.findings,
             original_text=request.text,
             processed_text=processed_text,
+            tenant_id=request.tenant_id,
             execution_time_ms=round(elapsed_ms, 3),
             metadata={
                 "direction": request.direction,
                 "user_id": request.user_id,
+                "tenant_id": request.tenant_id,
                 "session_id": request.session_id,
                 "has_detector_errors": finding_collection.has_errors,
             },

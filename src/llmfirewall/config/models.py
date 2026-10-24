@@ -10,6 +10,7 @@ from llmfirewall.policy.config import Policy, PolicyConfig, PolicyRule
 from llmfirewall.policy.engine import get_default_policy
 from llmfirewall.policy.redaction_config import RedactionConfig
 from llmfirewall.risk.config import RiskConfig
+from llmfirewall.detectors.adaptive import AdaptiveThreatConfig
 
 
 class PromptInjectionConfig(BaseModel):
@@ -97,6 +98,10 @@ class DetectorConfig(BaseModel):
     enable_heuristics: bool = Field(
         default=True,
         description="Enable token heuristics analysis and context enrichment.",
+    )
+    adaptive: AdaptiveThreatConfig = Field(
+        default_factory=AdaptiveThreatConfig,
+        description="Optional adaptive threat detection with contextual and historical signals.",
     )
 
 

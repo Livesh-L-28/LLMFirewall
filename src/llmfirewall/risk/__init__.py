@@ -33,17 +33,31 @@ from llmfirewall.risk.session import (
     SessionRiskTracker,
     SessionTurnRecord,
 )
+from llmfirewall.risk.advanced_correlation import (
+    AdvancedSecurityCorrelator,
+    AttackProgressionStage,
+    CorrelatedEntityRef,
+    EvidenceTimelineItem,
+    ExplainableCorrelation,
+    IncidentSecurityContext,
+)
 
 __all__ = [
     # Core Engine & Config
     "RiskEngine",
     "RiskConfig",
     "RiskPrioritizationEngine",
-    # Correlation Engine (Phase 50)
+    # Correlation Engine (Phase 50 & Phase 58)
     "AttackChainType",
     "CorrelatedAttackChain",
     "CorrelationReport",
     "FindingCorrelationEngine",
+    "AdvancedSecurityCorrelator",
+    "AttackProgressionStage",
+    "CorrelatedEntityRef",
+    "EvidenceTimelineItem",
+    "ExplainableCorrelation",
+    "IncidentSecurityContext",
     # Blast Radius (Phase 50)
     "BlastRadiusReport",
     "BlastRadiusEstimator",

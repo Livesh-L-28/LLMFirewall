@@ -19,7 +19,13 @@ from llmfirewall.observability.exporters import (
     export_events_csv,
     export_events_json,
     export_events_jsonl,
+    export_events_opentelemetry,
+    export_events_syslog_rfc5424,
     export_prometheus_metrics,
+)
+from llmfirewall.observability.webhook import (
+    WebhookAlertConfig,
+    WebhookAlertSink,
 )
 from llmfirewall.observability.intelligence import SecurityIntelligenceEngine
 from llmfirewall.observability.models import (
@@ -68,4 +74,9 @@ __all__ = [
     "export_events_json",
     "export_events_jsonl",
     "export_events_csv",
+    "export_events_opentelemetry",
+    "export_events_syslog_rfc5424",
+    # SIEM / SOC Integration (Phase 65)
+    "WebhookAlertConfig",
+    "WebhookAlertSink",
 ]

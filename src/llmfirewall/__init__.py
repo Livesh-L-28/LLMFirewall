@@ -42,6 +42,57 @@ from llmfirewall.detectors.prompt_injection import (
 )
 from llmfirewall.detectors.protocols import DetectorCost, DetectorProtocol
 from llmfirewall.detectors.registry import DetectorRegistry, default_detector_registry
+from llmfirewall.detectors.adaptive import (
+    AdaptiveThreatConfig,
+    AdaptiveThreatEngine,
+    ContextualSignal,
+    HistoricalSignalTracker,
+    compute_shannon_entropy,
+    compute_token_repetition_ratio,
+)
+from llmfirewall.threat_intel import (
+    AIThreatIndicator,
+    IndicatorMatch,
+    ThreatFeedValidator,
+    ThreatIntelFeed,
+    ThreatIntelManager,
+    ThreatIntelTrustLevel,
+    ThreatPatternType,
+)
+from llmfirewall.tenancy import (
+    TenantContext,
+    TenantPolicyManager,
+    TenantRateLimiter,
+    TenantTier,
+)
+from llmfirewall.persistence import (
+    BasePersistenceAdapter,
+    EncryptedStorageAdapter,
+    InMemoryPersistenceAdapter,
+    JSONLPersistenceAdapter,
+    PersistenceRecord,
+    SQLitePersistenceAdapter,
+    StorageFilter,
+)
+from llmfirewall.observability import (
+    WebhookAlertConfig,
+    WebhookAlertSink,
+    export_events_opentelemetry,
+    export_events_syslog_rfc5424,
+)
+from llmfirewall.secops import (
+    PlaybookActionType,
+    PlaybookEngine,
+    PlaybookExecutionResult,
+    PlaybookStep,
+    SecurityPlaybook,
+    StepExecutionResult,
+)
+from llmfirewall.cache import (
+    DistributedCacheAdapter,
+    DistributedCacheClient,
+)
+from llmfirewall.runtime.parallel import ParallelScanPool
 from llmfirewall.config.models import (
     AgentCapabilitiesConfig,
     AuditConfig,
@@ -120,6 +171,12 @@ from llmfirewall.capabilities import (
     DenyAllApprovalProvider,
     MemoryApprovalProvider,
     SideEffectType,
+    DelegationChainValidator,
+    ResourceScope,
+    ScopeType,
+    SlidingWindowRateLimiter,
+    StepUpApprovalProvider,
+    TimeWindowBudget,
 )
 from llmfirewall.rag import (
     CitationValidator,
@@ -134,6 +191,12 @@ from llmfirewall.rag import (
     QuarantineStore,
     SecurityScanCache,
     SourceProvenance,
+    AdvancedMemorySecurityGuard,
+    MemoryPoisoningAssessment,
+    MemoryPoisoningDetector,
+    MemoryProvenanceRecord,
+    MemoryTrustLabel,
+    SessionMemoryBoundary,
 )
 from llmfirewall.integrations import (
     FirewallIntegration,
@@ -223,6 +286,8 @@ from llmfirewall.tools import (
     validate_json_schema,
     validate_path_safety,
     validate_url_safety,
+    ToolResultSecurityAssessment,
+    ToolResultTrustAnalyzer,
 )
 from llmfirewall.eval import (
     AgentAdapter,
@@ -477,6 +542,12 @@ from llmfirewall.risk import (
     format_risk_human,
     format_risk_json,
     format_risk_yaml,
+    AdvancedSecurityCorrelator,
+    AttackProgressionStage,
+    CorrelatedEntityRef,
+    EvidenceTimelineItem,
+    ExplainableCorrelation,
+    IncidentSecurityContext,
 )
 from llmfirewall.incidents import (
     AbnormalAgentBehaviorRule,
@@ -587,6 +658,26 @@ __all__ = [
     "PIIDetector",
     "SecretDetector",
     "KeywordDetector",
+    # Adaptive Threat Detection (Phase 59)
+    "AdaptiveThreatConfig",
+    "AdaptiveThreatEngine",
+    "ContextualSignal",
+    "HistoricalSignalTracker",
+    "compute_shannon_entropy",
+    "compute_token_repetition_ratio",
+    # AI Threat Intelligence (Phase 60)
+    "AIThreatIndicator",
+    "ThreatIntelFeed",
+    "ThreatIntelTrustLevel",
+    "ThreatPatternType",
+    "IndicatorMatch",
+    "ThreatFeedValidator",
+    "ThreatIntelManager",
+    # Enterprise Multi-Tenancy (Phase 63)
+    "TenantTier",
+    "TenantContext",
+    "TenantPolicyManager",
+    "TenantRateLimiter",
     # Risk Engine
     "RiskEngine",
     "RiskConfig",
@@ -641,6 +732,9 @@ __all__ = [
     "validate_path_safety",
     "inspect_command_safety",
     "inspect_sql_safety",
+    # Tool Result Trust Analysis (Phase 61)
+    "ToolResultSecurityAssessment",
+    "ToolResultTrustAnalyzer",
     # AI Security Evaluation & Red-Team Engine (Phase 23)
     "SecurityEvaluationEngine",
     "SecurityTestCase",
@@ -718,6 +812,13 @@ __all__ = [
     "ContextOrchestrator",
     "MemorySecurityGuard",
     "CitationValidator",
+    # Advanced Memory Security (Phase 62)
+    "MemoryTrustLabel",
+    "MemoryProvenanceRecord",
+    "MemoryPoisoningAssessment",
+    "MemoryPoisoningDetector",
+    "SessionMemoryBoundary",
+    "AdvancedMemorySecurityGuard",
     # AI Supply-Chain & Model Security (Phase 28)
     "SupplyChainConfig",
     "ModelSecurityConfig",
@@ -779,6 +880,13 @@ __all__ = [
     "CapabilityEngine",
     "DEFAULT_CAPABILITIES",
     "DEFAULT_TOOL_CAPABILITY_MAP",
+    # Advanced Agent Security (Phase 61)
+    "ResourceScope",
+    "ScopeType",
+    "DelegationChainValidator",
+    "StepUpApprovalProvider",
+    "TimeWindowBudget",
+    "SlidingWindowRateLimiter",
     # Continuous AI Security Testing & Red-Team Engine (Phase 30)
     "TestOrchestrator",
     "SecurityTest",
@@ -1008,6 +1116,13 @@ __all__ = [
     "format_risk_diff_human",
     "format_risk_json",
     "format_risk_yaml",
+    # Advanced Security Intelligence (Phase 58)
+    "AdvancedSecurityCorrelator",
+    "AttackProgressionStage",
+    "CorrelatedEntityRef",
+    "EvidenceTimelineItem",
+    "ExplainableCorrelation",
+    "IncidentSecurityContext",
     # AI Security Incident Response & Investigation (Phase 38)
     "SecurityEvent",
     "SecurityEventType",
@@ -1053,5 +1168,29 @@ __all__ = [
     "SecurityBlockError",
     # Production Hardening & v1.0 Public API (Phase 40)
     "Scanner",
+    # Security Data Persistence (Phase 64)
+    "BasePersistenceAdapter",
+    "EncryptedStorageAdapter",
+    "InMemoryPersistenceAdapter",
+    "JSONLPersistenceAdapter",
+    "PersistenceRecord",
+    "SQLitePersistenceAdapter",
+    "StorageFilter",
+    # Advanced SIEM/SOC Integration (Phase 65)
+    "WebhookAlertConfig",
+    "WebhookAlertSink",
+    "export_events_opentelemetry",
+    "export_events_syslog_rfc5424",
+    # Security Operations Automation (Phase 66)
+    "PlaybookActionType",
+    "PlaybookEngine",
+    "PlaybookExecutionResult",
+    "PlaybookStep",
+    "SecurityPlaybook",
+    "StepExecutionResult",
+    # Performance & Distributed Execution (Phase 68)
+    "DistributedCacheAdapter",
+    "DistributedCacheClient",
+    "ParallelScanPool",
 ]
 

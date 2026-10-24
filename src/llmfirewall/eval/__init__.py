@@ -85,6 +85,13 @@ from llmfirewall.eval.targets import (
     EvaluationTarget,
     FirewallTarget,
 )
+from llmfirewall.eval.advanced_redteam import (
+    AttackChainResult,
+    AttackTurn,
+    MultiTurnAttackScenario,
+    MultiTurnRedTeamRunner,
+    get_builtin_attack_scenarios,
+)
 
 __all__ = [
     # Core Engine & Orchestrator
@@ -161,4 +168,10 @@ __all__ = [
     "format_sarif_report",
     "format_junit_report",
     "format_html_report",
+    # Advanced Red Teaming & Attack-Chains (Phase 67)
+    "AttackChainResult",
+    "AttackTurn",
+    "MultiTurnAttackScenario",
+    "MultiTurnRedTeamRunner",
+    "get_builtin_attack_scenarios",
 ]

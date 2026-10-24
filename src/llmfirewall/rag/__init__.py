@@ -15,6 +15,14 @@ from llmfirewall.rag.models import (
     SourceProvenance,
 )
 from llmfirewall.rag.orchestrator import ContextOrchestrator
+from llmfirewall.rag.advanced_memory import (
+    AdvancedMemorySecurityGuard,
+    MemoryPoisoningAssessment,
+    MemoryPoisoningDetector,
+    MemoryProvenanceRecord,
+    MemoryTrustLabel,
+    SessionMemoryBoundary,
+)
 
 __all__ = [
     "DocumentSecurityStatus",
@@ -29,4 +37,11 @@ __all__ = [
     "ContextOrchestrator",
     "MemorySecurityGuard",
     "CitationValidator",
+    # Advanced Memory Security (Phase 62)
+    "MemoryTrustLabel",
+    "MemoryProvenanceRecord",
+    "MemoryPoisoningAssessment",
+    "MemoryPoisoningDetector",
+    "SessionMemoryBoundary",
+    "AdvancedMemorySecurityGuard",
 ]
