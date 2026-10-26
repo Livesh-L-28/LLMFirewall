@@ -212,9 +212,22 @@ class ScanResult(BaseModel):
         data = self.model_dump()
         # Omit raw text to avoid leaking secrets/PII in log aggregators
         data["original_text"] = "[OMITTED_FOR_SAFETY]"
+        if self.is_blocked:
+            data["processed_text"] = "[BLOCKED_BY_POLICY]"
+        elif self.action == Action.ALLOW:
+            data["processed_text"] = "[OMITTED_FOR_SAFETY]"
         for finding in data.get("findings", []):
             if finding.get("matched_text"):
                 finding["matched_text"] = "[REDACTED_FROM_AUDIT]"
+            if "metadata" in finding and isinstance(finding["metadata"], dict):
+                for k in ("matched_snippet", "snippet", "secret_value", "raw_match"):
+                    if k in finding["metadata"]:
+                        finding["metadata"][k] = "[REDACTED_FROM_AUDIT]"
+                try:
+                    from llmfirewall.correlation.sanitizer import sanitize_metadata
+                    finding["metadata"] = sanitize_metadata(finding["metadata"])
+                except Exception:
+                    pass
         return data
 
 

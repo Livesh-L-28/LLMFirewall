@@ -117,18 +117,30 @@ class LLMFirewallClient:
         """Protect an LLM function execution, validating prompt and output."""
         # Find string prompt in args or kwargs
         prompt_val = ""
-        for a in args:
+        prompt_arg_idx: Optional[int] = None
+        prompt_kwarg_key: Optional[str] = None
+
+        for idx, a in enumerate(args):
             if isinstance(a, str):
                 prompt_val = a
+                prompt_arg_idx = idx
                 break
         if not prompt_val:
             for k in ("prompt", "text", "query", "message", "input"):
                 if k in kwargs and isinstance(kwargs[k], str):
                     prompt_val = kwargs[k]
+                    prompt_kwarg_key = k
                     break
 
         if prompt_val:
-            self.scan_prompt(prompt_val)
+            in_res = self.scan_prompt(prompt_val)
+            if in_res.action == Action.REDACT and in_res.sanitized_text:
+                if prompt_arg_idx is not None:
+                    args_list = list(args)
+                    args_list[prompt_arg_idx] = in_res.sanitized_text
+                    args = tuple(args_list)
+                elif prompt_kwarg_key is not None:
+                    kwargs[prompt_kwarg_key] = in_res.sanitized_text
 
         output = func(*args, **kwargs)
 
@@ -186,18 +198,30 @@ class AsyncLLMFirewallClient:
     async def protect_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Protect an async LLM function execution."""
         prompt_val = ""
-        for a in args:
+        prompt_arg_idx: Optional[int] = None
+        prompt_kwarg_key: Optional[str] = None
+
+        for idx, a in enumerate(args):
             if isinstance(a, str):
                 prompt_val = a
+                prompt_arg_idx = idx
                 break
         if not prompt_val:
             for k in ("prompt", "text", "query", "message", "input"):
                 if k in kwargs and isinstance(kwargs[k], str):
                     prompt_val = kwargs[k]
+                    prompt_kwarg_key = k
                     break
 
         if prompt_val:
-            await self.scan_prompt(prompt_val)
+            in_res = await self.scan_prompt(prompt_val)
+            if in_res.action == Action.REDACT and in_res.sanitized_text:
+                if prompt_arg_idx is not None:
+                    args_list = list(args)
+                    args_list[prompt_arg_idx] = in_res.sanitized_text
+                    args = tuple(args_list)
+                elif prompt_kwarg_key is not None:
+                    kwargs[prompt_kwarg_key] = in_res.sanitized_text
 
         if asyncio.iscoroutinefunction(func):
             output = await func(*args, **kwargs)

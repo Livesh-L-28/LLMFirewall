@@ -258,18 +258,20 @@ def export_events_opentelemetry(events: List[SecurityEvent]) -> Dict[str, Any]:
             "traceId": e.trace_id,
         })
 
+    from llmfirewall._version import __version__
+
     return {
         "resourceLogs": [
             {
                 "resource": {
                     "attributes": [
                         {"key": "service.name", "value": {"stringValue": "llmfirewall"}},
-                        {"key": "service.version", "value": {"stringValue": "1.2.0"}},
+                        {"key": "service.version", "value": {"stringValue": __version__}},
                     ]
                 },
                 "scopeLogs": [
                     {
-                        "scope": {"name": "llmfirewall.observability", "version": "1.2.0"},
+                        "scope": {"name": "llmfirewall.observability", "version": __version__},
                         "logRecords": log_records,
                     }
                 ],

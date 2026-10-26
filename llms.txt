@@ -1,0 +1,34 @@
+# LLMFirewall Core
+
+> In-process, defense-in-depth security framework for Large Language Model (LLM) applications, RAG pipelines, and autonomous AI agents. Sub-millisecond latency (0.02ms P50), zero external network dependencies.
+
+- Distribution: `llmfirewall-core` on PyPI (`pip install llmfirewall-core`)
+- Python Import: `import llmfirewall`
+- CLI Command: `llmfirewall`
+- Version: `1.2.0`
+
+## Documentation & Guides
+
+- [Getting Started](docs/getting-started.md): 5-minute quickstart, scan methods, decision semantics, and safe logging.
+- [Installation Guide](docs/installation.md): Installation options, virtual environments, pure ASGI setup, and optional extras.
+- [Public API Reference](docs/api.md): Authoritative class definitions, methods, return types, and exceptions.
+- [AI Coding Agent Guide](AGENTS.md): Architectural trust boundaries, canonical imports, 7-step developer workflow, decision invariants, and test verification commands.
+- [System Architecture](docs/architecture.md): 4-stage pipeline architecture (inspection, risk engine, policy engine, runtime defense).
+- [Security Model & Threat Boundaries](docs/security-model.md): Threat vectors, fail-closed semantics, and zero-retention privacy.
+- [Policy-as-Code](docs/policy-as-code.md): Declarative JSON/YAML rule authoring and policy validation.
+- [CLI Reference](docs/cli.md): Comprehensive subcommands for CI/CD gates, scanning, and incident investigation.
+
+## Integration Recipes
+
+- [FastAPI Endpoint](docs/integrations/fastapi_endpoint.md): ASGI middleware and route-level dependency injection.
+- [Flask Endpoint](docs/integrations/flask_endpoint.md): Flask extension with request lifecycle hooks.
+- [Pure ASGI Middleware](docs/integrations/asgi_middleware.md): Zero-dependency ASGI 3.0 middleware (compatible with FastAPI, Starlette, Quart).
+- [Streaming Text Guard](docs/integrations/streaming_guard.md): Boundary-aware sliding-window stream protection preventing split-token jailbreaks.
+- [Agent Tool Calling](docs/integrations/agent_tool_calling.md): Sandboxing agent tool calls against SSRF, SQL injection, and path traversal.
+- [RAG Ingestion Guard](docs/integrations/rag_context_guard.md): Document ingestion scanning, context budgeting, and poisoned chunk isolation.
+
+## Developer Tooling & Verification
+
+- CLI Developer Engine: `llmfirewall integrate detect`, `llmfirewall integrate scaffold`, `llmfirewall integrate validate`
+- [Verified Sample Applications](examples/sample_apps/): Isolated reference implementations for FastAPI, ASGI, Streaming, Agent Tools, and RAG.
+- [VS Code Developer Extension](ide/vscode/): Minimal extension for guidance, configuration validation, and test execution.

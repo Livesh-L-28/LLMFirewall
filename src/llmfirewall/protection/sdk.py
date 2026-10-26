@@ -25,7 +25,7 @@ def protect(
     raise_on_block: bool = True,
 ) -> Callable:
     """Decorator to wrap agent execution functions with LLMFirewall runtime protection.
-    
+
     Usage:
         @firewall.protect
         def run_agent(user_input: str) -> str:
@@ -65,6 +65,23 @@ def protect(
                     raise SecurityBlockError(dec.reason, decision=dec)
                 return f"[BLOCKED BY POLICY] {dec.reason}"
 
+            # Propagate redacted input content downstream to wrapped function
+            if dec.is_redacted and dec.redacted_content:
+                redacted = dec.redacted_content
+                if args:
+                    if isinstance(args[0], str):
+                        args = (redacted,) + args[1:]
+                    elif isinstance(args[0], dict):
+                        new_d = dict(args[0])
+                        for k in ("input", "prompt", "text", "query", "message"):
+                            if k in new_d and isinstance(new_d[k], str):
+                                new_d[k] = redacted
+                        args = (new_d,) + args[1:]
+                if "input" in kwargs and isinstance(kwargs["input"], str):
+                    kwargs["input"] = redacted
+                elif "prompt" in kwargs and isinstance(kwargs["prompt"], str):
+                    kwargs["prompt"] = redacted
+
             # 2. Execute wrapped agent function
             result = fn(*args, **kwargs)
 
@@ -95,14 +112,20 @@ def protect_tool(
     tool_name: Optional[str] = None,
     policy_name: Optional[str] = None,
     raise_on_block: bool = True,
+    workflow_id: Optional[str] = None,
+    tenant_id: Optional[str] = None,
 ) -> Callable:
     """Wraps a tool function with pre-execution authorization check.
-    
+
+    Supports both single-turn runtime inspection and Phase 3 cross-step workflow enforcement.
+
     Usage:
+        # Cross-step protected tool
         protected_db = firewall.protect_tool(
             database_query,
             tool_name="database",
-            policy_name="database-access"
+            workflow_id="wf-123",
+            tenant_id="tenant-a"
         )
     """
     engine = getattr(engine_or_fw, "protection", engine_or_fw)
@@ -110,6 +133,53 @@ def protect_tool(
 
     @functools.wraps(tool_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
+        active_wf_id = kwargs.pop("workflow_id", workflow_id)
+        active_tenant_id = kwargs.pop("tenant_id", tenant_id)
+        active_agent_id = kwargs.pop("agent_id", None)
+
+        # Cross-step workflow security check
+        if active_wf_id and hasattr(engine_or_fw, "cross_step_enforcer"):
+            from llmfirewall.workflow.models import CrossTenantViolationError
+            if not active_tenant_id:
+                raise CrossTenantViolationError(
+                    f"tenant_id is required for cross-step execution of tool '{name}' in workflow '{active_wf_id}'.",
+                    workflow_id=active_wf_id,
+                )
+            try:
+                engine_or_fw.cross_step_enforcer.enforce_tool_call(
+                    workflow_id=active_wf_id,
+                    tool_name=name,
+                    arguments=kwargs,
+                    tenant_id=active_tenant_id,
+                    agent_id=active_agent_id,
+                )
+            except Exception as exc:
+                if raise_on_block:
+                    raise
+                reason = getattr(exc, "reason", str(exc))
+                return {"status": "error", "error": f"Tool blocked by policy: {reason}"}
+
+            result = tool_fn(*args, **kwargs)
+
+            # Post-execution result scan in workflow
+            if isinstance(result, str):
+                try:
+                    engine_or_fw.cross_step_enforcer.enforce_tool_result(
+                        workflow_id=active_wf_id,
+                        tool_name=name,
+                        output=result,
+                        tenant_id=active_tenant_id,
+                        agent_id=active_agent_id,
+                    )
+                except Exception as exc:
+                    if raise_on_block:
+                        raise
+                    reason = getattr(exc, "reason", str(exc))
+                    return {"status": "error", "error": f"Tool result blocked by policy: {reason}"}
+
+            return result
+
+        # Single-turn runtime policy inspection
         req = RuntimeRequest(
             tool={"name": name, "arguments": kwargs or ({"args": args} if args else {})},
             metadata={"policy": policy_name} if policy_name else {},
@@ -128,7 +198,7 @@ def protect_tool(
 
 class LLMFirewallMiddleware:
     """Universal ASGI/WSGI middleware for web framework integrations (FastAPI, Starlette, Flask, Django).
-    
+
     Inspects incoming HTTP payloads without making any web framework a required dependency.
     """
 

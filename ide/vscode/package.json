@@ -1,0 +1,56 @@
+{
+  "name": "llmfirewall-vscode",
+  "displayName": "LLMFirewall Developer Tools",
+  "description": "Developer guidance, security policy validation, and test runner for LLMFirewall.",
+  "version": "1.0.0",
+  "publisher": "llmfirewall",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Linters",
+    "Security",
+    "Testing"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:python",
+    "onCommand:llmfirewall.findGuidance",
+    "onCommand:llmfirewall.validateConfig",
+    "onCommand:llmfirewall.runIntegrationTests"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "llmfirewall.findGuidance",
+        "title": "LLMFirewall: Find Integration Guidance & Recipes"
+      },
+      {
+        "command": "llmfirewall.validateConfig",
+        "title": "LLMFirewall: Validate Package & Security Policy Configuration"
+      },
+      {
+        "command": "llmfirewall.runIntegrationTests",
+        "title": "LLMFirewall: Run Security Integration Tests"
+      }
+    ],
+    "configuration": {
+      "title": "LLMFirewall",
+      "properties": {
+        "llmfirewall.executablePath": {
+          "type": "string",
+          "default": "llmfirewall",
+          "description": "Path to the llmfirewall CLI binary or virtualenv executable."
+        },
+        "llmfirewall.policyFile": {
+          "type": "string",
+          "default": "",
+          "description": "Optional path to custom Policy-as-Code YAML or JSON file."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "node --test test/extension.test.js"
+  }
+}

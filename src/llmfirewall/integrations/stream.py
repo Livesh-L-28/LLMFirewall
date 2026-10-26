@@ -18,12 +18,23 @@ class StreamingTextGuard:
         self,
         firewall: Optional[Firewall] = None,
         window_size: int = 512,
-        overlap_size: int = 128,
+        overlap_size: Optional[int] = None,
         fail_closed: bool = True,
     ) -> None:
+        if window_size <= 0:
+            raise ValueError("window_size must be positive")
+        if overlap_size is None:
+            actual_overlap = min(128, max(1, window_size // 4))
+        else:
+            if overlap_size <= 0:
+                raise ValueError("overlap_size must be positive")
+            if window_size <= overlap_size:
+                raise ValueError(f"window_size ({window_size}) must be greater than overlap_size ({overlap_size})")
+            actual_overlap = overlap_size
+
         self.firewall = firewall or Firewall()
         self.window_size = window_size
-        self.overlap_size = overlap_size
+        self.overlap_size = actual_overlap
         self.fail_closed = fail_closed
 
     def protect_stream(

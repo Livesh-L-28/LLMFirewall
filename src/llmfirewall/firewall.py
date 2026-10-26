@@ -1,9 +1,12 @@
 """Main Firewall orchestrator coordinating Detectors, Risk Engine, and Policy Engine."""
 
 from datetime import datetime, timezone
+import logging
 import time
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import uuid
+
+logger = logging.getLogger("llmfirewall")
 
 from llmfirewall.cache import ScanCache
 
@@ -380,6 +383,101 @@ class Firewall:
     def rag(self) -> Any:
         """Convenience property for RAG context orchestrator."""
         return self.context_orchestrator
+
+    @property
+    def workflow_manager(self) -> Any:
+        """Cross-step workflow context manager coordinating multi-step execution (Phase 3)."""
+        if not hasattr(self, "_workflow_manager"):
+            from llmfirewall.workflow.context import WorkflowContextManager
+            self._workflow_manager = WorkflowContextManager()
+        return self._workflow_manager
+
+    @property
+    def cross_step_enforcer(self) -> Any:
+        """Cross-step security enforcer (Phase 3)."""
+        if not hasattr(self, "_cross_step_enforcer"):
+            from llmfirewall.workflow.enforcer import CrossStepEnforcer
+            self._cross_step_enforcer = CrossStepEnforcer(self, self.workflow_manager)
+        return self._cross_step_enforcer
+
+    def create_workflow(
+        self,
+        tenant_id: str,
+        workflow_id: Optional[str] = None,
+        agent_id: str = "default_agent",
+        session_id: Optional[str] = None,
+        scoped_permissions: Optional[Dict[str, Any]] = None,
+        allowed_tools: Optional[List[str]] = None,
+        denied_tools: Optional[List[str]] = None,
+        max_steps: int = 50,
+        max_tool_calls: int = 30,
+        ttl_seconds: float = 3600.0,
+        idle_timeout_seconds: float = 300.0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """Create and register a stateful cross-step agent workflow security context."""
+        return self.workflow_manager.create_workflow(
+            tenant_id=tenant_id,
+            workflow_id=workflow_id,
+            agent_id=agent_id,
+            session_id=session_id,
+            scoped_permissions=scoped_permissions,
+            allowed_tools=allowed_tools,
+            denied_tools=denied_tools,
+            max_steps=max_steps,
+            max_tool_calls=max_tool_calls,
+            ttl_seconds=ttl_seconds,
+            idle_timeout_seconds=idle_timeout_seconds,
+            metadata=metadata,
+        )
+
+    def get_workflow(self, workflow_id: str, tenant_id: str) -> Any:
+        """Retrieve an active workflow context, enforcing tenant isolation."""
+        return self.workflow_manager.get_workflow(workflow_id, tenant_id)
+
+    def workflow(self, workflow_id: str, tenant_id: str) -> Any:
+        """Convenience alias for get_workflow."""
+        return self.get_workflow(workflow_id, tenant_id)
+
+    @property
+    def correlation_engine(self) -> Any:
+        """Unified Security Event Correlation Engine (Phase 4)."""
+        if not hasattr(self, "_correlation_engine"):
+            from llmfirewall.correlation.engine import EventCorrelationEngine
+            self._correlation_engine = EventCorrelationEngine()
+        return self._correlation_engine
+
+    def correlate_events(
+        self,
+        events: List[Any],
+        correlation_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+    ) -> Any:
+        """Deterministically correlate a list of security events into an incident timeline."""
+        return self.correlation_engine.correlate_events(
+            events=events,
+            correlation_id=correlation_id,
+            tenant_id=tenant_id,
+        )
+
+    def get_incident_timeline(
+        self,
+        correlation_id: str,
+        tenant_id: Optional[str] = None,
+    ) -> Any:
+        """Retrieve the correlated incident timeline for a session or workflow."""
+        return self.correlation_engine.get_timeline(
+            correlation_id=correlation_id,
+            tenant_id=tenant_id,
+        )
+
+    @property
+    def context_decision_engine(self) -> Any:
+        """Context-Aware Security Decision Engine (Phase 5)."""
+        if not hasattr(self, "_context_decision_engine"):
+            from llmfirewall.context.engine import ContextAwareDecisionEngine
+            self._context_decision_engine = ContextAwareDecisionEngine()
+        return self._context_decision_engine
 
     @property
     def model_verifier(self) -> Any:
@@ -799,6 +897,53 @@ class Firewall:
             context=scan_context,
         )
 
+        # Step 3.5: Context-Aware Security Decision Evaluation (Phase 5)
+        context_enrichment = None
+        try:
+            from llmfirewall.context.models import VerifiedSecurityContext
+            v_ctx = None
+            if isinstance(context, VerifiedSecurityContext):
+                v_ctx = context
+            elif scan_context:
+                wf_threat_state = None
+                has_prior_injection = False
+                wf_id = scan_context.get("workflow_id")
+                t_id = request.tenant_id or scan_context.get("tenant_id")
+                if wf_id and t_id:
+                    try:
+                        active_wf = self.workflow_manager.get_workflow(wf_id, t_id)
+                        if active_wf:
+                            wf_threat_state = active_wf.threat_state
+                            has_prior_injection = bool(active_wf.is_tainted)
+                    except Exception:
+                        pass
+
+                v_attrs = dict(scan_context)
+                if wf_threat_state is not None:
+                    v_attrs["workflow_threat_state"] = wf_threat_state
+                    v_attrs["has_prior_injection"] = has_prior_injection
+
+                v_ctx = VerifiedSecurityContext.from_request(
+                    request=request,
+                    verified_attributes=v_attrs,
+                    tenant_id=t_id,
+                )
+
+            if v_ctx is not None:
+                context_enrichment = self.context_decision_engine.evaluate(
+                    findings=finding_collection.findings,
+                    risk_score=risk_score,
+                    context=v_ctx,
+                    tool_name=scan_context.get("tool"),
+                )
+
+                if context_enrichment.contextual_multiplier != 1.0:
+                    adjusted_score = min(1.0, max(0.0, risk_score.score * context_enrichment.contextual_multiplier))
+                    risk_score = risk_score.model_copy(update={"score": round(adjusted_score, 4)})
+
+        except Exception as exc:
+            logger.debug(f"Context evaluation skipped due to non-critical error: {exc}")
+
         # Step 4: Run Policy Engine
         decision = self._policy_engine.decide(
             text=request.text,
@@ -806,6 +951,13 @@ class Firewall:
             risk_score=risk_score,
             context=scan_context,
         )
+
+        # Enforce non-overridable context decision rules (e.g. forced BLOCK on tainted tool call)
+        if context_enrichment and context_enrichment.forced_action == Action.BLOCK and decision.action != Action.BLOCK:
+            decision = decision.model_copy(update={
+                "action": Action.BLOCK,
+                "reason": f"Action 'BLOCK' mandated by context contract: {context_enrichment.context_explanation}. (Superseded {decision.action.value.upper()}).",
+            })
 
         # Step 5: Determine processed_text for safe downstream consumption
         if decision.action == Action.BLOCK:
@@ -821,6 +973,16 @@ class Firewall:
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0
 
+        scan_meta: Dict[str, Any] = {
+            "direction": request.direction,
+            "user_id": request.user_id,
+            "tenant_id": request.tenant_id,
+            "session_id": request.session_id,
+            "has_detector_errors": finding_collection.has_errors,
+        }
+        if context_enrichment is not None:
+            scan_meta["context_enrichment"] = context_enrichment.safe_dict()
+
         scan_result = ScanResult(
             request_id=request.id,
             decision=decision,
@@ -830,13 +992,7 @@ class Firewall:
             processed_text=processed_text,
             tenant_id=request.tenant_id,
             execution_time_ms=round(elapsed_ms, 3),
-            metadata={
-                "direction": request.direction,
-                "user_id": request.user_id,
-                "tenant_id": request.tenant_id,
-                "session_id": request.session_id,
-                "has_detector_errors": finding_collection.has_errors,
-            },
+            metadata=scan_meta,
         )
 
         # Automatic audit logging if logger is attached
@@ -881,6 +1037,10 @@ class Firewall:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
+        correlation_id: Optional[str] = None,
+        workflow_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        record_to_timeline: bool = True,
     ) -> DecisionTrace:
         """Execute scan and return a comprehensive, deterministic DecisionTrace explaining why the decision was made.
         
@@ -893,16 +1053,42 @@ class Firewall:
         if isinstance(text_or_request, ScanRequest):
             request = text_or_request
         else:
+            eff_tenant = tenant_id or (context.get("tenant_id") if isinstance(context, dict) else None)
+            eff_meta = dict(context or {})
+            if eff_tenant and "tenant_id" not in eff_meta:
+                eff_meta["tenant_id"] = eff_tenant
+            if workflow_id and "workflow_id" not in eff_meta:
+                eff_meta["workflow_id"] = workflow_id
             request = ScanRequest(
                 text=str(text_or_request),
                 direction=direction,
                 user_id=user_id,
+                tenant_id=eff_tenant,
                 session_id=session_id,
-                metadata=dict(context or {}),
+                metadata=eff_meta,
             )
 
         result = self.check(request)
-        return DecisionTrace.from_scan_result(request=request, result=result)
+        trace = DecisionTrace.from_scan_result(request=request, result=result)
+
+        if record_to_timeline:
+            try:
+                corr = correlation_id or workflow_id or session_id or request.request_id or trace.trace_id
+                eff_tenant = tenant_id or (request.metadata.get("tenant_id") if request.metadata else None) or user_id
+                eff_workflow = workflow_id or (request.metadata.get("workflow_id") if request.metadata else None)
+                from llmfirewall.correlation.models import UnifiedSecurityEvent
+                ev = UnifiedSecurityEvent.from_scan_result(
+                    request=request,
+                    result=result,
+                    correlation_id=corr,
+                    tenant_id=eff_tenant,
+                    workflow_id=eff_workflow,
+                )
+                self.correlation_engine.record_event(ev)
+            except Exception as exc:
+                logger.debug(f"Timeline event recording skipped: {exc}")
+
+        return trace
 
     def check_prompt(
         self,
@@ -959,6 +1145,9 @@ class Firewall:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
+        workflow_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
     ) -> ToolSecurityDecision:
         """Inspect and enforce security controls on an AI agent tool call before execution.
         
@@ -968,10 +1157,43 @@ class Firewall:
             user_id: Optional calling user or tenant ID.
             session_id: Optional session identifier.
             context: Contextual parameters.
+            workflow_id: Optional cross-step workflow ID (Phase 3).
+            tenant_id: Authoritative tenant ID required when workflow_id is specified.
+            agent_id: Optional authorized agent role.
             
         Returns:
             ToolSecurityDecision: Deterministic ALLOW, WARN, or BLOCK decision.
         """
+        # Cross-step workflow delegation
+        effective_wf_id = workflow_id or (context.get("workflow_id") if isinstance(context, dict) else None)
+        effective_tenant_id = tenant_id or user_id or (context.get("tenant_id") if isinstance(context, dict) else None)
+        effective_agent_id = agent_id or (context.get("agent_id") if isinstance(context, dict) else None)
+        is_internal_cross = bool(context and context.get("_internal_cross_step"))
+
+        if effective_wf_id and not is_internal_cross:
+            from llmfirewall.workflow.models import CrossTenantViolationError
+            if not effective_tenant_id:
+                raise CrossTenantViolationError(
+                    f"tenant_id must be provided when enforcing cross-step workflow '{effective_wf_id}'.",
+                    workflow_id=effective_wf_id,
+                )
+            if isinstance(tool_call_or_name, str):
+                t_name = tool_call_or_name
+                t_args = arguments or {}
+            elif isinstance(tool_call_or_name, dict):
+                t_name = tool_call_or_name.get("tool_name") or tool_call_or_name.get("name", "")
+                t_args = tool_call_or_name.get("arguments", arguments or {})
+            else:
+                t_name = tool_call_or_name.tool_name
+                t_args = tool_call_or_name.arguments
+
+            return self.cross_step_enforcer.enforce_tool_call(
+                workflow_id=effective_wf_id,
+                tool_name=t_name,
+                arguments=t_args,
+                tenant_id=effective_tenant_id,
+                agent_id=effective_agent_id,
+            )
         if isinstance(tool_call_or_name, str):
             call = ToolCall(
                 tool_name=tool_call_or_name,
@@ -1073,6 +1295,9 @@ class Firewall:
         tool_result_or_name: Union[ToolResult, str, Dict[str, Any]],
         output: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
+        workflow_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
     ) -> ToolSecurityDecision:
         """Inspect and enforce security controls on a tool result before sending to LLM.
         
@@ -1080,10 +1305,43 @@ class Firewall:
             tool_result_or_name: ToolResult instance, dict representation, or tool name string.
             output: Result string (if tool_result_or_name is a tool name string).
             context: Contextual parameters.
+            workflow_id: Optional cross-step workflow ID (Phase 3).
+            tenant_id: Authoritative tenant ID required when workflow_id is specified.
+            agent_id: Optional authorized agent role.
             
         Returns:
             ToolSecurityDecision: ALLOW, WARN, REDACT, or BLOCK outcome.
         """
+        # Cross-step workflow delegation
+        effective_wf_id = workflow_id or (context.get("workflow_id") if isinstance(context, dict) else None)
+        effective_tenant_id = tenant_id or (context.get("tenant_id") if isinstance(context, dict) else None)
+        effective_agent_id = agent_id or (context.get("agent_id") if isinstance(context, dict) else None)
+        is_internal_cross = bool(context and context.get("_internal_cross_step"))
+
+        if effective_wf_id and not is_internal_cross:
+            from llmfirewall.workflow.models import CrossTenantViolationError
+            if not effective_tenant_id:
+                raise CrossTenantViolationError(
+                    f"tenant_id must be provided when enforcing cross-step workflow '{effective_wf_id}'.",
+                    workflow_id=effective_wf_id,
+                )
+            if isinstance(tool_result_or_name, str):
+                t_name = tool_result_or_name
+                t_out = str(output or "")
+            elif isinstance(tool_result_or_name, dict):
+                t_name = tool_result_or_name.get("tool_name") or tool_result_or_name.get("name", "")
+                t_out = str(tool_result_or_name.get("output", output or ""))
+            else:
+                t_name = tool_result_or_name.tool_name
+                t_out = str(tool_result_or_name.output or "")
+
+            return self.cross_step_enforcer.enforce_tool_result(
+                workflow_id=effective_wf_id,
+                tool_name=t_name,
+                output=t_out,
+                tenant_id=effective_tenant_id,
+                agent_id=effective_agent_id,
+            )
         if isinstance(tool_result_or_name, str):
             result_obj = ToolResult(
                 tool_name=tool_result_or_name,
@@ -1515,15 +1773,19 @@ class Firewall:
         tool_name: Optional[str] = None,
         policy: Optional[str] = None,
         raise_on_block: bool = True,
+        workflow_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
     ) -> Callable:
         """Wraps a tool function with pre-execution policy authorization."""
         from llmfirewall.protection.sdk import protect_tool as sdk_protect_tool
         return sdk_protect_tool(
-            self.protection,
+            self,
             tool_fn=tool_fn,
             tool_name=tool_name,
             policy_name=policy,
             raise_on_block=raise_on_block,
+            workflow_id=workflow_id,
+            tenant_id=tenant_id,
         )
 
 

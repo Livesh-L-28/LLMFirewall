@@ -21,8 +21,18 @@ class TokenHeuristics(BaseModel):
     suspicious_token_count: int = Field(default=0, ge=0)
 
 
+# Deterministic Cyrillic homoglyph confusable translation table
+CYRILLIC_HOMOGLYPH_TABLE = str.maketrans({
+    "\u0430": "a", "\u0435": "e", "\u043e": "o", "\u0440": "p", "\u0441": "c",
+    "\u0443": "y", "\u0445": "x", "\u0456": "i", "\u0458": "j", "\u0455": "s",
+    "\u0410": "A", "\u0415": "E", "\u041e": "O", "\u0420": "P", "\u0421": "C",
+    "\u0422": "T", "\u0425": "X", "\u0406": "I", "\u0408": "J", "\u0405": "S",
+    "\u0432": "b", "\u043c": "m", "\u043d": "h", "\u0442": "t",
+})
+
+
 def normalize_detection_input(text: str) -> Tuple[str, str]:
-    """Normalize input text deterministically using NFKC and lowercase canonicalization.
+    """Normalize input text deterministically using NFKC, homoglyph folding, and lowercase canonicalization.
     
     Returns:
         (canonical_text, lower_text)
@@ -31,9 +41,11 @@ def normalize_detection_input(text: str) -> Tuple[str, str]:
         return "", ""
     # Standard NFKC normalization handles compatible Unicode equivalents
     nfkc = unicodedata.normalize("NFKC", text)
+    # Fold Cyrillic homoglyphs commonly used in evasion attacks
+    folded = nfkc.translate(CYRILLIC_HOMOGLYPH_TABLE)
     # Strip null bytes, non-printable control characters, and zero-width/format markers (Cc, Cf)
     cleaned_chars = [
-        ch for ch in nfkc
+        ch for ch in folded
         if ch in ("\n", "\r", "\t") or (ch >= " " and unicodedata.category(ch) not in ("Cc", "Cf"))
     ]
     canonical = "".join(cleaned_chars)

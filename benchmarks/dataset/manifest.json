@@ -1,27 +1,37 @@
 {
-  "dataset_version": "benchmark dataset v1",
-  "schema_version": "1.0.0",
-  "creation_date": "2026-09-28",
-  "total_cases": 40,
+  "dataset_version": "2.0.0",
+  "schema_version": "2.0.0",
+  "creation_date": "2026-10-26",
+  "total_cases": 64,
   "categories": [
     "prompt_injection",
     "jailbreak",
-    "data_exfiltration",
+    "sensitive_data",
     "tool_abuse",
     "rag_poisoning",
     "memory_poisoning",
-    "sensitive_data",
-    "agent_attacks"
+    "data_exfiltration",
+    "agent_attacks",
+    "benign",
+    "unicode_evasion",
+    "malformed_oversized",
+    "policy_precedence",
+    "multi_turn"
   ],
   "cases_by_category": {
     "prompt_injection": 11,
     "jailbreak": 7,
-    "data_exfiltration": 3,
+    "sensitive_data": 5,
     "tool_abuse": 5,
     "rag_poisoning": 3,
     "memory_poisoning": 3,
-    "sensitive_data": 5,
-    "agent_attacks": 3
+    "data_exfiltration": 3,
+    "agent_attacks": 3,
+    "benign": 8,
+    "unicode_evasion": 5,
+    "malformed_oversized": 5,
+    "policy_precedence": 4,
+    "multi_turn": 2
   },
-  "safety_attestation": "All cases contain synthetic data and simulated attacks only. Zero actual credentials, PII, or external targets are included."
+  "safety_attestation": "All cases contain synthetic data, synthetic secrets, and simulated attack vectors only. Zero actual credentials, customer PII, or external network targets are included."
 }

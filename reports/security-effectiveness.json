@@ -1,0 +1,415 @@
+{
+  "timestamp": "2026-10-26T23:05:08.949802+00:00",
+  "dataset_version": "2.0.0",
+  "total_cases": 64,
+  "passed": 64,
+  "failed": 0,
+  "accuracy": 1.0,
+  "policy_decision_accuracy": 1.0,
+  "confusion_matrix": {
+    "true_positives": 36,
+    "false_positives": 0,
+    "true_negatives": 28,
+    "false_negatives": 0
+  },
+  "metrics": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "p50_latency_ms": 0.1954,
+    "p95_latency_ms": 0.4881,
+    "p99_latency_ms": 1.0194
+  },
+  "policy_outcomes": {
+    "allow": {
+      "allow": 28,
+      "block": 0,
+      "redact": 0,
+      "warn": 0,
+      "review": 0,
+      "rate_limit": 0
+    },
+    "block": {
+      "allow": 0,
+      "block": 31,
+      "redact": 0,
+      "warn": 0,
+      "review": 0,
+      "rate_limit": 0
+    },
+    "redact": {
+      "allow": 0,
+      "block": 0,
+      "redact": 4,
+      "warn": 0,
+      "review": 0,
+      "rate_limit": 0
+    },
+    "warn": {
+      "allow": 0,
+      "block": 0,
+      "redact": 0,
+      "warn": 0,
+      "review": 0,
+      "rate_limit": 0
+    },
+    "review": {
+      "allow": 0,
+      "block": 0,
+      "redact": 0,
+      "warn": 0,
+      "review": 1,
+      "rate_limit": 0
+    },
+    "rate_limit": {
+      "allow": 0,
+      "block": 0,
+      "redact": 0,
+      "warn": 0,
+      "review": 0,
+      "rate_limit": 0
+    }
+  },
+  "by_category": {
+    "agent_attacks": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 2,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.047,
+        "p50_ms": 0.1655,
+        "mean_ms": 0.6614,
+        "p95_ms": 1.6112,
+        "p99_ms": 1.7397,
+        "max_ms": 1.7718
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "benign": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "true_negatives": 8,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.1789,
+        "p50_ms": 0.1994,
+        "mean_ms": 0.2472,
+        "p95_ms": 0.4408,
+        "p99_ms": 0.5305,
+        "max_ms": 0.5529
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "data_exfiltration": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 2,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.1997,
+        "p50_ms": 0.2809,
+        "mean_ms": 0.2698,
+        "p95_ms": 0.3241,
+        "p99_ms": 0.3279,
+        "max_ms": 0.3289
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "jailbreak": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 5,
+        "false_positives": 0,
+        "true_negatives": 2,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.185,
+        "p50_ms": 0.2323,
+        "mean_ms": 0.2349,
+        "p95_ms": 0.2869,
+        "p99_ms": 0.2945,
+        "max_ms": 0.2964
+      },
+      "detector_findings_match_rate": 0.4286
+    },
+    "malformed_oversized": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 1,
+        "false_positives": 0,
+        "true_negatives": 4,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.0531,
+        "p50_ms": 0.1504,
+        "mean_ms": 0.1794,
+        "p95_ms": 0.3249,
+        "p99_ms": 0.3404,
+        "max_ms": 0.3443
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "memory_poisoning": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 2,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.0388,
+        "p50_ms": 0.0928,
+        "mean_ms": 0.0799,
+        "p95_ms": 0.1065,
+        "p99_ms": 0.1077,
+        "max_ms": 0.108
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "multi_turn": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 1,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.5135,
+        "p50_ms": 0.5455,
+        "mean_ms": 0.5455,
+        "p95_ms": 0.5743,
+        "p99_ms": 0.5769,
+        "max_ms": 0.5775
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "policy_precedence": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 3,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.121,
+        "p50_ms": 0.1944,
+        "mean_ms": 0.2039,
+        "p95_ms": 0.2923,
+        "p99_ms": 0.303,
+        "max_ms": 0.3057
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "prompt_injection": {
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 8,
+        "false_positives": 0,
+        "true_negatives": 3,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.1671,
+        "p50_ms": 0.2176,
+        "mean_ms": 0.2081,
+        "p95_ms": 0.2334,
+        "p99_ms": 0.2349,
+        "max_ms": 0.2353
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "rag_poisoning": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 2,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.0442,
+        "p50_ms": 0.0936,
+        "mean_ms": 0.0821,
+        "p95_ms": 0.107,
+        "p99_ms": 0.1082,
+        "max_ms": 0.1085
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "sensitive_data": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 4,
+        "false_positives": 0,
+        "true_negatives": 1,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.0189,
+        "p50_ms": 0.0204,
+        "mean_ms": 0.0455,
+        "p95_ms": 0.1198,
+        "p99_ms": 0.1387,
+        "max_ms": 0.1434
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "tool_abuse": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 3,
+        "false_positives": 0,
+        "true_negatives": 2,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.0315,
+        "p50_ms": 0.1084,
+        "mean_ms": 0.0982,
+        "p95_ms": 0.1628,
+        "p99_ms": 0.1652,
+        "max_ms": 0.1657
+      },
+      "detector_findings_match_rate": 1.0
+    },
+    "unicode_evasion": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "true_positives": 3,
+        "false_positives": 0,
+        "true_negatives": 2,
+        "false_negatives": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      },
+      "latencies": {
+        "min_ms": 0.1651,
+        "p50_ms": 0.2315,
+        "mean_ms": 0.2284,
+        "p95_ms": 0.2665,
+        "p99_ms": 0.2669,
+        "max_ms": 0.267
+      },
+      "detector_findings_match_rate": 1.0
+    }
+  }
+}
