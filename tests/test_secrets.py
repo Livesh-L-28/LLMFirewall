@@ -10,10 +10,11 @@ from llmfirewall.detectors.secrets.rules import (
     PrivateKeyRule,
     TokenRule,
 )
+# pyrefly: ignore [missing-import]
 from tests.datasets.secret_dataset import (
     SECRET_DETECTION_SAMPLES,
-    SECRET_NON_DETECTION_SAMPLES,
-)
+    SECRET_NON_DETECTION_SAMPLES,)
+
 
 
 def test_shannon_entropy():
