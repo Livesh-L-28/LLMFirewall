@@ -49,11 +49,13 @@ class DependencyDiscoveryProvider(DiscoveryProvider):
         now = time.time()
 
         try:
-            dists = list(importlib.metadata.distributions())[: self.max_packages]
+            dists = list(importlib.metadata.distributions())
         except Exception:
             return []
 
         for dist in dists:
+            if len(assets) >= self.max_packages:
+                break
             try:
                 raw_name = dist.metadata.get("Name", dist.name if hasattr(dist, "name") else "unknown")
                 pkg_name = str(raw_name).strip()
