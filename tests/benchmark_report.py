@@ -13,7 +13,26 @@ DATASETS_DIR = Path(__file__).parent / "datasets"
 
 def load_json(name: str) -> List[Dict[str, Any]]:
     with open(DATASETS_DIR / name, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    synthetic_fixtures = {
+        "{{SYNTHETIC_OPENAI_KEY}}": "".join(["sk-", "proj-", "abc123DEF456ghi789JKL012mno345PQR678stu901VWX234yz567890"]),
+        "{{SYNTHETIC_STRIPE_KEY}}": "".join(["api_key_", "sample_token_x9K2pZ8wR4mQ7vL1yT5j"]),
+        "{{SYNTHETIC_GITHUB_TOKEN}}": "".join(["gh", "p_", "0123456789abcdefghijklmnopqrstuvwxyz"]),
+        "{{SYNTHETIC_POSTGRES_URI}}": "".join(["postgresql://", "dbadmin:", "mY$ecureP@ssw0rd123!", "@localhost:5432/primary_db"]),
+        "{{SYNTHETIC_JWT_TOKEN}}": "".join([
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.",
+            "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.",
+            "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+        ]),
+    }
+    for item in data:
+        if isinstance(item.get("input"), str):
+            for token, val in synthetic_fixtures.items():
+                if token in item["input"]:
+                    item["input"] = item["input"].replace(token, val)
+
+    return data
 
 
 def evaluate_dataset(

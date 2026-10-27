@@ -2,7 +2,7 @@
 
 ### In-Process Defense-in-Depth Security & Policy Enforcement Framework for AI & LLMs
 
-[![PyPI version](https://img.shields.io/badge/pypi-v1.3.1-blue.svg)](https://pypi.org/project/llmfirewall-core/)
+[![PyPI version](https://img.shields.io/badge/pypi-v1.3.2-blue.svg)](https://pypi.org/project/llmfirewall-core/)
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-861%20passed-brightgreen.svg)](docs/benchmarks.md)
