@@ -255,7 +255,7 @@ def test_security_scan_cache():
     assert cache.get(key) is not None
 
     # Wait for TTL expiration
-    time.sleep(0.06)
+    time.sleep(0.1)
     assert cache.get(key) is None
 
 

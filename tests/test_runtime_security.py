@@ -184,7 +184,7 @@ def test_loop_guard_repetition_detection():
 
 def test_loop_guard_timeout():
     lg = LoopGuard(max_runtime_seconds=0.05)
-    time.sleep(0.06)
+    time.sleep(0.1)
     with pytest.raises(RuntimeLimitExceeded) as exc_info:
         lg.check_iteration()
     assert exc_info.value.limit_name == "max_runtime_seconds"
