@@ -579,5 +579,5 @@ def test_lru_and_ttl_session_pruning():
     ttl_engine.record_event(UnifiedSecurityEvent(event_id="e4", correlation_id="s_ttl", request_id="r4", event_type=SecurityEventType.SCAN_REQUEST))
     assert ttl_engine.get_timeline("s_ttl") is not None
 
-    time.sleep(0.06)
+    time.sleep(0.1)
     assert ttl_engine.get_timeline("s_ttl") is None

@@ -111,7 +111,7 @@ def test_scan_cache_ttl_expiration() -> None:
     )
 
     cache.put("k_expire", mock_res)
-    time.sleep(0.10)
+    time.sleep(0.15)
 
     assert cache.get("k_expire") is None
     assert cache.get_metrics().expirations == 1

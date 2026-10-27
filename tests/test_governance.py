@@ -1013,6 +1013,34 @@ def test_library_governance_policy_evaluation_with_genuine_evidence():
         assert "dependency-security" in failed_ids
         assert "configuration-integrity" in failed_ids
 
+        # 6. Evaluate library policy with corrupted/malformed JSON snapshot -> error
+        corrupt_snap_path = os.path.join(tmpdir, "corrupt_snap.json")
+        with open(corrupt_snap_path, "w", encoding="utf-8") as f:
+            f.write("{invalid_json: malformed...")
+        code_corrupt = handle_governance_gate(
+            policy_file="policies/governance/library-policy.yaml",
+            results_file=results_path,
+            snapshot_file=corrupt_snap_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_corrupt != 0
+
+        # 7. Evaluate library policy with schema-invalid snapshot -> error
+        invalid_snap_path = os.path.join(tmpdir, "invalid_snap.json")
+        with open(invalid_snap_path, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"snapshot_id": 12345, "created_at": "invalid", "deployment": "not-dict"}))
+        code_invalid_schema = handle_governance_gate(
+            policy_file="policies/governance/library-policy.yaml",
+            results_file=results_path,
+            snapshot_file=invalid_snap_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_invalid_schema != 0
+
 
 def test_production_policy_strictly_blocks_without_model_identity():
     """Verify production-standard-governance remains unchanged and blocks without model evidence."""
