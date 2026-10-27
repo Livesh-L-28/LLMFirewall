@@ -1389,11 +1389,18 @@ def handle_governance_gate(
     try:
         # 1. Load Policy
         if policy_file:
-            p_path = Path(policy_file).resolve()
-            if not p_path.exists():
-                print(f"Error: Policy file not found: {policy_file}", file=sys.stderr)
-                return EXIT_USAGE_ERROR
-            policy = GovernancePolicy.from_file(str(p_path))
+            if policy_file in ("library", "default_library", "library-release-governance"):
+                policy = GovernancePolicy.default_library_policy()
+            elif policy_file in ("production", "default_production", "production-standard-governance"):
+                policy = GovernancePolicy.default_production_policy()
+            elif policy_file in ("development", "default_development", "development-governance"):
+                policy = GovernancePolicy.default_development_policy()
+            else:
+                p_path = Path(policy_file).resolve()
+                if not p_path.exists():
+                    print(f"Error: Policy file not found: {policy_file}", file=sys.stderr)
+                    return EXIT_USAGE_ERROR
+                policy = GovernancePolicy.from_file(str(p_path))
         else:
             policy = GovernancePolicy.default_production_policy()
 

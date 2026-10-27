@@ -1,0 +1,76 @@
+# LLMFirewall Core Library Security Governance Policy
+# -----------------------------------------------------------------------------
+# Scope & Rationale:
+# Tailored specifically for core library/SDK CI release gating where the package
+# itself does not ship, host, or execute ML model weights or safetensors artifacts.
+# The 'model-integrity' gate is excluded because this repository contains no model
+# artifacts requiring verification.
+# All security gates applicable to the core library itself remain strictly mandatory:
+# - core-security: Full execution and 100% pass rate on LLM security test suites
+# - dependency-security: Cryptographic dependency supply-chain integrity verification
+# - configuration-integrity: Deterministic SHA-256 integrity of active firewall configs
+# - agent-security: Verification of capability controls and sandboxing
+# -----------------------------------------------------------------------------
+name: library-release-governance
+version: "1.0"
+profile: production
+
+# Global severity enforcement: any unresolved critical finding triggers BLOCK
+block_on:
+  - critical
+
+review_on:
+  - high
+
+# Mandatory gates required for library release approval
+require:
+  - core-security
+  - dependency-security
+  - configuration-integrity
+  - agent-security
+
+gates:
+  - id: core-security
+    type: test
+    name: Core LLM Security Tests
+    description: Verifies complete execution of security test suites with 100% pass rate.
+    required: true
+    minimum_pass_rate: 1.0
+    block_on:
+      - critical
+
+  - id: dependency-security
+    type: dependency
+    name: AI Dependency Security
+    description: Enforces cryptographic hash verification of dependencies and detects supply-chain drift.
+    required: true
+    block_on:
+      - critical
+
+  - id: configuration-integrity
+    type: configuration
+    name: Firewall Security Configuration Integrity
+    description: Verifies deterministic SHA-256 integrity hash of active firewall configuration.
+    required: true
+    block_on:
+      - critical
+
+  - id: agent-security
+    type: agent
+    name: Agent Capabilities & Action Control
+    description: Enforces agent capability registry and action authorization boundaries.
+    required: true
+    block_on:
+      - critical
+
+  - id: rag-security
+    type: rag
+    name: RAG Document Trust & Provenance
+    description: Enforces document trust boundaries and provenance tracking.
+    required: false
+    review_on:
+      - high
+
+waivers: []
+evidence_retention_days: 90
+allow_emergency_override: true
