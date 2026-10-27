@@ -807,3 +807,90 @@ def test_cli_gate_and_baseline_commands():
             format_type="json",
         )
         assert code_gate in (0, 1)
+
+
+def test_cli_governance_gate_snapshot_evidence():
+    from llmfirewall.cli.commands import handle_governance_gate, handle_supply_chain_snapshot
+    from llmfirewall.supply_chain.models import ModelArtifact
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        valid_snap_path = os.path.join(tmpdir, "valid_snap.json")
+        invalid_json_path = os.path.join(tmpdir, "invalid.json")
+        missing_snap_path = os.path.join(tmpdir, "nonexistent.json")
+        out_report_path = os.path.join(tmpdir, "gov_out.json")
+
+        # 1. Generate valid snapshot via genuine CLI command
+        code_snap = handle_supply_chain_snapshot(output_path=valid_snap_path)
+        assert code_snap == 0
+        assert os.path.exists(valid_snap_path)
+
+        # 2. Create invalid JSON file
+        with open(invalid_json_path, "w", encoding="utf-8") as f:
+            f.write("{invalid-json-content")
+
+        # 3. Test invalid snapshot path returns usage error (code 2)
+        code_missing = handle_governance_gate(
+            snapshot_file=missing_snap_path,
+            ci=False,
+            format_type="json",
+        )
+        assert code_missing == 2
+
+        # 4. Test corrupted snapshot file returns system error (code 3)
+        code_corrupt = handle_governance_gate(
+            snapshot_file=invalid_json_path,
+            ci=False,
+            format_type="json",
+        )
+        assert code_corrupt == 3
+
+        # 5. Test missing snapshot evidence vs valid snapshot evidence
+        # Missing snapshot: configuration & dependency gates missing evidence
+        handle_governance_gate(
+            snapshot_file=None,
+            ci=False,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert os.path.exists(out_report_path)
+        res_no_snap = json.loads(open(out_report_path, encoding="utf-8").read())
+        failed_gate_ids = [g["gate_id"] for g in res_no_snap.get("failed_gates", [])]
+        assert "dependency-security" in failed_gate_ids
+        assert "configuration-integrity" in failed_gate_ids
+
+        # 6. Valid snapshot: dependency & configuration gates succeed
+        handle_governance_gate(
+            snapshot_file=valid_snap_path,
+            ci=False,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert os.path.exists(out_report_path)
+        res_valid = json.loads(open(out_report_path, encoding="utf-8").read())
+        passed_gate_ids = [g["gate_id"] for g in res_valid.get("passed_gates", [])]
+        assert "dependency-security" in passed_gate_ids
+        assert "configuration-integrity" in passed_gate_ids
+
+        # 7. Snapshot with model identity: verifies propagation to model gate
+        snap_data = json.loads(open(valid_snap_path, encoding="utf-8").read())
+        model_art = ModelArtifact(
+            name="test-llama-3",
+            version="1.0.0",
+            sha256="abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+            provider="local",
+        )
+        snap_data["models"] = [model_art.model_dump(mode="json")]
+        model_snap_path = os.path.join(tmpdir, "model_snap.json")
+        with open(model_snap_path, "w", encoding="utf-8") as f:
+            json.dump(snap_data, f)
+
+        handle_governance_gate(
+            snapshot_file=model_snap_path,
+            ci=False,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        res_model = json.loads(open(out_report_path, encoding="utf-8").read())
+        passed_with_model = [g["gate_id"] for g in res_model.get("passed_gates", [])]
+        assert "model-integrity" in passed_with_model
+

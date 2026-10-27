@@ -1428,11 +1428,22 @@ def handle_governance_gate(
                 return EXIT_USAGE_ERROR
             snapshot = SecuritySnapshot(**json.loads(s_path.read_text(encoding="utf-8")))
 
+        model_id: Optional[dict[str, Any]] = None
+        if snapshot and snapshot.models:
+            first_m = snapshot.models[0]
+            model_id = {
+                "name": first_m.name,
+                "version": first_m.version,
+                "sha256": first_m.sha256,
+                "provider": first_m.provider or "local",
+            }
+
         evidence = SecurityEvidence(
             release_id=f"REL-{int(time.time())}",
             evaluation_report=eval_report,
             test_results=test_results,
             snapshot=snapshot,
+            model_identity=model_id,
             policy_version=policy.version,
             configuration_hash=snapshot.configurations[0].sha256 if (snapshot and snapshot.configurations) else None,
             dependency_hash=snapshot.snapshot_hash if snapshot else None,
