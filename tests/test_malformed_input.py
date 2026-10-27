@@ -27,6 +27,7 @@ class TestMalformedInputHandling:
             "NaN",
             "Infinity",
         ],
+        ids=lambda s: f"len_{len(s)}" if len(s) > 50 else repr(s),
     )
     def test_unusual_inputs_return_valid_scan_result(self, default_firewall: Firewall, edge_input: str) -> None:
         """Engine processes boundary inputs cleanly without unhandled exceptions."""

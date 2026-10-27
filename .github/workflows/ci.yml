@@ -20,6 +20,10 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
+      - name: Disable Git Auto-CRLF
+        run: git config --global core.autocrlf false
+        shell: bash
+
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
