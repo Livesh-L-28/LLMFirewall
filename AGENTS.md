@@ -9,7 +9,7 @@ This document is the authoritative instruction manual for AI coding agents (Clau
 - **Distribution Name (PyPI)**: `llmfirewall-core` (`pip install llmfirewall-core`)
 - **Python Module**: `llmfirewall` (`import llmfirewall`)
 - **CLI Binary**: `llmfirewall`
-- **Current Version**: `1.3.0`
+- **Current Version**: `1.3.1`
 - **Minimal Core Dependencies**: `pydantic>=2.0.0`, `pyyaml>=6.0.0` (zero external network/database dependencies).
 
 ### Directory Layout
