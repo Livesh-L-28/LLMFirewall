@@ -113,10 +113,10 @@ class WebhookAlertSink:
             self._dispatched_alerts.append(alert_record)
             return alert_record
 
-        # 4. Outbound HTTP dispatch
+        from llmfirewall._version import __version__
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "LLMFirewall-AlertSink/1.2.0",
+            "User-Agent": f"LLMFirewall-AlertSink/{__version__}",
         }
         if signature:
             headers["X-LLMFirewall-Signature"] = signature

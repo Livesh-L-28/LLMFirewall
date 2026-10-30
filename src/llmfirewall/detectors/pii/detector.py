@@ -25,6 +25,7 @@ class PIIDetector(Detector):
       - PhoneSubDetector: International / North American phone numbers.
       - IPSubDetector: IPv4 and IPv6 addresses with octet bounds validation.
       - PaymentSubDetector: Credit/debit cards with Luhn checksum validation.
+      - SSNSubDetector: Social Security Numbers with SSA structural validation.
       - CustomPatternSubDetector: User-defined organizational regex patterns.
       
     Privacy by Default:
@@ -47,7 +48,7 @@ class PIIDetector(Detector):
     ) -> None:
         """
         Args:
-            enabled_categories: Set of category names to run ('email', 'phone', 'ip', 'payment').
+            enabled_categories: Set of category names to run ('email', 'phone', 'ip', 'payment', 'ssn').
                                 Defaults to all categories.
             custom_sub_detectors: Optional list of additional custom PIISubDetectors.
             store_matched_text: If True, include raw matched string in Finding.matched_text.
@@ -62,6 +63,7 @@ class PIIDetector(Detector):
             PhoneSubDetector(),
             IPSubDetector(),
             PaymentSubDetector(),
+            SSNSubDetector(),
         ]
 
         if custom_sub_detectors:

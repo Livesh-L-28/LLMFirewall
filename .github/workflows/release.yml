@@ -7,19 +7,54 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  build-and-publish:
-    name: Build, Audit & Publish Release
+  build-and-verify:
+    name: Build, Audit & Verify Artifacts
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/llmfirewall-core
+    permissions:
+      contents: read
     steps:
       # Pin actions/checkout to v4.2.2 (11bd71901bbe5b1630ceea73d27597364c9af683)
       - name: Checkout Triggering Release Tag
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Enforce Release Tag Ancestry on Protected Main Branch
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          echo "Resolving target commit for tag: ${RELEASE_TAG}"
+          TAG_COMMIT=$(git rev-parse "${RELEASE_TAG}^{commit}" 2>/dev/null || true)
+          if [ -z "$TAG_COMMIT" ]; then
+              echo "ERROR: Unable to resolve release tag '${RELEASE_TAG}' to a valid commit."
+              exit 1
+          fi
+          echo "Peeled tag commit SHA: ${TAG_COMMIT}"
+
+          # Ensure origin/main is fetched and available to ancestry check
+          if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+              echo "Fetching origin/main to verify release ancestry..."
+              git fetch origin main:refs/remotes/origin/main --depth=0
+          fi
+
+          MAIN_COMMIT=$(git rev-parse origin/main)
+          echo "Current origin/main commit SHA: ${MAIN_COMMIT}"
+
+          # Verify ancestry: tag commit MUST be reachable from origin/main
+          if ! git merge-base --is-ancestor "${TAG_COMMIT}" origin/main; then
+              echo "=========================================================================="
+              echo "CRITICAL RELEASE GOVERNANCE VIOLATION:"
+              echo "Tag '${RELEASE_TAG}' (${TAG_COMMIT}) is NOT reachable from origin/main (${MAIN_COMMIT})."
+              echo "Releases may ONLY be built and published from commits on the protected main branch."
+              echo "=========================================================================="
+              exit 1
+          fi
+
+          echo "Governance verification passed: tag '${RELEASE_TAG}' is an ancestor of origin/main."
 
       # Pin actions/setup-python to v5.4.0 (42375524e23c412d93fb67b49958b491fce71c38)
       - name: Set up Python
@@ -125,6 +160,15 @@ jobs:
         with:
           name: SHA256SUMS.txt
           path: dist-manifest/SHA256SUMS.txt
+          retention-days: 5
+
+      # Upload built distributions for the isolated publishing job
+      - name: Upload Release Distributions Artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: release-distributions
+          path: dist-ci/
+          retention-days: 1
 
       - name: Test Wheel in Isolated Virtualenv
         env:
@@ -170,11 +214,40 @@ jobs:
           deactivate
           rm -rf venv_sdist
 
+  publish:
+    name: Publish Release to PyPI
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/llmfirewall-core
+    permissions:
+      contents: read
+      id-token: write  # Least privilege: OIDC publication scope granted ONLY to publishing job
+    steps:
+      # Pin actions/download-artifact to v4.1.9 (cc203385981b70ca67e1cc392babf9cc229d5806)
+      - name: Download Release Distributions
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: release-distributions
+          path: dist-publish/
+
+      - name: Download Checksum Manifest
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: SHA256SUMS.txt
+          path: dist-manifest/
+
+      - name: Verify Artifact Integrity Before Publishing
+        run: |
+          set -euo pipefail
+          echo "Verifying SHA-256 checksums of distribution artifacts prior to PyPI publication:"
+          (cd dist-publish && sha256sum -c ../dist-manifest/SHA256SUMS.txt)
+          echo "Cryptographic integrity verified: dist-publish matches exact build output."
+
       # Pin pypa/gh-action-pypi-publish to v1.14.3 (7245906fb61fa33a13554f9d5fb856fe61758086)
       # Fail-closed: skip-existing removed to reject duplicate or partial uploads
       - name: Publish distributions to PyPI
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
-          packages-dir: dist-ci/
-
-
+          packages-dir: dist-publish/

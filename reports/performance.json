@@ -1,21 +1,223 @@
 {
-  "iterations": 500,
-  "without_firewall": {
-    "mean_ms": 0.0001,
-    "p50_ms": 0.0001,
-    "p95_ms": 0.0001,
-    "p99_ms": 0.0002,
-    "min_ms": 0.0,
-    "max_ms": 0.0004
+  "timestamp": "2026-10-26T23:05:08.949808+00:00",
+  "environment": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "system": "Darwin",
+    "python_version": "3.12.1",
+    "cpu_architecture": "arm64",
+    "logical_cpus": 8
   },
-  "with_firewall": {
-    "mean_ms": 0.0276,
-    "p50_ms": 0.0235,
-    "p95_ms": 0.0486,
-    "p99_ms": 0.1291,
-    "min_ms": 0.0225,
-    "max_ms": 0.2334
+  "cold_scanning": {
+    "min_ms": 0.1697,
+    "p50_ms": 0.1725,
+    "mean_ms": 0.177,
+    "p95_ms": 0.1841,
+    "p99_ms": 0.2114,
+    "max_ms": 0.4059,
+    "throughput_req_sec": 5650.73,
+    "sample_count": 100,
+    "error_rate": 0.0
   },
-  "added_latency_p50_ms": 0.0234,
-  "sub_millisecond_overhead": true
+  "warm_cache_scanning": {
+    "min_ms": 0.0364,
+    "p50_ms": 0.0367,
+    "mean_ms": 0.0372,
+    "p95_ms": 0.0382,
+    "p99_ms": 0.0461,
+    "max_ms": 0.0639,
+    "throughput_req_sec": 26911.26,
+    "sample_count": 200,
+    "error_rate": 0.0,
+    "disclosure": "Cache-hit path only. Do NOT present as general request latency."
+  },
+  "single_detectors": {
+    "iterations_per_detector": 150,
+    "prompt_injection": {
+      "min_ms": 0.0644,
+      "p50_ms": 0.0646,
+      "mean_ms": 0.0648,
+      "p95_ms": 0.0656,
+      "p99_ms": 0.0684,
+      "max_ms": 0.0706,
+      "ops_sec": 15426.23
+    },
+    "pii": {
+      "min_ms": 0.0375,
+      "p50_ms": 0.0377,
+      "mean_ms": 0.0379,
+      "p95_ms": 0.0383,
+      "p99_ms": 0.0404,
+      "max_ms": 0.0437,
+      "ops_sec": 26417.98
+    },
+    "secrets": {
+      "min_ms": 0.029,
+      "p50_ms": 0.0294,
+      "mean_ms": 0.0294,
+      "p95_ms": 0.0296,
+      "p99_ms": 0.0299,
+      "max_ms": 0.0302,
+      "ops_sec": 34049.3
+    }
+  },
+  "full_pipeline": {
+    "min_ms": 0.123,
+    "p50_ms": 0.1253,
+    "mean_ms": 0.1289,
+    "p95_ms": 0.1311,
+    "p99_ms": 0.1535,
+    "max_ms": 0.674,
+    "throughput_req_sec": 7757.96,
+    "iterations": 200
+  },
+  "concurrency": {
+    "1_workers": {
+      "min_ms": 0.127,
+      "p50_ms": 0.1293,
+      "mean_ms": 0.1306,
+      "p95_ms": 0.1352,
+      "p99_ms": 0.164,
+      "max_ms": 0.172,
+      "workers": 1,
+      "requests": 200,
+      "wall_clock_time_sec": 0.0274,
+      "aggregate_throughput_req_sec": 7305.0,
+      "error_rate": 0.0
+    },
+    "2_workers": {
+      "min_ms": 0.1266,
+      "p50_ms": 0.1292,
+      "mean_ms": 0.2596,
+      "p95_ms": 0.1376,
+      "p99_ms": 0.1769,
+      "max_ms": 25.8306,
+      "workers": 2,
+      "requests": 200,
+      "wall_clock_time_sec": 0.0274,
+      "aggregate_throughput_req_sec": 7300.95,
+      "error_rate": 0.0
+    },
+    "4_workers": {
+      "min_ms": 0.1342,
+      "p50_ms": 0.1529,
+      "mean_ms": 0.5614,
+      "p95_ms": 1.6622,
+      "p99_ms": 8.9897,
+      "max_ms": 10.0067,
+      "workers": 4,
+      "requests": 200,
+      "wall_clock_time_sec": 0.0323,
+      "aggregate_throughput_req_sec": 6188.19,
+      "error_rate": 0.0
+    },
+    "8_workers": {
+      "min_ms": 0.1304,
+      "p50_ms": 0.1331,
+      "mean_ms": 0.1395,
+      "p95_ms": 0.1524,
+      "p99_ms": 0.1807,
+      "max_ms": 1.0026,
+      "workers": 8,
+      "requests": 200,
+      "wall_clock_time_sec": 0.0287,
+      "aggregate_throughput_req_sec": 6974.39,
+      "error_rate": 0.0
+    }
+  },
+  "payload_scaling": {
+    "small_100B": {
+      "min_ms": 0.1314,
+      "p50_ms": 0.1344,
+      "mean_ms": 0.136,
+      "p95_ms": 0.1432,
+      "p99_ms": 0.1652,
+      "max_ms": 0.1807,
+      "payload_bytes": 95,
+      "throughput_req_sec": 7353.57,
+      "throughput_mb_sec": 0.67
+    },
+    "medium_1KB": {
+      "min_ms": 0.7157,
+      "p50_ms": 0.7198,
+      "mean_ms": 0.7214,
+      "p95_ms": 0.7304,
+      "p99_ms": 0.75,
+      "max_ms": 0.7502,
+      "payload_bytes": 1000,
+      "throughput_req_sec": 1386.23,
+      "throughput_mb_sec": 1.32
+    },
+    "large_10KB": {
+      "min_ms": 6.4793,
+      "p50_ms": 6.5046,
+      "mean_ms": 6.538,
+      "p95_ms": 6.7536,
+      "p99_ms": 6.869,
+      "max_ms": 6.892,
+      "payload_bytes": 10000,
+      "throughput_req_sec": 152.95,
+      "throughput_mb_sec": 1.46
+    },
+    "oversized_50KB": {
+      "min_ms": 32.1258,
+      "p50_ms": 32.283,
+      "mean_ms": 32.3371,
+      "p95_ms": 32.7972,
+      "p99_ms": 33.0486,
+      "max_ms": 33.5698,
+      "payload_bytes": 50000,
+      "throughput_req_sec": 30.92,
+      "throughput_mb_sec": 1.47
+    }
+  },
+  "streaming_guard": {
+    "streams_evaluated": 10,
+    "total_chunks_processed": 10,
+    "per_chunk_latency": {
+      "min_ms": 0.0,
+      "p50_ms": 0.0001,
+      "mean_ms": 0.0002,
+      "p95_ms": 0.0006,
+      "p99_ms": 0.0008,
+      "max_ms": 0.0008
+    },
+    "per_stream_latency": {
+      "min_ms": 0.1649,
+      "p50_ms": 0.1705,
+      "mean_ms": 0.1796,
+      "p95_ms": 0.2208,
+      "p99_ms": 0.2448,
+      "max_ms": 0.2507
+    },
+    "throughput_chunks_sec": 5569.35,
+    "error_rate": 0.0
+  },
+  "agent_and_rag_paths": {
+    "iterations": 100,
+    "tool_call_inspection": {
+      "min_ms": 0.1009,
+      "p50_ms": 0.1044,
+      "mean_ms": 0.1095,
+      "p95_ms": 0.1125,
+      "p99_ms": 0.17,
+      "max_ms": 0.4383,
+      "ops_sec": 9135.83
+    },
+    "rag_context_filtering": {
+      "min_ms": 0.361,
+      "p50_ms": 0.3684,
+      "mean_ms": 0.3755,
+      "p95_ms": 0.403,
+      "p99_ms": 0.4285,
+      "max_ms": 0.6509,
+      "ops_sec": 2663.42
+    }
+  },
+  "memory_profiling": {
+    "iterations": 200,
+    "baseline_memory_mb": 0.037,
+    "peak_memory_mb": 1.566,
+    "net_heap_delta_mb": 1.524,
+    "estimated_growth_per_1000_req_mb": 7.622
+  }
 }

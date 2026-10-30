@@ -729,6 +729,116 @@ def build_parser() -> argparse.ArgumentParser:
     protect_parser.add_argument("--json", action="store_true", dest="json_mode", help="Output as JSON.")
     protect_parser.add_argument("--out-file", "-o", dest="output_file", default=None, help="Write output to file.")
 
+    # integrate / dev subcommand (Developer Scaffolding & Integration)
+    integrate_parser = subparsers.add_parser(
+        "integrate",
+        aliases=["dev"],
+        help="Developer integration assistance, framework detection, scaffolding, and validation.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    integrate_parser.add_argument(
+        "action",
+        nargs="?",
+        default="detect",
+        choices=["detect", "scaffold", "recipe", "template", "validate", "list"],
+        help="Action to perform: detect (default), scaffold, validate, list.",
+    )
+    integrate_parser.add_argument(
+        "--recipe",
+        "-r",
+        dest="recipe",
+        default=None,
+        help="Target recipe name: fastapi, asgi, streaming, tools, rag.",
+    )
+    integrate_parser.add_argument(
+        "--write-app",
+        dest="write_app",
+        default=None,
+        help="Path to write application boilerplate safely.",
+    )
+    integrate_parser.add_argument(
+        "--write-test",
+        dest="write_test",
+        default=None,
+        help="Path to write verification test suite safely.",
+    )
+    integrate_parser.add_argument(
+        "--force",
+        action="store_true",
+        dest="force",
+        help="Overwrite destination files if they already exist.",
+    )
+    integrate_parser.add_argument(
+        "--path",
+        dest="target_path",
+        default=".",
+        help="Path to target project or directory (default: .).",
+    )
+    integrate_parser.add_argument(
+        "--policy",
+        "-p",
+        dest="policy_file",
+        default=None,
+        help="Path to policy YAML/JSON to validate.",
+    )
+    integrate_parser.add_argument(
+        "--format",
+        "-f",
+        dest="format_type",
+        choices=["human", "json"],
+        default="human",
+        help="Output format (human or json).",
+    )
+    integrate_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_mode",
+        help="Output as JSON.",
+    )
+    integrate_parser.add_argument(
+        "--out-file",
+        "-o",
+        dest="output_file",
+        default=None,
+        help="Write output to file.",
+    )
+
+    # benchmark subcommand (Phase 2: Security Effectiveness & Performance Benchmarking)
+    benchmark_parser = subparsers.add_parser(
+        "benchmark",
+        help="Execute reproducible security effectiveness and runtime performance benchmarks.",
+    )
+    benchmark_parser.add_argument(
+        "--suite",
+        choices=["all", "security", "perf"],
+        default="all",
+        help="Benchmark suite to run: 'all', 'security', or 'perf' (default: all).",
+    )
+    benchmark_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_mode",
+        help="Output structured JSON report to stdout.",
+    )
+    benchmark_parser.add_argument(
+        "--dataset",
+        dest="dataset_dir",
+        default=None,
+        help="Custom dataset directory path.",
+    )
+    benchmark_parser.add_argument(
+        "--output",
+        dest="output_dir",
+        default=None,
+        help="Custom output reports directory path.",
+    )
+    benchmark_parser.add_argument(
+        "--ci",
+        action="store_true",
+        dest="ci",
+        help="Enforce CI regression thresholds (exit 1 if unexpected regressions detected).",
+    )
+
     return parser
 
 
@@ -1478,6 +1588,70 @@ def main(argv: Optional[List[str]] = None) -> int:
             format_type=fmt,
             output_file=args.output_file,
         )
+
+    if args.subcommand in ("integrate", "dev"):
+        from llmfirewall.developer.cli import handle_integrate
+
+        fmt = "json" if getattr(args, "json_mode", False) else getattr(args, "format_type", "human")
+        return handle_integrate(
+            action=args.action,
+            target_path=args.target_path,
+            recipe=args.recipe,
+            write_app=args.write_app,
+            write_test=args.write_test,
+            force=args.force,
+            policy_file=args.policy_file,
+            json_mode=getattr(args, "json_mode", False),
+            format_type=fmt,
+            output_file=args.output_file,
+        )
+
+    if args.subcommand == "benchmark":
+        import json
+        from pathlib import Path
+        from benchmarks.runners.security_benchmark_runner import SecurityBenchmarkRunner
+
+        runner = SecurityBenchmarkRunner(
+            dataset_dir=Path(args.dataset_dir) if args.dataset_dir else None,
+            output_dir=Path(args.output_dir) if args.output_dir else None,
+        )
+
+        if args.suite == "security":
+            summary = runner.run_security_suite()
+        elif args.suite == "perf":
+            summary = runner.benchmark_performance()
+        else:
+            summary = runner.run_all()
+
+        if getattr(args, "json_mode", False):
+            print(json.dumps(summary, indent=2))
+            return EXIT_ALLOWED
+
+        print("=" * 80)
+        print(f"      LLMFirewall Core v{__version__}: Security Effectiveness & Performance Benchmark")
+        print("=" * 80)
+        if "security_effectiveness" in summary:
+            sec = summary["security_effectiveness"]
+            print(f"Total Test Cases:       {sec['total_cases']}")
+            print(f"Passed Policy Actions:  {sec['passed']} / {sec['total_cases']} ({sec['policy_decision_accuracy'] * 100:.2f}%)")
+            print(f"Precision:              {sec['metrics']['precision'] * 100:.2f}%")
+            print(f"Recall:                 {sec['metrics']['recall'] * 100:.2f}%")
+            print(f"F1 Score:               {sec['metrics']['f1_score'] * 100:.2f}%")
+            print(f"False Positive Rate:    {sec['metrics']['false_positive_rate'] * 100:.2f}%")
+            print(f"False Negative Rate:    {sec['metrics']['false_negative_rate'] * 100:.2f}%")
+        if "performance" in summary:
+            perf = summary["performance"]
+            cold = perf["cold_scanning"]
+            warm = perf["warm_cache_scanning"]
+            print(f"Cold Scan P50:          {cold['p50_ms']:.3f} ms ({cold['throughput_req_sec']} req/s)")
+            print(f"Warm-Cache Scan P50:    {warm['p50_ms']:.3f} ms ({warm['throughput_req_sec']} req/s)")
+
+        if getattr(args, "ci", False):
+            fns = summary.get("security_effectiveness", {}).get("confusion_matrix", {}).get("false_negatives", 0)
+            fps = summary.get("security_effectiveness", {}).get("confusion_matrix", {}).get("false_positives", 0)
+            if fps > 0 or fns > 1:
+                return 1
+        return EXIT_ALLOWED
 
     return EXIT_USAGE_ERROR
 

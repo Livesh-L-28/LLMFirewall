@@ -12,6 +12,12 @@ from llmfirewall.persistence import (
     SQLitePersistenceAdapter,
     StorageFilter,
 )
+from llmfirewall.persistence.encryption import _HAS_CRYPTOGRAPHY
+
+crypto_required = pytest.mark.skipif(
+    not _HAS_CRYPTOGRAPHY,
+    reason="cryptography library is not installed (install with: pip install 'llmfirewall-core[crypto]')",
+)
 
 
 def test_record_checksum_and_tamper_detection():
@@ -120,6 +126,7 @@ def test_sqlite_persistence_adapter(tmp_path):
     adapter.close()
 
 
+@crypto_required
 def test_encrypted_storage_adapter():
     """Verify EncryptedStorageAdapter secures payload at rest and prevents tampering."""
     raw_adapter = InMemoryPersistenceAdapter()
@@ -159,6 +166,7 @@ def test_encrypted_storage_adapter():
         crypto_adapter.get("enc-tampered")
 
 
+@crypto_required
 def test_encrypted_storage_single_bit_tamper_detection():
     """Verify that flipping even a single bit in ciphertext or tag fails authentication."""
     import base64
@@ -187,6 +195,7 @@ def test_encrypted_storage_single_bit_tamper_detection():
         crypto_adapter.get("rec-bitflip")
 
 
+@crypto_required
 def test_encrypted_storage_wrong_key_rejection():
     """Verify that an adapter initialized with a different key cannot decrypt payloads."""
     raw_adapter = InMemoryPersistenceAdapter()
@@ -208,6 +217,7 @@ def test_encrypted_storage_wrong_key_rejection():
         adapter_b.get("rec-secret-a")
 
 
+@crypto_required
 def test_encrypted_storage_key_rotation():
     """Verify key rotation: new key writes, but previous_keys decrypts legacy records."""
     raw_adapter = InMemoryPersistenceAdapter()
@@ -230,6 +240,7 @@ def test_encrypted_storage_key_rotation():
     assert rotated_adapter.get("rec-new").payload["phase"] == "v1.2"
 
 
+@crypto_required
 def test_encrypted_storage_aad_swap_attack_prevention():
     """Verify that swapping an encrypted payload to a different record ID or tenant fails AAD check."""
     raw_adapter = InMemoryPersistenceAdapter()
@@ -259,6 +270,7 @@ def test_encrypted_storage_aad_swap_attack_prevention():
         crypto_adapter.get("rec-attacker")
 
 
+@crypto_required
 def test_encrypted_storage_confidentiality_and_nonce_uniqueness():
     """Verify semantic security: identical plaintexts produce distinct nonces and distinct ciphertexts."""
     raw_adapter = InMemoryPersistenceAdapter()
@@ -281,6 +293,7 @@ def test_encrypted_storage_confidentiality_and_nonce_uniqueness():
     assert len(ciphertexts) == 50
 
 
+@crypto_required
 def test_encrypted_storage_malformed_and_key_masking():
     """Verify malformed envelope rejection and key masking in __repr__."""
     raw_adapter = InMemoryPersistenceAdapter()
@@ -306,3 +319,13 @@ def test_encrypted_storage_malformed_and_key_masking():
     with pytest.raises(ValueError, match="Integrity check failed"):
         crypto_adapter.get("rec-malformed")
 
+
+def test_encrypted_storage_adapter_absent_dependency_error(monkeypatch):
+    """Verify EncryptedStorageAdapter fails closed with actionable message when cryptography is absent."""
+    import llmfirewall.persistence.encryption as enc_module
+
+    raw_adapter = InMemoryPersistenceAdapter()
+    monkeypatch.setattr(enc_module, "_HAS_CRYPTOGRAPHY", False)
+
+    with pytest.raises(RuntimeError, match="Install it with 'pip install cryptography' or 'pip install llmfirewall-core\\[crypto\\]'"):
+        enc_module.EncryptedStorageAdapter(raw_adapter, secret_key="super-secret-key-32-chars-long!")

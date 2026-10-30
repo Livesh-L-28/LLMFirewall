@@ -260,7 +260,7 @@ class CredentialConfigRule(SecretRule):
 
     def __init__(self) -> None:
         self._patterns = [
-            # URI Connection Strings: postgresql://user:password@host:port/db
+            # URI Connection Strings pattern: <protocol>://<user>:<password>@<host>:<port>/<db>
             (
                 re.compile(
                     r"\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp|mssql)://"

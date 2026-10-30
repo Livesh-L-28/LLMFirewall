@@ -1,116 +1,675 @@
 {
-  "timestamp": "2026-10-05T01:41:46.045624+00:00",
-  "version": "1.0.0",
-  "dataset_version": "benchmark dataset v1",
+  "benchmark_version": "2.0.0",
+  "dataset_identifier": "LLMFirewall-Core-Eval-Corpus-v2.0",
+  "package_source_revision": "8e09bc2",
+  "timestamp": "2026-10-26T23:05:13.326796+00:00",
+  "llmfirewall_version": "1.3.0",
   "environment": {
     "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "system": "Darwin",
     "python_version": "3.12.1",
-    "cpu_architecture": "arm64"
+    "cpu_architecture": "arm64",
+    "logical_cpus": 8
   },
-  "total_cases": 40,
-  "passed": 40,
-  "failed": 0,
-  "accuracy": 1.0,
-  "confusion_matrix": {
-    "true_positives": 28,
-    "false_positives": 0,
-    "true_negatives": 12,
-    "false_negatives": 0
-  },
-  "metrics": {
-    "precision": 1.0,
-    "recall": 1.0,
-    "false_positive_rate": 0.0,
-    "false_negative_rate": 0.0,
-    "p50_latency_ms": 0.153,
-    "p95_latency_ms": 0.639,
-    "p99_latency_ms": 2.216
-  },
-  "by_category": {
-    "agent_attacks": {
-      "total": 3,
-      "passed": 3,
-      "failed": 0,
-      "p50_ms": 0.218,
-      "p95_ms": 2.216,
-      "accuracy": 1.0
-    },
-    "data_exfiltration": {
-      "total": 3,
-      "passed": 3,
-      "failed": 0,
-      "p50_ms": 0.213,
-      "p95_ms": 0.639,
-      "accuracy": 1.0
-    },
-    "jailbreak": {
-      "total": 7,
-      "passed": 7,
-      "failed": 0,
-      "p50_ms": 0.166,
-      "p95_ms": 0.198,
-      "accuracy": 1.0
-    },
-    "memory_poisoning": {
-      "total": 3,
-      "passed": 3,
-      "failed": 0,
-      "p50_ms": 0.086,
-      "p95_ms": 0.102,
-      "accuracy": 1.0
-    },
-    "prompt_injection": {
-      "total": 11,
-      "passed": 11,
-      "failed": 0,
-      "p50_ms": 0.153,
-      "p95_ms": 0.413,
-      "accuracy": 1.0
-    },
-    "rag_poisoning": {
-      "total": 3,
-      "passed": 3,
-      "failed": 0,
-      "p50_ms": 0.096,
-      "p95_ms": 0.127,
-      "accuracy": 1.0
-    },
-    "sensitive_data": {
-      "total": 5,
-      "passed": 5,
-      "failed": 0,
-      "p50_ms": 0.027,
-      "p95_ms": 0.173,
-      "accuracy": 1.0
-    },
-    "tool_abuse": {
-      "total": 5,
-      "passed": 5,
-      "failed": 0,
-      "p50_ms": 0.109,
-      "p95_ms": 0.168,
-      "accuracy": 1.0
+  "methodology": {
+    "description": "Deterministic empirical evaluation of security effectiveness and runtime performance.",
+    "reproducibility": "All test cases are versioned in YAML, run locally without external network or LLM dependencies.",
+    "isolation_rules": "Cache-hit microbenchmarks are explicitly measured and reported separately from cold general request latencies.",
+    "metric_definitions": {
+      "true_positives": "Attacks where policy enforcement blocked, redacted, or alerted (actual_action != 'allow').",
+      "false_positives": "Benign inputs incorrectly flagged or blocked by security policies (actual_action != 'allow').",
+      "true_negatives": "Benign inputs correctly permitted by security policies (actual_action == 'allow').",
+      "false_negatives": "Attacks improperly permitted without enforcement (actual_action == 'allow').",
+      "precision": "TP / (TP + FP) \u2014 proportion of triggered alerts that were genuine attacks.",
+      "recall": "TP / (TP + FN) \u2014 proportion of attacks successfully identified and mitigated.",
+      "f1_score": "2 * (Precision * Recall) / (Precision + Recall) \u2014 harmonic mean of precision and recall.",
+      "policy_decision_accuracy": "Exact matches between expected policy action (ALLOW, BLOCK, REDACT, WARN) and actual action."
     }
   },
-  "performance_overhead": {
-    "iterations": 500,
-    "without_firewall": {
-      "mean_ms": 0.0001,
-      "p50_ms": 0.0001,
-      "p95_ms": 0.0001,
-      "p99_ms": 0.0002,
-      "min_ms": 0.0,
-      "max_ms": 0.0004
+  "security_effectiveness": {
+    "timestamp": "2026-10-26T23:05:08.949802+00:00",
+    "dataset_version": "2.0.0",
+    "total_cases": 64,
+    "passed": 64,
+    "failed": 0,
+    "accuracy": 1.0,
+    "policy_decision_accuracy": 1.0,
+    "confusion_matrix": {
+      "true_positives": 36,
+      "false_positives": 0,
+      "true_negatives": 28,
+      "false_negatives": 0
     },
-    "with_firewall": {
-      "mean_ms": 0.0276,
-      "p50_ms": 0.0235,
-      "p95_ms": 0.0486,
-      "p99_ms": 0.1291,
-      "min_ms": 0.0225,
-      "max_ms": 0.2334
+    "metrics": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "p50_latency_ms": 0.1954,
+      "p95_latency_ms": 0.4881,
+      "p99_latency_ms": 1.0194
     },
-    "added_latency_p50_ms": 0.0234,
-    "sub_millisecond_overhead": true
+    "policy_outcomes": {
+      "allow": {
+        "allow": 28,
+        "block": 0,
+        "redact": 0,
+        "warn": 0,
+        "review": 0,
+        "rate_limit": 0
+      },
+      "block": {
+        "allow": 0,
+        "block": 31,
+        "redact": 0,
+        "warn": 0,
+        "review": 0,
+        "rate_limit": 0
+      },
+      "redact": {
+        "allow": 0,
+        "block": 0,
+        "redact": 4,
+        "warn": 0,
+        "review": 0,
+        "rate_limit": 0
+      },
+      "warn": {
+        "allow": 0,
+        "block": 0,
+        "redact": 0,
+        "warn": 0,
+        "review": 0,
+        "rate_limit": 0
+      },
+      "review": {
+        "allow": 0,
+        "block": 0,
+        "redact": 0,
+        "warn": 0,
+        "review": 1,
+        "rate_limit": 0
+      },
+      "rate_limit": {
+        "allow": 0,
+        "block": 0,
+        "redact": 0,
+        "warn": 0,
+        "review": 0,
+        "rate_limit": 0
+      }
+    },
+    "by_category": {
+      "agent_attacks": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 2,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.047,
+          "p50_ms": 0.1655,
+          "mean_ms": 0.6614,
+          "p95_ms": 1.6112,
+          "p99_ms": 1.7397,
+          "max_ms": 1.7718
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "benign": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 0,
+          "false_positives": 0,
+          "true_negatives": 8,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.1789,
+          "p50_ms": 0.1994,
+          "mean_ms": 0.2472,
+          "p95_ms": 0.4408,
+          "p99_ms": 0.5305,
+          "max_ms": 0.5529
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "data_exfiltration": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 2,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.1997,
+          "p50_ms": 0.2809,
+          "mean_ms": 0.2698,
+          "p95_ms": 0.3241,
+          "p99_ms": 0.3279,
+          "max_ms": 0.3289
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "jailbreak": {
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 5,
+          "false_positives": 0,
+          "true_negatives": 2,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.185,
+          "p50_ms": 0.2323,
+          "mean_ms": 0.2349,
+          "p95_ms": 0.2869,
+          "p99_ms": 0.2945,
+          "max_ms": 0.2964
+        },
+        "detector_findings_match_rate": 0.4286
+      },
+      "malformed_oversized": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 1,
+          "false_positives": 0,
+          "true_negatives": 4,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.0531,
+          "p50_ms": 0.1504,
+          "mean_ms": 0.1794,
+          "p95_ms": 0.3249,
+          "p99_ms": 0.3404,
+          "max_ms": 0.3443
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "memory_poisoning": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 2,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.0388,
+          "p50_ms": 0.0928,
+          "mean_ms": 0.0799,
+          "p95_ms": 0.1065,
+          "p99_ms": 0.1077,
+          "max_ms": 0.108
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "multi_turn": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 1,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.5135,
+          "p50_ms": 0.5455,
+          "mean_ms": 0.5455,
+          "p95_ms": 0.5743,
+          "p99_ms": 0.5769,
+          "max_ms": 0.5775
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "policy_precedence": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 3,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.121,
+          "p50_ms": 0.1944,
+          "mean_ms": 0.2039,
+          "p95_ms": 0.2923,
+          "p99_ms": 0.303,
+          "max_ms": 0.3057
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "prompt_injection": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 8,
+          "false_positives": 0,
+          "true_negatives": 3,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.1671,
+          "p50_ms": 0.2176,
+          "mean_ms": 0.2081,
+          "p95_ms": 0.2334,
+          "p99_ms": 0.2349,
+          "max_ms": 0.2353
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "rag_poisoning": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 2,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.0442,
+          "p50_ms": 0.0936,
+          "mean_ms": 0.0821,
+          "p95_ms": 0.107,
+          "p99_ms": 0.1082,
+          "max_ms": 0.1085
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "sensitive_data": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 4,
+          "false_positives": 0,
+          "true_negatives": 1,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.0189,
+          "p50_ms": 0.0204,
+          "mean_ms": 0.0455,
+          "p95_ms": 0.1198,
+          "p99_ms": 0.1387,
+          "max_ms": 0.1434
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "tool_abuse": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 3,
+          "false_positives": 0,
+          "true_negatives": 2,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.0315,
+          "p50_ms": 0.1084,
+          "mean_ms": 0.0982,
+          "p95_ms": 0.1628,
+          "p99_ms": 0.1652,
+          "max_ms": 0.1657
+        },
+        "detector_findings_match_rate": 1.0
+      },
+      "unicode_evasion": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "confusion_matrix": {
+          "true_positives": 3,
+          "false_positives": 0,
+          "true_negatives": 2,
+          "false_negatives": 0
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1_score": 1.0
+        },
+        "latencies": {
+          "min_ms": 0.1651,
+          "p50_ms": 0.2315,
+          "mean_ms": 0.2284,
+          "p95_ms": 0.2665,
+          "p99_ms": 0.2669,
+          "max_ms": 0.267
+        },
+        "detector_findings_match_rate": 1.0
+      }
+    }
+  },
+  "performance": {
+    "timestamp": "2026-10-26T23:05:08.949808+00:00",
+    "environment": {
+      "platform": "macOS-27.0.1-arm64-arm-64bit",
+      "system": "Darwin",
+      "python_version": "3.12.1",
+      "cpu_architecture": "arm64",
+      "logical_cpus": 8
+    },
+    "cold_scanning": {
+      "min_ms": 0.1697,
+      "p50_ms": 0.1725,
+      "mean_ms": 0.177,
+      "p95_ms": 0.1841,
+      "p99_ms": 0.2114,
+      "max_ms": 0.4059,
+      "throughput_req_sec": 5650.73,
+      "sample_count": 100,
+      "error_rate": 0.0
+    },
+    "warm_cache_scanning": {
+      "min_ms": 0.0364,
+      "p50_ms": 0.0367,
+      "mean_ms": 0.0372,
+      "p95_ms": 0.0382,
+      "p99_ms": 0.0461,
+      "max_ms": 0.0639,
+      "throughput_req_sec": 26911.26,
+      "sample_count": 200,
+      "error_rate": 0.0,
+      "disclosure": "Cache-hit path only. Do NOT present as general request latency."
+    },
+    "single_detectors": {
+      "iterations_per_detector": 150,
+      "prompt_injection": {
+        "min_ms": 0.0644,
+        "p50_ms": 0.0646,
+        "mean_ms": 0.0648,
+        "p95_ms": 0.0656,
+        "p99_ms": 0.0684,
+        "max_ms": 0.0706,
+        "ops_sec": 15426.23
+      },
+      "pii": {
+        "min_ms": 0.0375,
+        "p50_ms": 0.0377,
+        "mean_ms": 0.0379,
+        "p95_ms": 0.0383,
+        "p99_ms": 0.0404,
+        "max_ms": 0.0437,
+        "ops_sec": 26417.98
+      },
+      "secrets": {
+        "min_ms": 0.029,
+        "p50_ms": 0.0294,
+        "mean_ms": 0.0294,
+        "p95_ms": 0.0296,
+        "p99_ms": 0.0299,
+        "max_ms": 0.0302,
+        "ops_sec": 34049.3
+      }
+    },
+    "full_pipeline": {
+      "min_ms": 0.123,
+      "p50_ms": 0.1253,
+      "mean_ms": 0.1289,
+      "p95_ms": 0.1311,
+      "p99_ms": 0.1535,
+      "max_ms": 0.674,
+      "throughput_req_sec": 7757.96,
+      "iterations": 200
+    },
+    "concurrency": {
+      "1_workers": {
+        "min_ms": 0.127,
+        "p50_ms": 0.1293,
+        "mean_ms": 0.1306,
+        "p95_ms": 0.1352,
+        "p99_ms": 0.164,
+        "max_ms": 0.172,
+        "workers": 1,
+        "requests": 200,
+        "wall_clock_time_sec": 0.0274,
+        "aggregate_throughput_req_sec": 7305.0,
+        "error_rate": 0.0
+      },
+      "2_workers": {
+        "min_ms": 0.1266,
+        "p50_ms": 0.1292,
+        "mean_ms": 0.2596,
+        "p95_ms": 0.1376,
+        "p99_ms": 0.1769,
+        "max_ms": 25.8306,
+        "workers": 2,
+        "requests": 200,
+        "wall_clock_time_sec": 0.0274,
+        "aggregate_throughput_req_sec": 7300.95,
+        "error_rate": 0.0
+      },
+      "4_workers": {
+        "min_ms": 0.1342,
+        "p50_ms": 0.1529,
+        "mean_ms": 0.5614,
+        "p95_ms": 1.6622,
+        "p99_ms": 8.9897,
+        "max_ms": 10.0067,
+        "workers": 4,
+        "requests": 200,
+        "wall_clock_time_sec": 0.0323,
+        "aggregate_throughput_req_sec": 6188.19,
+        "error_rate": 0.0
+      },
+      "8_workers": {
+        "min_ms": 0.1304,
+        "p50_ms": 0.1331,
+        "mean_ms": 0.1395,
+        "p95_ms": 0.1524,
+        "p99_ms": 0.1807,
+        "max_ms": 1.0026,
+        "workers": 8,
+        "requests": 200,
+        "wall_clock_time_sec": 0.0287,
+        "aggregate_throughput_req_sec": 6974.39,
+        "error_rate": 0.0
+      }
+    },
+    "payload_scaling": {
+      "small_100B": {
+        "min_ms": 0.1314,
+        "p50_ms": 0.1344,
+        "mean_ms": 0.136,
+        "p95_ms": 0.1432,
+        "p99_ms": 0.1652,
+        "max_ms": 0.1807,
+        "payload_bytes": 95,
+        "throughput_req_sec": 7353.57,
+        "throughput_mb_sec": 0.67
+      },
+      "medium_1KB": {
+        "min_ms": 0.7157,
+        "p50_ms": 0.7198,
+        "mean_ms": 0.7214,
+        "p95_ms": 0.7304,
+        "p99_ms": 0.75,
+        "max_ms": 0.7502,
+        "payload_bytes": 1000,
+        "throughput_req_sec": 1386.23,
+        "throughput_mb_sec": 1.32
+      },
+      "large_10KB": {
+        "min_ms": 6.4793,
+        "p50_ms": 6.5046,
+        "mean_ms": 6.538,
+        "p95_ms": 6.7536,
+        "p99_ms": 6.869,
+        "max_ms": 6.892,
+        "payload_bytes": 10000,
+        "throughput_req_sec": 152.95,
+        "throughput_mb_sec": 1.46
+      },
+      "oversized_50KB": {
+        "min_ms": 32.1258,
+        "p50_ms": 32.283,
+        "mean_ms": 32.3371,
+        "p95_ms": 32.7972,
+        "p99_ms": 33.0486,
+        "max_ms": 33.5698,
+        "payload_bytes": 50000,
+        "throughput_req_sec": 30.92,
+        "throughput_mb_sec": 1.47
+      }
+    },
+    "streaming_guard": {
+      "streams_evaluated": 10,
+      "total_chunks_processed": 10,
+      "per_chunk_latency": {
+        "min_ms": 0.0,
+        "p50_ms": 0.0001,
+        "mean_ms": 0.0002,
+        "p95_ms": 0.0006,
+        "p99_ms": 0.0008,
+        "max_ms": 0.0008
+      },
+      "per_stream_latency": {
+        "min_ms": 0.1649,
+        "p50_ms": 0.1705,
+        "mean_ms": 0.1796,
+        "p95_ms": 0.2208,
+        "p99_ms": 0.2448,
+        "max_ms": 0.2507
+      },
+      "throughput_chunks_sec": 5569.35,
+      "error_rate": 0.0
+    },
+    "agent_and_rag_paths": {
+      "iterations": 100,
+      "tool_call_inspection": {
+        "min_ms": 0.1009,
+        "p50_ms": 0.1044,
+        "mean_ms": 0.1095,
+        "p95_ms": 0.1125,
+        "p99_ms": 0.17,
+        "max_ms": 0.4383,
+        "ops_sec": 9135.83
+      },
+      "rag_context_filtering": {
+        "min_ms": 0.361,
+        "p50_ms": 0.3684,
+        "mean_ms": 0.3755,
+        "p95_ms": 0.403,
+        "p99_ms": 0.4285,
+        "max_ms": 0.6509,
+        "ops_sec": 2663.42
+      }
+    },
+    "memory_profiling": {
+      "iterations": 200,
+      "baseline_memory_mb": 0.037,
+      "peak_memory_mb": 1.566,
+      "net_heap_delta_mb": 1.524,
+      "estimated_growth_per_1000_req_mb": 7.622
+    }
+  },
+  "limitations_and_uncertainty": {
+    "known_limitations": [
+      "Cyrillic homoglyph prompt injection (UNI-001) bypasses standard NFKD normalization in v1.2.0; documented as a false negative.",
+      "Synthetic security test cases evaluate pattern matching, heuristic risk aggregation, and policy rules, but cannot fully replicate human-in-the-loop social engineering.",
+      "In-process microbenchmark latencies reflect pure algorithmic execution overhead; real-world HTTP network serialization adds standard transport overhead."
+    ],
+    "incomparable_runs_warning": "Benchmark runs across differing hardware architectures (e.g. Apple Silicon M-series vs x86-64 cloud runners) exhibit distinct L1/L2 cache and memory bandwidth profiles. Compare only identical runner classes."
   }
 }

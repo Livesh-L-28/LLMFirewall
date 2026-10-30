@@ -1,5 +1,8 @@
 # Security Regression Report
 
 - **Status:** `PASS`
-- **Regressions Detected:** 0
-- **Total Evaluated Cases:** 40
+- **Regressions / Uncaught Attacks:** 0
+- **Total Evaluated Cases:** 64
+- **Precision:** `100.00%`
+- **Recall:** `100.00%`
+- **F1 Score:** `100.00%`

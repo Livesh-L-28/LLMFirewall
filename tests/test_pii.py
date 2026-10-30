@@ -9,8 +9,13 @@ from llmfirewall.detectors.pii.sub_detectors import (
     IPSubDetector,
     PaymentSubDetector,
     PhoneSubDetector,
+    SSNSubDetector,
 )
-from llmfirewall.detectors.pii.validators import is_valid_ip_address, luhn_checksum_is_valid
+from llmfirewall.detectors.pii.validators import (
+    is_valid_ip_address,
+    is_valid_ssn,
+    luhn_checksum_is_valid,
+)
 
 
 # -------------------------------------------------------------
@@ -198,3 +203,77 @@ def test_pii_detector_metadata():
     assert ThreatType.PII in detector.metadata.supported_threats
     assert "input" in detector.metadata.supported_directions
     assert "output" in detector.metadata.supported_directions
+
+
+# -------------------------------------------------------------
+# 8. Social Security Number (SSN) Tests
+# -------------------------------------------------------------
+def test_ssn_validator_positives_and_negatives():
+    # Valid synthetic SSN patterns
+    assert is_valid_ssn("219-45-7890") is True
+    assert is_valid_ssn("123-45-6789") is True
+    assert is_valid_ssn("456-78-9012") is True
+
+    # Invalid area numbers: 000, 666, 900+
+    assert is_valid_ssn("000-45-7890") is False
+    assert is_valid_ssn("666-45-7890") is False
+    assert is_valid_ssn("900-45-7890") is False
+    assert is_valid_ssn("999-45-7890") is False
+
+    # Invalid group numbers: 00
+    assert is_valid_ssn("219-00-7890") is False
+
+    # Invalid serial numbers: 0000
+    assert is_valid_ssn("219-45-0000") is False
+
+    # Non-PII context safety: order numbers, tracking numbers, and reference codes
+    order_text = "Order reference code 123-45-6789 was completed on 2026-05-12."
+    assert is_valid_ssn("123-45-6789", full_text=order_text, start_pos=21) is False
+
+
+def test_ssn_sub_detector_positives():
+    detector = SSNSubDetector()
+    text = "Candidate identity confirmed with SSN 219-45-7890 on file."
+    matches = detector.find_matches(text)
+    assert len(matches) == 1
+    assert matches[0].category == "ssn"
+    assert matches[0].severity == Severity.HIGH
+    assert matches[0].replacement_text == "[REDACTED_SSN]"
+    assert matches[0].start_pos == 38
+    assert matches[0].end_pos == 49
+
+
+def test_ssn_sub_detector_negatives():
+    detector = SSNSubDetector()
+    # Order reference code should not be misidentified as SSN
+    text = "Order reference code 123-45-6789 was completed on 2026-05-12."
+    matches = detector.find_matches(text)
+    assert len(matches) == 0
+
+    # Structurally invalid numbers
+    invalid_text = "Invalid tokens 000-12-3456 and 666-12-3456 and 912-34-5678 should not match."
+    matches_invalid = detector.find_matches(invalid_text)
+    assert len(matches_invalid) == 0
+
+
+def test_pii_detector_default_includes_ssn():
+    detector = PIIDetector()
+    text = "Customer submitted SSN: 219-45-7890."
+    findings = detector.detect(text)
+    assert len(findings) == 1
+    assert findings[0].metadata["pii_category"] == "ssn"
+    assert findings[0].replacement_text == "[REDACTED_SSN]"
+    assert findings[0].matched_text is None  # Privacy invariant preserved
+
+
+def test_firewall_ssn_redaction_downstream():
+    from llmfirewall import Action, Firewall
+
+    fw = Firewall()
+    prompt = "Please verify my application with SSN 219-45-7890 today."
+    res = fw.scan(prompt)
+
+    assert res.action == Action.REDACT
+    assert res.is_allowed is True
+    assert "219-45-7890" not in res.processed_text
+    assert "[REDACTED_SSN]" in res.processed_text

@@ -219,6 +219,26 @@ class RuntimeProtectionEngine:
                         None,
                     )
 
+            # Sensitive PII check for redaction on input
+            needs_redact = False
+            in_text = request.input
+            for pat in PII_PATTERNS:
+                if re.search(pat, in_text):
+                    needs_redact = True
+                    in_text = re.sub(pat, "[REDACTED_PII]", in_text)
+
+            if needs_redact:
+                risk_factors.append("PII_IN_INPUT")
+                redacted_content = in_text
+                return (
+                    PolicyDecision.REDACT,
+                    "Sensitive PII detected and redacted from input prompt.",
+                    ["redact-sensitive-input"],
+                    risk_factors,
+                    [{"action": "redact"}],
+                    redacted_content,
+                )
+
         # 3. Tool Protection & Authorization Check
         if request.tool and self.policy.inspect_tools:
             tool_name = request.tool.get("name") or request.tool.get("tool_name", "")

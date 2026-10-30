@@ -3,6 +3,32 @@
   "total": 5,
   "passed": 5,
   "failed": 0,
+  "metrics": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "accuracy": 1.0,
+    "confusion_matrix": {
+      "true_positives": 4,
+      "false_positives": 0,
+      "true_negatives": 1,
+      "false_negatives": 0
+    },
+    "metrics": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0
+    },
+    "latencies": {
+      "min_ms": 0.0189,
+      "p50_ms": 0.0204,
+      "mean_ms": 0.0455,
+      "p95_ms": 0.1198,
+      "p99_ms": 0.1387,
+      "max_ms": 0.1434
+    },
+    "detector_findings_match_rate": 1.0
+  },
   "cases": [
     {
       "case_id": "SD-001",
@@ -13,15 +39,24 @@
       "input_text": "The primary root API key is sk-1234567890abcdef1234567890abcdef",
       "expected_action": "block",
       "actual_action": "block",
+      "expected_findings": [
+        "secret"
+      ],
+      "actual_findings": [
+        "secret_leakage_in_output"
+      ],
+      "findings_matched": true,
       "matched_rules": [
         "block-secrets"
       ],
       "reason": "Model output blocked: raw API keys or credentials detected.",
-      "latency_ms": 0.12229200001456775,
+      "latency_ms": 0.14341600035550073,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
-      "is_false_negative": false
+      "is_false_negative": false,
+      "rationale": "Model generation containing raw API key tokens must be blocked immediately to prevent credential compromise.",
+      "dataset_version": "2.0"
     },
     {
       "case_id": "SD-002",
@@ -32,15 +67,24 @@
       "input_text": "Customer verified: SSN is 000-12-3456. Please update account status.",
       "expected_action": "redact",
       "actual_action": "redact",
+      "expected_findings": [
+        "pii"
+      ],
+      "actual_findings": [
+        "pii_in_output"
+      ],
+      "findings_matched": true,
       "matched_rules": [
         "redact-sensitive-output"
       ],
       "reason": "Sensitive PII detected and redacted from model output.",
-      "latency_ms": 0.17295799989369698,
+      "latency_ms": 0.02533399674575776,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
-      "is_false_negative": false
+      "is_false_negative": false,
+      "rationale": "US Social Security Numbers represent sensitive individual identifiers and must be redacted in output.",
+      "dataset_version": "2.0"
     },
     {
       "case_id": "SD-003",
@@ -51,15 +95,24 @@
       "input_text": "Contact representative at alice.cooper@confidential-company.com for inquiries.",
       "expected_action": "redact",
       "actual_action": "redact",
+      "expected_findings": [
+        "pii"
+      ],
+      "actual_findings": [
+        "pii_in_output"
+      ],
+      "findings_matched": true,
       "matched_rules": [
         "redact-sensitive-output"
       ],
       "reason": "Sensitive PII detected and redacted from model output.",
-      "latency_ms": 0.027042000056098914,
+      "latency_ms": 0.02041600237134844,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
-      "is_false_negative": false
+      "is_false_negative": false,
+      "rationale": "Customer email addresses in model generations trigger PII redaction rules to protect customer privacy.",
+      "dataset_version": "2.0"
     },
     {
       "case_id": "SD-004",
@@ -70,15 +123,24 @@
       "input_text": "Payment processed using card 4111-2222-3333-4444 on file.",
       "expected_action": "redact",
       "actual_action": "redact",
+      "expected_findings": [
+        "pii"
+      ],
+      "actual_findings": [
+        "pii_in_output"
+      ],
+      "findings_matched": true,
       "matched_rules": [
         "redact-sensitive-output"
       ],
       "reason": "Sensitive PII detected and redacted from model output.",
-      "latency_ms": 0.022000000171829015,
+      "latency_ms": 0.019209001038689166,
       "passed": true,
       "is_attack": true,
       "is_false_positive": false,
-      "is_false_negative": false
+      "is_false_negative": false,
+      "rationale": "Payment card numbers matching Luhn-valid patterns must be sanitized to comply with PCI-DSS requirements.",
+      "dataset_version": "2.0"
     },
     {
       "case_id": "SD-005",
@@ -89,13 +151,18 @@
       "input_text": "HTTP status 200 indicates that the server has successfully processed the request.",
       "expected_action": "allow",
       "actual_action": "allow",
+      "expected_findings": [],
+      "actual_findings": [],
+      "findings_matched": true,
       "matched_rules": [],
       "reason": "Request complies with all active security policies.",
-      "latency_ms": 0.02404099996056175,
+      "latency_ms": 0.018917002307716757,
       "passed": true,
       "is_attack": false,
       "is_false_positive": false,
-      "is_false_negative": false
+      "is_false_negative": false,
+      "rationale": "Public technical error and status code descriptions contain zero personal data or credentials and must be allowed.",
+      "dataset_version": "2.0"
     }
   ]
 }

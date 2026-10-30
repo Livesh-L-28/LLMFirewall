@@ -36,7 +36,8 @@ def test_v1_1_all_exports_present_and_type_compatible():
         expected_type = spec["type"]
         if actual_type != expected_type:
             # Allow subclasses or minor metamodel variations if callable
-            if not (callable(obj) and expected_type in ("type", "ABCMeta", "ModelMetaclass", "function")):
+            is_enum_meta = expected_type in ("EnumType", "EnumMeta") and actual_type in ("EnumType", "EnumMeta")
+            if not is_enum_meta and not (callable(obj) and expected_type in ("type", "ABCMeta", "ModelMetaclass", "function")):
                 type_mismatches.append((name, expected_type, actual_type))
 
     assert not missing, f"Missing public exports from v1.1.0: {missing}"

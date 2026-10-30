@@ -807,3 +807,491 @@ def test_cli_gate_and_baseline_commands():
             format_type="json",
         )
         assert code_gate in (0, 1)
+
+
+def test_cli_governance_gate_snapshot_evidence():
+    from llmfirewall.cli.commands import handle_governance_gate, handle_supply_chain_snapshot
+    from llmfirewall.supply_chain.models import ModelArtifact
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        valid_snap_path = os.path.join(tmpdir, "valid_snap.json")
+        invalid_json_path = os.path.join(tmpdir, "invalid.json")
+        missing_snap_path = os.path.join(tmpdir, "nonexistent.json")
+        out_report_path = os.path.join(tmpdir, "gov_out.json")
+
+        # 1. Generate valid snapshot via genuine CLI command
+        code_snap = handle_supply_chain_snapshot(output_path=valid_snap_path)
+        assert code_snap == 0
+        assert os.path.exists(valid_snap_path)
+
+        # 2. Create invalid JSON file
+        with open(invalid_json_path, "w", encoding="utf-8") as f:
+            f.write("{invalid-json-content")
+
+        # 3. Test invalid snapshot path returns usage error (code 2)
+        code_missing = handle_governance_gate(
+            snapshot_file=missing_snap_path,
+            ci=False,
+            format_type="json",
+        )
+        assert code_missing == 2
+
+        # 4. Test corrupted snapshot file returns system error (code 3)
+        code_corrupt = handle_governance_gate(
+            snapshot_file=invalid_json_path,
+            ci=False,
+            format_type="json",
+        )
+        assert code_corrupt == 3
+
+        # 5. Test missing snapshot evidence vs valid snapshot evidence
+        # Missing snapshot: configuration & dependency gates missing evidence
+        handle_governance_gate(
+            snapshot_file=None,
+            ci=False,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert os.path.exists(out_report_path)
+        res_no_snap = json.loads(open(out_report_path, encoding="utf-8").read())
+        failed_gate_ids = [g["gate_id"] for g in res_no_snap.get("failed_gates", [])]
+        assert "dependency-security" in failed_gate_ids
+        assert "configuration-integrity" in failed_gate_ids
+
+        # 6. Valid snapshot: dependency & configuration gates succeed
+        handle_governance_gate(
+            snapshot_file=valid_snap_path,
+            ci=False,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert os.path.exists(out_report_path)
+        res_valid = json.loads(open(out_report_path, encoding="utf-8").read())
+        passed_gate_ids = [g["gate_id"] for g in res_valid.get("passed_gates", [])]
+        assert "dependency-security" in passed_gate_ids
+        assert "configuration-integrity" in passed_gate_ids
+
+        # 7. Snapshot with model identity: verifies propagation to model gate
+        snap_data = json.loads(open(valid_snap_path, encoding="utf-8").read())
+        model_art = ModelArtifact(
+            name="test-llama-3",
+            version="1.0.0",
+            sha256="abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+            provider="local",
+        )
+        snap_data["models"] = [model_art.model_dump(mode="json")]
+        model_snap_path = os.path.join(tmpdir, "model_snap.json")
+        with open(model_snap_path, "w", encoding="utf-8") as f:
+            json.dump(snap_data, f)
+
+        handle_governance_gate(
+            snapshot_file=model_snap_path,
+            ci=False,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        res_model = json.loads(open(out_report_path, encoding="utf-8").read())
+        passed_with_model = [g["gate_id"] for g in res_model.get("passed_gates", [])]
+        assert "model-integrity" in passed_with_model
+
+
+# ---------------------------------------------------------------------------
+# 28. Scoped Governance Policy & CI Workflow Verification Tests
+# ---------------------------------------------------------------------------
+
+def test_governance_policy_definitions_and_loading():
+    """Verify production and library governance policy invariants and declarative YAML loading."""
+    from pathlib import Path
+
+    # 1. Production policy mandates model-integrity
+    prod_policy = GovernancePolicy.default_production_policy()
+    assert prod_policy.name == "production-standard-governance"
+    assert "model-integrity" in prod_policy.require
+    assert any(g.id == "model-integrity" and g.required for g in prod_policy.gates)
+
+    # 2. Library policy excludes model-integrity while keeping all library gates strictly required
+    lib_policy = GovernancePolicy.default_library_policy()
+    assert lib_policy.name == "library-release-governance"
+    assert lib_policy.profile == ReleaseProfile.PRODUCTION
+    assert "model-integrity" not in lib_policy.require
+    assert not any(g.id == "model-integrity" for g in lib_policy.gates)
+    for req_gate in ["core-security", "dependency-security", "configuration-integrity", "agent-security"]:
+        assert req_gate in lib_policy.require
+        gate_obj = next(g for g in lib_policy.gates if g.id == req_gate)
+        assert gate_obj.required is True
+        assert Severity.CRITICAL in gate_obj.block_on
+
+    # 3. Declarative YAML file exists and matches requirements
+    yaml_path = Path("policies/governance/library-policy.yaml")
+    assert yaml_path.exists(), "policies/governance/library-policy.yaml must exist"
+    loaded_yaml = GovernancePolicy.from_file(str(yaml_path))
+    assert loaded_yaml.name == "library-release-governance"
+    assert loaded_yaml.profile == ReleaseProfile.PRODUCTION
+    assert "model-integrity" not in loaded_yaml.require
+    for req_gate in ["core-security", "dependency-security", "configuration-integrity", "agent-security"]:
+        assert req_gate in loaded_yaml.require
+
+
+def test_library_governance_policy_evaluation_with_genuine_evidence():
+    """Verify library policy PASS on genuine library evidence without models, and BLOCK on missing required evidence."""
+    from llmfirewall.cli.commands import (
+        handle_governance_gate,
+        handle_supply_chain_snapshot,
+        handle_test_security,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        results_path = os.path.join(tmpdir, "security_results.json")
+        snapshot_path = os.path.join(tmpdir, "security_snapshot.json")
+        out_report_path = os.path.join(tmpdir, "gov_out.json")
+
+        # 1. Generate genuine security test results (100% pass rate)
+        code_test = handle_test_security(
+            suite="core",
+            format_type="json",
+            output_file=results_path,
+        )
+        assert code_test == 0
+        assert os.path.exists(results_path)
+
+        # 2. Generate genuine supply chain snapshot
+        code_snap = handle_supply_chain_snapshot(output_path=snapshot_path)
+        assert code_snap == 0
+        assert os.path.exists(snapshot_path)
+
+        # Confirm snapshot contains no models (library contains no model weights)
+        snap_data = json.loads(open(snapshot_path, encoding="utf-8").read())
+        assert len(snap_data.get("models", [])) == 0
+
+        # 3. Evaluate against library policy via file path
+        code_gate_path = handle_governance_gate(
+            policy_file="policies/governance/library-policy.yaml",
+            results_file=results_path,
+            snapshot_file=snapshot_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_gate_path == 0
+        report = json.loads(open(out_report_path, encoding="utf-8").read())
+        assert report["decision"] == "PASS"
+        assert report["passed"] is True
+        assert len(report["failed_gates"]) == 0
+        assert len(report["missing_evidence"]) == 0
+        passed_ids = [g["gate_id"] for g in report["passed_gates"]]
+        assert "core-security" in passed_ids
+        assert "dependency-security" in passed_ids
+        assert "configuration-integrity" in passed_ids
+        assert "agent-security" in passed_ids
+        assert "model-integrity" not in passed_ids
+
+        # 4. Evaluate against library policy via CLI alias 'library'
+        code_gate_alias = handle_governance_gate(
+            policy_file="library",
+            results_file=results_path,
+            snapshot_file=snapshot_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_gate_alias == 0
+
+        # 5. Evaluate library policy with missing snapshot -> BLOCK on dependency & configuration
+        code_missing_snap = handle_governance_gate(
+            policy_file="policies/governance/library-policy.yaml",
+            results_file=results_path,
+            snapshot_file=None,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_missing_snap != 0
+        report_missing = json.loads(open(out_report_path, encoding="utf-8").read())
+        assert report_missing["decision"] == "BLOCK"
+        assert report_missing["passed"] is False
+        failed_ids = [g["gate_id"] for g in report_missing["failed_gates"]]
+        assert "dependency-security" in failed_ids
+        assert "configuration-integrity" in failed_ids
+
+        # 6. Evaluate library policy with corrupted/malformed JSON snapshot -> error
+        corrupt_snap_path = os.path.join(tmpdir, "corrupt_snap.json")
+        with open(corrupt_snap_path, "w", encoding="utf-8") as f:
+            f.write("{invalid_json: malformed...")
+        code_corrupt = handle_governance_gate(
+            policy_file="policies/governance/library-policy.yaml",
+            results_file=results_path,
+            snapshot_file=corrupt_snap_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_corrupt != 0
+
+        # 7. Evaluate library policy with schema-invalid snapshot -> error
+        invalid_snap_path = os.path.join(tmpdir, "invalid_snap.json")
+        with open(invalid_snap_path, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"snapshot_id": 12345, "created_at": "invalid", "deployment": "not-dict"}))
+        code_invalid_schema = handle_governance_gate(
+            policy_file="policies/governance/library-policy.yaml",
+            results_file=results_path,
+            snapshot_file=invalid_snap_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_invalid_schema != 0
+
+
+def test_production_policy_strictly_blocks_without_model_identity():
+    """Verify production-standard-governance remains unchanged and blocks without model evidence."""
+    from llmfirewall.cli.commands import (
+        handle_governance_gate,
+        handle_supply_chain_snapshot,
+        handle_test_security,
+    )
+    from llmfirewall.supply_chain.models import ModelArtifact
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        results_path = os.path.join(tmpdir, "security_results.json")
+        snapshot_path = os.path.join(tmpdir, "security_snapshot.json")
+        out_report_path = os.path.join(tmpdir, "gov_out.json")
+
+        # 1. Genuine evidence without models
+        handle_test_security(suite="core", format_type="json", output_file=results_path)
+        handle_supply_chain_snapshot(output_path=snapshot_path)
+
+        # 2. Production policy evaluation MUST block when model-identity is missing
+        code_prod = handle_governance_gate(
+            policy_file=None,  # default is production-standard-governance
+            results_file=results_path,
+            snapshot_file=snapshot_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_prod != 0
+        report = json.loads(open(out_report_path, encoding="utf-8").read())
+        assert report["decision"] == "BLOCK"
+        assert report["passed"] is False
+        failed_ids = [g["gate_id"] for g in report["failed_gates"]]
+        assert "model-integrity" in failed_ids
+        assert "model-integrity" in report["missing_evidence"]
+
+        # 3. Supply valid model artifact -> production policy model gate passes
+        valid_model = ModelArtifact(
+            name="deepseek-coder-6.7b",
+            version="1.0.0",
+            sha256="1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            provider="local",
+        )
+        snap_data = json.loads(open(snapshot_path, encoding="utf-8").read())
+        snap_data["models"] = [valid_model.model_dump(mode="json")]
+        model_snap_path = os.path.join(tmpdir, "model_snap.json")
+        with open(model_snap_path, "w", encoding="utf-8") as f:
+            json.dump(snap_data, f)
+
+        code_prod_valid = handle_governance_gate(
+            policy_file=None,
+            results_file=results_path,
+            snapshot_file=model_snap_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_prod_valid == 0
+        report_valid = json.loads(open(out_report_path, encoding="utf-8").read())
+        assert report_valid["decision"] == "PASS"
+        passed_ids = [g["gate_id"] for g in report_valid["passed_gates"]]
+        assert "model-integrity" in passed_ids
+
+        # 4. Model change against baseline -> triggers review / gate failure
+        from llmfirewall.governance.baseline import SecurityBaseline
+        baseline = SecurityBaseline(
+            baseline_id="BASE-MODEL-001",
+            version="1.0",
+            created_by="security-team",
+            model_identity={
+                "name": "deepseek-coder-6.7b",
+                "sha256": "original_baseline_hash_00000000000000000000000000000000000000000000",
+            },
+        )
+        baseline_path = os.path.join(tmpdir, "baseline.json")
+        with open(baseline_path, "w", encoding="utf-8") as f:
+            f.write(baseline.to_json())
+
+        code_prod_drift = handle_governance_gate(
+            policy_file=None,
+            baseline_file=baseline_path,
+            results_file=results_path,
+            snapshot_file=model_snap_path,
+            ci=True,
+            format_type="json",
+            output_file=out_report_path,
+        )
+        assert code_prod_drift != 0
+        report_drift = json.loads(open(out_report_path, encoding="utf-8").read())
+        assert report_drift["decision"] in ("BLOCK", "REVIEW")
+        assert report_drift["passed"] is False
+        review_or_failed = [g["gate_id"] for g in report_drift.get("failed_gates", [])] + [
+            r["gate_id"] for r in report_drift.get("review_items", [])
+        ]
+        assert "model-integrity" in review_or_failed
+
+
+def test_security_workflow_configuration_integrity():
+    """Verify .github/workflows/llmfirewall-security.yml configuration integrity and safety."""
+    from pathlib import Path
+    import yaml
+
+    workflow_path = Path(".github/workflows/llmfirewall-security.yml")
+    assert workflow_path.exists(), "Workflow file must exist"
+
+    content = workflow_path.read_text(encoding="utf-8")
+    parsed = yaml.safe_load(content)
+
+    # Job and steps verification
+    jobs = parsed.get("jobs", {})
+    assert "governance-gate" in jobs
+    steps = jobs["governance-gate"].get("steps", [])
+
+    # Step: evaluate governance release gate must use library policy and NOT continue-on-error
+    gate_step = next((s for s in steps if "governance release gate" in s.get("name", "").lower()), None)
+    assert gate_step is not None, "Gate evaluation step must exist"
+    assert "continue-on-error" not in gate_step, "Gate step must not have continue-on-error"
+    run_cmd = gate_step.get("run", "")
+    assert "--policy policies/governance/library-policy.yaml" in run_cmd
+    assert "--results security-results.json" in run_cmd
+    assert "--snapshot security-snapshot.json" in run_cmd
+    assert "--ci" in run_cmd
+
+    # Step: test security and supply-chain snapshot must NOT have blanket continue-on-error
+    test_step = next((s for s in steps if "security test suite" in s.get("name", "").lower()), None)
+    assert test_step is not None
+    assert "continue-on-error" not in test_step
+
+    snap_step = next((s for s in steps if "security snapshot" in s.get("name", "").lower()), None)
+    assert snap_step is not None
+    assert "continue-on-error" not in snap_step
+
+    # Step: artifact upload step must upload all 3 evidence artifacts
+    upload_step = next((s for s in steps if "upload evidence" in s.get("name", "").lower()), None)
+    assert upload_step is not None
+    with_params = upload_step.get("with", {})
+    artifact_paths = with_params.get("path", "")
+    assert "security-results.json" in artifact_paths
+    assert "security-snapshot.json" in artifact_paths
+    assert "governance-result.json" in artifact_paths
+    assert with_params.get("retention-days") == 90
+
+
+def test_release_workflow_governance_ancestry_enforcement():
+    """Verify that .github/workflows/release.yml enforces least privilege and tag ancestry on main branch."""
+    import yaml
+    from pathlib import Path
+
+    workflow_path = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "release.yml"
+    assert workflow_path.exists(), "release.yml workflow must exist"
+
+    with open(workflow_path, "r", encoding="utf-8") as f:
+        wf = yaml.safe_load(f)
+
+    # 1. Workflow-level permissions must be minimal (no id-token: write)
+    assert wf.get("permissions") == {"contents": "read"}, "Default permissions must be read-only"
+
+    # 2. Build-and-verify job must NOT have id-token: write
+    build_job = wf["jobs"]["build-and-verify"]
+    assert build_job.get("permissions") == {"contents": "read"}, "Build job must have only contents: read"
+
+    # 3. Publish job must require build-and-verify and be isolated with id-token: write
+    publish_job = wf["jobs"]["publish"]
+    assert publish_job.get("needs") == "build-and-verify"
+    assert publish_job.get("permissions") == {"contents": "read", "id-token": "write"}
+    assert publish_job.get("environment", {}).get("name") == "pypi"
+
+    steps = build_job["steps"]
+
+    # 4. Checkout step must specify fetch-depth: 0 (not shallow) to allow ancestry verification
+    checkout_step = next(s for s in steps if "Checkout" in s.get("name", ""))
+    assert checkout_step.get("with", {}).get("fetch-depth") == 0, (
+        "Checkout step in release.yml must specify 'fetch-depth: 0' to preserve git commit ancestry."
+    )
+
+    # 5. Ancestry enforcement step must exist BEFORE Python setup and build
+    ancestry_idx = next(i for i, s in enumerate(steps) if "Ancestry" in s.get("name", ""))
+    setup_py_idx = next(i for i, s in enumerate(steps) if "Set up Python" in s.get("name", ""))
+    build_idx = next(i for i, s in enumerate(steps) if "Build" in s.get("name", ""))
+
+    assert ancestry_idx < setup_py_idx < build_idx, (
+        "Ancestry enforcement must run before setup and build steps."
+    )
+
+    # 6. Step run script must verify peeled commit and ancestry against origin/main
+    ancestry_step = steps[ancestry_idx]
+    run_script = ancestry_step.get("run", "")
+    assert 'git rev-parse "${RELEASE_TAG}^{commit}"' in run_script
+    assert "git merge-base --is-ancestor" in run_script
+    assert "origin/main" in run_script
+
+    # 7. Checksum verification in publish job
+    pub_steps = publish_job["steps"]
+    integrity_step = next(s for s in pub_steps if "Integrity" in s.get("name", ""))
+    assert "sha256sum -c" in integrity_step.get("run", "")
+
+
+
+def test_git_ancestry_logic_validation(tmp_path):
+    """Verify git ancestry check fails-closed for unmerged development commits and succeeds for main commits."""
+    import subprocess
+
+    # Create an isolated, hermetic git repository to test ancestry semantics across all CI runners
+    repo = tmp_path / "ancestry_test_repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Test Runner"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@llmfirewall.local"], cwd=repo, check=True, capture_output=True)
+
+    # 1. Initial commit on main
+    (repo / "file1.txt").write_text("main v1", encoding="utf-8")
+    subprocess.run(["git", "add", "file1.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "initial main commit"], cwd=repo, check=True, capture_output=True)
+    main_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+
+    # Create annotated release tag
+    subprocess.run(["git", "tag", "-a", "v1.0.0", "-m", "release v1.0.0"], cwd=repo, check=True, capture_output=True)
+
+    # 2. Main commit is an ancestor of main branch
+    res_main = subprocess.run(["git", "merge-base", "--is-ancestor", main_commit, "main"], cwd=repo, capture_output=True)
+    assert res_main.returncode == 0, "Commit on main must be recognized as an ancestor of main"
+
+    # 3. Peeling annotated tag resolves to target commit
+    peeled = subprocess.check_output(["git", "rev-parse", "v1.0.0^{commit}"], cwd=repo, text=True).strip()
+    assert peeled == main_commit, "Tag peeling must resolve to exact commit SHA"
+
+    # 4. Create unmerged development branch with diverging commit
+    subprocess.run(["git", "checkout", "-b", "dev"], cwd=repo, check=True, capture_output=True)
+    (repo / "dev.txt").write_text("dev work", encoding="utf-8")
+    subprocess.run(["git", "add", "dev.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "unmerged dev commit"], cwd=repo, check=True, capture_output=True)
+    dev_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+
+    # Advance main independently
+    subprocess.run(["git", "checkout", "main"], cwd=repo, check=True, capture_output=True)
+    (repo / "file2.txt").write_text("main v2", encoding="utf-8")
+    subprocess.run(["git", "add", "file2.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "independent main commit"], cwd=repo, check=True, capture_output=True)
+
+    # 5. Verify unmerged dev commit is NOT an ancestor of main (fails closed with code 1)
+    res_dev = subprocess.run(["git", "merge-base", "--is-ancestor", dev_commit, "main"], cwd=repo, capture_output=True)
+    assert res_dev.returncode == 1, "Unmerged development commit must NOT be recognized as ancestor of main"
+
+
+def test_governance_policy_missing_mandatory_gate_fails_closed():
+    """Verify that referencing a non-existent gate in 'require' raises ValueError (fail-closed)."""
+    with pytest.raises(ValueError, match="Mandatory gate 'dangling-mandatory-gate' referenced in 'require' is not defined"):
+        GovernancePolicy(
+            name="invalid-policy",
+            version="1.0",
+            require=["dangling-mandatory-gate"],
+            gates=[],
+        )
+

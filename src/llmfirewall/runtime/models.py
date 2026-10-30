@@ -35,6 +35,11 @@ class TrustLevel(str, Enum):
     TRUSTED = "trusted"
     CONTROLLED = "controlled"
     UNKNOWN = "unknown"
+    # Phase 5 context extensions
+    TRUSTED_INTERNAL = "trusted_internal"
+    SEMI_TRUSTED_PARTNER = "semi_trusted_partner"
+    UNTRUSTED_EXTERNAL = "untrusted_external"
+    ANONYMOUS_PUBLIC = "anonymous_public"
 
 
 class RuntimeBoundary(str, Enum):

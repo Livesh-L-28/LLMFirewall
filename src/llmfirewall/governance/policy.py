@@ -96,8 +96,9 @@ class GovernancePolicy(BaseModel):
         # Check require list
         for req_id in self.require:
             if req_id not in gate_ids:
-                # If gate not in gates list, ensure it's not a dangling reference unless it's a known built-in gate
-                pass
+                raise ValueError(
+                    f"Mandatory gate '{req_id}' referenced in 'require' is not defined in policy gates."
+                )
 
         # Check for duplicate gate IDs
         seen = set()
@@ -176,6 +177,77 @@ class GovernancePolicy(BaseModel):
                 ),
             ],
             require=["core-security", "model-integrity", "configuration-integrity"],
+        )
+
+    @classmethod
+    def default_library_policy(cls) -> "GovernancePolicy":
+        """Dedicated security governance policy for LLMFirewall core library release gating.
+
+        Scope & Architectural Rationale:
+        - The core library repository is a rule/pattern-based local firewall library that does
+          not deploy, bundle, or host machine learning models (weights, safetensors, ONNX).
+        - 'model-integrity' is excluded only for this library-specific policy because the repository
+          contains no model artifacts requiring cryptographic identity verification.
+        - All applicable library security gates remain strictly mandatory:
+          * core-security: Full execution and 100% pass rate on LLM security test suites.
+          * dependency-security: Cryptographic dependency supply-chain integrity verification.
+          * configuration-integrity: Deterministic SHA-256 integrity of active firewall configs.
+          * agent-security: Verification of capability controls and sandboxing.
+        - Production deployments and host applications that serve AI models must continue to use
+          'production-standard-governance' (default_production_policy) which strictly requires
+          'model-integrity'.
+        """
+        from llmfirewall.governance.gates import GateType
+        return cls(
+            name="library-release-governance",
+            version="1.0",
+            profile=ReleaseProfile.PRODUCTION,
+            block_on=[Severity.CRITICAL],
+            review_on=[Severity.HIGH],
+            gates=[
+                SecurityGate(
+                    id="core-security",
+                    type=GateType.TEST_GATE,
+                    name="Core LLM Security Tests",
+                    description="Verifies complete execution of security test suites with 100% pass rate.",
+                    required=True,
+                    minimum_pass_rate=1.0,
+                    block_on=[Severity.CRITICAL],
+                ),
+                SecurityGate(
+                    id="dependency-security",
+                    type=GateType.DEPENDENCY_GATE,
+                    name="AI Dependency Security",
+                    description="Enforces cryptographic hash verification of dependencies and detects supply-chain drift.",
+                    required=True,
+                    block_on=[Severity.CRITICAL],
+                ),
+                SecurityGate(
+                    id="configuration-integrity",
+                    type=GateType.CONFIGURATION_GATE,
+                    name="Firewall Security Configuration Integrity",
+                    description="Verifies deterministic SHA-256 integrity hash of active firewall configuration.",
+                    required=True,
+                    block_on=[Severity.CRITICAL],
+                ),
+                SecurityGate(
+                    id="agent-security",
+                    type=GateType.AGENT_GATE,
+                    name="Agent Capabilities & Action Control",
+                    description="Enforces agent capability registry and action authorization boundaries.",
+                    required=True,
+                    block_on=[Severity.CRITICAL],
+                ),
+                SecurityGate(
+                    id="rag-security",
+                    type=GateType.RAG_GATE,
+                    name="RAG Document Trust & Provenance",
+                    description="Enforces document trust boundaries and provenance tracking.",
+                    required=False,
+                    review_on=[Severity.HIGH],
+                ),
+            ],
+            require=["core-security", "dependency-security", "configuration-integrity", "agent-security"],
         )
 
     @classmethod

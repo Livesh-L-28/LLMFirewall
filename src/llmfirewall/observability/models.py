@@ -35,6 +35,11 @@ class SecurityEventType(str, Enum):
     ANOMALY_DETECTED = "anomaly_detected"
     SECURITY_REGRESSION = "security_regression"
     CONFIGURATION_CHANGED = "configuration_changed"
+    SCAN_REQUEST = "scan_request"
+    THREAT_DETECTED = "threat_detected"
+    RISK_EVALUATION = "risk_evaluation"
+    TOOL_EXECUTION_DENIED = "tool_execution_denied"
+    RAG_QUARANTINE = "rag_quarantine"
 
 
 class EventSeverity(str, Enum):
@@ -276,6 +281,7 @@ class DecisionTrace(BaseModel):
                     "direction": request.direction,
                     "payload_length": len(request.text),
                     "payload_hash": hash_content(request.text),
+                    "tenant_id": getattr(request, "tenant_id", None) or (request.metadata.get("tenant_id") if isinstance(getattr(request, "metadata", None), dict) else None),
                 },
                 duration_ms=0.0,
             )
@@ -383,6 +389,88 @@ class DecisionTrace(BaseModel):
                 "rules": result.decision.triggered_rules,
             },
             total_duration_ms=result.execution_time_ms,
+        )
+
+    def to_unified_events(
+        self,
+        correlation_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        workflow_id: Optional[str] = None,
+    ) -> List[Any]:
+        """Convert trace steps into a causally linked sequence of UnifiedSecurityEvents (Phase 4)."""
+        from llmfirewall.correlation.models import UnifiedSecurityEvent
+
+        events = []
+        corr = correlation_id or self.trace_id or self.request_id
+        parent_id: Optional[str] = None
+        eff_tenant = tenant_id or (self.steps[0].details.get("tenant_id") if self.steps and self.steps[0].details else None)
+        eff_wf = workflow_id or (self.steps[0].details.get("workflow_id") if self.steps and self.steps[0].details else None)
+
+        sev_map = {
+            Action.BLOCK: EventSeverity.HIGH,
+            Action.REDACT: EventSeverity.WARNING,
+            Action.WARN: EventSeverity.WARNING,
+            Action.ALLOW: EventSeverity.INFO,
+        }
+
+        for step in self.steps:
+            ev_id = f"evt-{self.request_id[:8]}-s{step.step_number}"
+
+            ev_type = SecurityEventType.SECURITY_DECISION
+            if step.action_or_finding == "request_received":
+                ev_type = SecurityEventType.SCAN_REQUEST
+            elif step.action_or_finding == "threat_detected":
+                ev_type = SecurityEventType.THREAT_DETECTED
+            elif step.action_or_finding == "risk_calculated":
+                ev_type = SecurityEventType.RISK_EVALUATION
+            elif "action_" in step.action_or_finding:
+                ev_type = SecurityEventType.SECURITY_DECISION
+
+            ev = UnifiedSecurityEvent(
+                event_id=ev_id,
+                sequence_number=step.step_number,
+                event_type=ev_type,
+                severity=sev_map.get(self.final_action, EventSeverity.INFO),
+                correlation_id=corr,
+                request_id=self.request_id,
+                trace_id=self.trace_id,
+                workflow_id=eff_wf,
+                tenant_id=eff_tenant,
+                component=step.component,
+                action=self.final_action if step.step_number == len(self.steps) else None,
+                outcome="BLOCKED" if self.final_action == Action.BLOCK else ("REDACTED" if self.final_action == Action.REDACT else "ALLOWED"),
+                safe_explanation=self.explanation if step.step_number == len(self.steps) else f"Step {step.step_number}: {step.action_or_finding}",
+                parent_event_id=parent_id,
+                duration_ms=step.duration_ms,
+                metadata=dict(step.details),
+            )
+            events.append(ev)
+            parent_id = ev_id
+
+        return events
+
+    def to_timeline(
+        self,
+        correlation_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        workflow_id: Optional[str] = None,
+    ) -> Any:
+        """Construct a CorrelatedIncidentTimeline directly from this DecisionTrace."""
+        from llmfirewall.correlation.engine import EventCorrelationEngine
+
+        eff_tenant = tenant_id or (self.steps[0].details.get("tenant_id") if self.steps and self.steps[0].details else None)
+        eff_wf = workflow_id or (self.steps[0].details.get("workflow_id") if self.steps and self.steps[0].details else None)
+
+        engine = EventCorrelationEngine()
+        events = self.to_unified_events(
+            correlation_id=correlation_id,
+            tenant_id=eff_tenant,
+            workflow_id=eff_wf,
+        )
+        return engine.correlate_events(
+            events=events,
+            correlation_id=correlation_id or self.trace_id or self.request_id,
+            tenant_id=eff_tenant,
         )
 
 
