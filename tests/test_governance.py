@@ -1239,41 +1239,50 @@ def test_release_workflow_governance_ancestry_enforcement():
 
 
 
-def test_git_ancestry_logic_validation():
+def test_git_ancestry_logic_validation(tmp_path):
     """Verify git ancestry check fails-closed for unmerged development commits and succeeds for main commits."""
     import subprocess
-    from pathlib import Path
 
-    repo_dir = Path(__file__).resolve().parent.parent
+    # Create an isolated, hermetic git repository to test ancestry semantics across all CI runners
+    repo = tmp_path / "ancestry_test_repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Test Runner"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@llmfirewall.local"], cwd=repo, check=True, capture_output=True)
 
-    # 1. Commit on main branch (origin/main) is an ancestor of origin/main
-    main_head = subprocess.check_output(
-        ["git", "rev-parse", "origin/main"],
-        cwd=repo_dir,
-        text=True,
-    ).strip()
+    # 1. Initial commit on main
+    (repo / "file1.txt").write_text("main v1", encoding="utf-8")
+    subprocess.run(["git", "add", "file1.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "initial main commit"], cwd=repo, check=True, capture_output=True)
+    main_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
 
-    res_main = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", main_head, "origin/main"],
-        cwd=repo_dir,
-    )
-    assert res_main.returncode == 0, "Commit on main must be recognized as ancestor of main"
+    # Create annotated release tag
+    subprocess.run(["git", "tag", "-a", "v1.0.0", "-m", "release v1.0.0"], cwd=repo, check=True, capture_output=True)
 
-    # 2. Unmerged commit on v1.2.0-dev (aad745c) is NOT an ancestor of origin/main
-    dev_commit = "aad745ca9c98fe9542372b64abb1932555789600"
-    res_dev = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", dev_commit, "origin/main"],
-        cwd=repo_dir,
-    )
+    # 2. Main commit is an ancestor of main branch
+    res_main = subprocess.run(["git", "merge-base", "--is-ancestor", main_commit, "main"], cwd=repo, capture_output=True)
+    assert res_main.returncode == 0, "Commit on main must be recognized as an ancestor of main"
+
+    # 3. Peeling annotated tag resolves to target commit
+    peeled = subprocess.check_output(["git", "rev-parse", "v1.0.0^{commit}"], cwd=repo, text=True).strip()
+    assert peeled == main_commit, "Tag peeling must resolve to exact commit SHA"
+
+    # 4. Create unmerged development branch with diverging commit
+    subprocess.run(["git", "checkout", "-b", "dev"], cwd=repo, check=True, capture_output=True)
+    (repo / "dev.txt").write_text("dev work", encoding="utf-8")
+    subprocess.run(["git", "add", "dev.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "unmerged dev commit"], cwd=repo, check=True, capture_output=True)
+    dev_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+
+    # Advance main independently
+    subprocess.run(["git", "checkout", "main"], cwd=repo, check=True, capture_output=True)
+    (repo / "file2.txt").write_text("main v2", encoding="utf-8")
+    subprocess.run(["git", "add", "file2.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "independent main commit"], cwd=repo, check=True, capture_output=True)
+
+    # 5. Verify unmerged dev commit is NOT an ancestor of main (fails closed with code 1)
+    res_dev = subprocess.run(["git", "merge-base", "--is-ancestor", dev_commit, "main"], cwd=repo, capture_output=True)
     assert res_dev.returncode == 1, "Unmerged development commit must NOT be recognized as ancestor of main"
-
-    # 3. Peeling annotated or lightweight tag
-    tag_peeled = subprocess.check_output(
-        ["git", "rev-parse", "v1.3.1^{commit}"],
-        cwd=repo_dir,
-        text=True,
-    ).strip()
-    assert len(tag_peeled) == 40
 
 
 def test_governance_policy_missing_mandatory_gate_fails_closed():
