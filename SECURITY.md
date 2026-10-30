@@ -10,7 +10,7 @@ We provide security patches and updates for the following versions:
 
 | Version | Supported | Status |
 |:---|:---:|:---|
-| `1.3.x` | :white_check_mark: | Current Release Line (`1.3.2` Candidate, `1.3.1` PyPI Stable) |
+| `1.3.x` | :white_check_mark: | Current Stable Release Line (`v1.3.2`) |
 | `1.2.x` | :white_check_mark: | Active Maintenance (`1.2.0`) |
 | `1.1.x` | :white_check_mark: | Maintenance |
 | `1.0.x` | :white_check_mark: | Maintenance |

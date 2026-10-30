@@ -87,6 +87,21 @@ except SecurityBlockError as err:
     print(f"Blocked securely: {err.reason}")
 ```
 
+### 4. Declarative Policy Configuration
+
+Load a declarative Policy-as-Code document to enforce custom security rules:
+
+```python
+from llmfirewall import Firewall
+
+# Initialize firewall with an explicit policy file
+fw = Firewall(policy="policies/strict.json")
+
+result = fw.scan("Untrusted user query")
+if result.is_blocked:
+    print(f"Request denied by policy: {result.reason}")
+```
+
 ---
 
 ## Decision Semantics Guide
@@ -139,6 +154,9 @@ logger.info("Scan completed: %s", result.safe_dict())
 The `llmfirewall` CLI provides 21 comprehensive subcommands for CI/CD pipelines, security gates, and SOC diagnostics:
 
 ```bash
+# Verify installed version
+llmfirewall --version
+
 # Scan a prompt directly from the shell
 llmfirewall scan "Explain quantum computing."
 
@@ -204,6 +222,17 @@ See [docs/architecture.md](docs/architecture.md) and [ARCHITECTURE.md](ARCHITECT
 | **Django** | `from llmfirewall.integrations.django import FirewallMiddleware` | `pip install "llmfirewall-core[django]"` |
 | **LangChain** | `from llmfirewall.integrations.langchain import FirewallCallbackHandler` | `pip install "llmfirewall-core[langchain]"` |
 | **LlamaIndex** | `from llmfirewall.integrations.llamaindex import FirewallNodePostprocessor` | `pip install "llmfirewall-core[llamaindex]"` |
+
+---
+
+## Security Boundaries & Threat Limitations
+
+LLMFirewall operates as an **in-process application-layer AI safety and guardrail system**. Please note the following architectural boundaries:
+
+- **Not an IAM System**: LLMFirewall does not replace authentication, authorization, or role-based access control (RBAC). Applications must authenticate and authorize callers before evaluating prompts.
+- **Not a Network WAF / DDoS Shield**: Network transport protections, rate-limiting, and volumetric transport scrubbing should be implemented at the API Gateway or reverse proxy layer.
+- **Defense-in-Depth Principle**: Deterministic regex and heuristic analyzers deliver sub-millisecond inspection latency (`~0.10–0.20ms` P50). For high-assurance workloads, combine prompt input scanning, output completion verification, and sandboxed agent tool permissions.
+- **Contextual SSN Suppression**: 9-digit patterns embedded within order/tracking prefixes (e.g. `Order #123-45-6789`) are suppressed by default to prevent business workflow disruption; applications requiring strict 9-digit masking across all contexts can configure `SSNSubDetector` parameters.
 
 ---
 
