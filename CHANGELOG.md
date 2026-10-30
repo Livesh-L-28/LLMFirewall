@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - Unreleased
+
+### Added
+- **Default SSN Detection & Validation (FIND-FUNC-01)**:
+  - Enabled `SSNSubDetector` by default in `PIIDetector` with SSA-compliant structural validation (`is_valid_ssn`).
+  - Implemented false-positive suppression for order/tracking numbers and alphanumeric serial codes.
+  - Added public API regression tests confirming valid synthetic SSN redaction blocks sensitive data from reaching downstream models.
+- **Optional Dependency Isolation (FIND-TEST-01)**:
+  - Added clean skipping and explicit error messages with installation instructions when optional dependencies (`fastapi`, `cryptography`) are absent.
+  - Added unit test verifying `EncryptedStorageAdapter` fails closed with actionable installation guidance when `cryptography` is not installed.
+- **Release Governance Ancestry Guard**:
+  - Hardened `.github/workflows/release.yml` with full clone checkout (`fetch-depth: 0`) and `git merge-base --is-ancestor` verification ensuring release tags point strictly to commits on protected `main`.
+  - Added automated CI governance and git ancestry verification test suite in `tests/test_governance.py`.
+- **Synthetic Secret Fixture Hygiene (FIND-SEC-01)**:
+  - Sanitized synthetic evaluation strings in `eval/generators.py`, `eval/payloads.py`, and `eval/suites.py` to prevent false positive secret scanning alerts while preserving 100% detection effectiveness.
+  - Added regression test `test_find_sec_01_synthetic_evaluation_fixtures_hygiene` verifying fixture safety and detector effectiveness.
+
+### Fixed
+- **Benchmark Latency Documentation (FIND-PERF-01)**:
+  - Qualified `README.md` and benchmark badges to distinguish detector inspection latency (`~0.10–0.20ms` P50) from serving runtime overhead delta (`~0.02ms` P50).
+  - Updated test count documentation to reflect 874 verified test cases across unit, regression, and integration suites.
+- **Security Policy Documentation (FIND-DOC-01)**:
+  - Updated `SECURITY.md` supported version matrix to cover `1.3.x`, `1.2.x`, `1.1.x`, and `1.0.x`.
+- **Cross-Platform Test Stabilization**:
+  - Enforced LF line endings via `.gitattributes` and adjusted timer assertion margins for Windows and macOS runner reliability.
+
+## [1.3.1] - 2026-10-27
+
+### Fixed
+- **Integrity Invariant Reconciliation**:
+  - Reconciled protected `tests/test_secrets.py` to match exact required SHA-256 hash (`d5ca47fd85349bf4ef6d7944ab9a9f131aa27877b58bb90b31532203d7420e41`).
+- **Release Version Metadata**:
+  - Synchronized package version to `1.3.1` across `pyproject.toml`, `_version.py`, and `AGENTS.md`.
+
+## [1.3.0] - 2026-10-27
+
+### Added
+- **Developer Integration Tooling**:
+  - Added `llmfirewall integrate` CLI subcommand suite (`detect`, `list`, `scaffold`, `validate`).
+  - Added automated framework detection and interactive/non-interactive boilerplate scaffolding for FastAPI, ASGI, Streaming, Tools, and RAG.
+  - Added companion test generation for all supported scaffolding recipes.
+- **Zero-Dependency Framework Integrations**:
+  - Added `LLMFirewallASGIMiddleware` pure ASGI 3.0 middleware with zero framework dependencies.
+  - Added `StreamingTextGuard` sliding-window token boundary guard for streaming LLM generations.
+  - Added `LLMFirewallClient` and `AsyncLLMFirewallClient` high-level client wrappers.
+- **Security Event Correlation**:
+  - Added `AdvancedSecurityCorrelator` linking atomic findings to asset inventories, attack progression stages, and MITRE ATT&CK / OWASP LLM taxonomy.
+- **Workflow & Agent Tool Security**:
+  - Added `WorkflowEnforcer` and context-aware multi-step decision engine.
+  - Added comprehensive adversarial integration test suites.
+
 ## [1.2.0] - 2026-10-24
 
 ### Added

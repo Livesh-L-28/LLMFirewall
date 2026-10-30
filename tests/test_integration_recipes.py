@@ -12,9 +12,19 @@ Plus decision explainability (trace_decision) and zero-retention safe logging (s
 
 import json
 import pytest
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
 from pydantic import BaseModel
+
+try:
+    import fastapi
+    from fastapi import FastAPI, Request
+    from fastapi.testclient import TestClient
+    from llmfirewall.integrations.fastapi import (
+        FirewallMiddleware,
+        get_scan_result,
+    )
+    _HAS_FASTAPI = True
+except ImportError:
+    _HAS_FASTAPI = False
 
 from llmfirewall import Action, Firewall, SecurityBlockError, Severity
 from llmfirewall.integrations import (
@@ -23,10 +33,6 @@ from llmfirewall.integrations import (
     LLMFirewallClient,
     SecurityViolation,
     StreamingTextGuard,
-)
-from llmfirewall.integrations.fastapi import (
-    FirewallMiddleware,
-    get_scan_result,
 )
 from llmfirewall.rag.models import DocumentSecurityStatus
 
@@ -41,6 +47,8 @@ class ChatPayload(BaseModel):
 
 @pytest.fixture
 def fastapi_recipe_app():
+    if not _HAS_FASTAPI:
+        pytest.skip("fastapi is not installed (install with: pip install 'llmfirewall-core[fastapi]')")
     app = FastAPI(title="FastAPI Recipe App")
     fw = Firewall()
 

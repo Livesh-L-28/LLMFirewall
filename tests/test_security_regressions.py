@@ -1205,8 +1205,29 @@ def test_phase_40_public_api_stability_regressions() -> None:
     assert res.is_allowed is True
 
 
+def test_find_sec_01_synthetic_evaluation_fixtures_hygiene():
+    """Verify FIND-SEC-01: Synthetic evaluation fixtures in src/ and tests/ do not expose live credentials.
 
+    Verifies that:
+    1. Generated evaluation fixtures in eval/generators.py produce valid test strings without hardcoding real credentials.
+    2. Secret detector successfully detects synthetic fixtures without false negative regression.
+    3. Synthetic fixtures are clearly marked with deterministic test tokens.
+    """
+    from llmfirewall.eval.generators import SecretGenerator
+    from llmfirewall.detectors.secrets.detector import SecretDetector
 
+    detector = SecretDetector()
+    gen = SecretGenerator()
+    generated_tests = gen.generate(count=8)
+    assert len(generated_tests) == 8
 
-
-
+    for t in generated_tests:
+        assert isinstance(t.input_payload, str)
+        # Ensure synthetic markers are present
+        payload_lower = t.input_payload.lower()
+        assert any(m.lower() in payload_lower for m in ["testkey", "testsecret", "exp", "pwd"]), (
+            f"Fixture {t.name} should contain synthetic identifier: {t.input_payload}"
+        )
+        # Verify detection
+        matches = detector.detect(t.input_payload)
+        assert len(matches) > 0, f"Synthetic fixture '{t.name}' must be detected by SecretDetector: {t.input_payload}"

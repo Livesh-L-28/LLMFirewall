@@ -1184,3 +1184,105 @@ def test_security_workflow_configuration_integrity():
     assert with_params.get("retention-days") == 90
 
 
+def test_release_workflow_governance_ancestry_enforcement():
+    """Verify that .github/workflows/release.yml enforces least privilege and tag ancestry on main branch."""
+    import yaml
+    from pathlib import Path
+
+    workflow_path = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "release.yml"
+    assert workflow_path.exists(), "release.yml workflow must exist"
+
+    with open(workflow_path, "r", encoding="utf-8") as f:
+        wf = yaml.safe_load(f)
+
+    # 1. Workflow-level permissions must be minimal (no id-token: write)
+    assert wf.get("permissions") == {"contents": "read"}, "Default permissions must be read-only"
+
+    # 2. Build-and-verify job must NOT have id-token: write
+    build_job = wf["jobs"]["build-and-verify"]
+    assert build_job.get("permissions") == {"contents": "read"}, "Build job must have only contents: read"
+
+    # 3. Publish job must require build-and-verify and be isolated with id-token: write
+    publish_job = wf["jobs"]["publish"]
+    assert publish_job.get("needs") == "build-and-verify"
+    assert publish_job.get("permissions") == {"contents": "read", "id-token": "write"}
+    assert publish_job.get("environment", {}).get("name") == "pypi"
+
+    steps = build_job["steps"]
+
+    # 4. Checkout step must specify fetch-depth: 0 (not shallow) to allow ancestry verification
+    checkout_step = next(s for s in steps if "Checkout" in s.get("name", ""))
+    assert checkout_step.get("with", {}).get("fetch-depth") == 0, (
+        "Checkout step in release.yml must specify 'fetch-depth: 0' to preserve git commit ancestry."
+    )
+
+    # 5. Ancestry enforcement step must exist BEFORE Python setup and build
+    ancestry_idx = next(i for i, s in enumerate(steps) if "Ancestry" in s.get("name", ""))
+    setup_py_idx = next(i for i, s in enumerate(steps) if "Set up Python" in s.get("name", ""))
+    build_idx = next(i for i, s in enumerate(steps) if "Build" in s.get("name", ""))
+
+    assert ancestry_idx < setup_py_idx < build_idx, (
+        "Ancestry enforcement must run before setup and build steps."
+    )
+
+    # 6. Step run script must verify peeled commit and ancestry against origin/main
+    ancestry_step = steps[ancestry_idx]
+    run_script = ancestry_step.get("run", "")
+    assert 'git rev-parse "${RELEASE_TAG}^{commit}"' in run_script
+    assert "git merge-base --is-ancestor" in run_script
+    assert "origin/main" in run_script
+
+    # 7. Checksum verification in publish job
+    pub_steps = publish_job["steps"]
+    integrity_step = next(s for s in pub_steps if "Integrity" in s.get("name", ""))
+    assert "sha256sum -c" in integrity_step.get("run", "")
+
+
+
+def test_git_ancestry_logic_validation():
+    """Verify git ancestry check fails-closed for unmerged development commits and succeeds for main commits."""
+    import subprocess
+    from pathlib import Path
+
+    repo_dir = Path(__file__).resolve().parent.parent
+
+    # 1. Commit on main branch (origin/main) is an ancestor of origin/main
+    main_head = subprocess.check_output(
+        ["git", "rev-parse", "origin/main"],
+        cwd=repo_dir,
+        text=True,
+    ).strip()
+
+    res_main = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", main_head, "origin/main"],
+        cwd=repo_dir,
+    )
+    assert res_main.returncode == 0, "Commit on main must be recognized as ancestor of main"
+
+    # 2. Unmerged commit on v1.2.0-dev (aad745c) is NOT an ancestor of origin/main
+    dev_commit = "aad745ca9c98fe9542372b64abb1932555789600"
+    res_dev = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", dev_commit, "origin/main"],
+        cwd=repo_dir,
+    )
+    assert res_dev.returncode == 1, "Unmerged development commit must NOT be recognized as ancestor of main"
+
+    # 3. Peeling annotated or lightweight tag
+    tag_peeled = subprocess.check_output(
+        ["git", "rev-parse", "v1.3.1^{commit}"],
+        cwd=repo_dir,
+        text=True,
+    ).strip()
+    assert len(tag_peeled) == 40
+
+
+def test_governance_policy_missing_mandatory_gate_fails_closed():
+    """Verify that referencing a non-existent gate in 'require' raises ValueError (fail-closed)."""
+    with pytest.raises(ValueError, match="Mandatory gate 'dangling-mandatory-gate' referenced in 'require' is not defined"):
+        GovernancePolicy(
+            name="invalid-policy",
+            version="1.0",
+            require=["dangling-mandatory-gate"],
+            gates=[],
+        )
+

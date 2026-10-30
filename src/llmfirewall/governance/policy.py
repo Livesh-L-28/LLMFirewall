@@ -96,8 +96,9 @@ class GovernancePolicy(BaseModel):
         # Check require list
         for req_id in self.require:
             if req_id not in gate_ids:
-                # If gate not in gates list, ensure it's not a dangling reference unless it's a known built-in gate
-                pass
+                raise ValueError(
+                    f"Mandatory gate '{req_id}' referenced in 'require' is not defined in policy gates."
+                )
 
         # Check for duplicate gate IDs
         seen = set()

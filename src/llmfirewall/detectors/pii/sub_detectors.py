@@ -6,7 +6,11 @@ import re
 from typing import List, Optional
 
 from llmfirewall.core.models import Finding, Severity, ThreatType
-from llmfirewall.detectors.pii.validators import is_valid_ip_address, luhn_checksum_is_valid
+from llmfirewall.detectors.pii.validators import (
+    is_valid_ip_address,
+    is_valid_ssn,
+    luhn_checksum_is_valid,
+)
 
 
 @dataclass(frozen=True)
@@ -270,16 +274,17 @@ class SSNSubDetector(PIISubDetector):
         matches: List[PIIMatch] = []
         for m in self._pattern.finditer(text):
             matched = m.group(0)
-            matches.append(
-                PIIMatch(
-                    category=self.category_name,
-                    description="Social Security Number (SSN) detected",
-                    severity=Severity.HIGH,
-                    confidence=0.95,
-                    start_pos=m.start(0),
-                    end_pos=m.end(0),
-                    replacement_text="[REDACTED_SSN]",
-                    raw_match=matched,
+            if is_valid_ssn(matched, text, m.start(0)):
+                matches.append(
+                    PIIMatch(
+                        category=self.category_name,
+                        description="Social Security Number (SSN) detected",
+                        severity=Severity.HIGH,
+                        confidence=0.95,
+                        start_pos=m.start(0),
+                        end_pos=m.end(0),
+                        replacement_text="[REDACTED_SSN]",
+                        raw_match=matched,
+                    )
                 )
-            )
         return matches

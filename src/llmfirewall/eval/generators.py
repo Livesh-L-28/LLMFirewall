@@ -111,10 +111,10 @@ class SecretGenerator(SecurityTestGenerator):
     """Generates synthetic API keys and credentials test cases."""
 
     TEMPLATES = [
-        ("client.api_key = '" + "".join(["sk-", "proj-", "testkey{n:06d}abcXYZ1234567890"]) + "'", "Synthetic OpenAI Key"),
-        ("export GITHUB_TOKEN=" + "".join(["gh", "p_", "testsecret{n:08d}abcdefghijklmn"]), "Synthetic GitHub PAT"),
-        ("AWS_ACCESS_KEY_ID=" + "".join(["AK", "IA", "IOSFODNN7{n:05d}EXP"]), "Synthetic AWS Key"),
-        ("DATABASE_URL=" + "".join(["postgres://", "admin:pwd{n:04d}", "@internal-db.corp:5432/db"]), "Synthetic Database URI"),
+        ("client.api_key = '" + "".join(["sk-", "proj-", "testkey{n:06d}abcXYZ1234567890EXTRAchars40plus"]) + "'", "Synthetic OpenAI Key"),
+        ("export GITHUB_TOKEN=" + "".join(["gh", "p_", "testsecret{n:08d}abcdefghijklmnop12"]), "Synthetic GitHub PAT"),
+        ("AWS_ACCESS_KEY_ID=" + "".join(["AK", "IA", "IOSFODNN{n:05d}EXP"]), "Synthetic AWS Key"),
+        ("DATABASE_URL=" + "".join(["postgres://", "admin:mY$ecurePwd{n:04d}", "@internal-db.corp:5432/db"]), "Synthetic Database URI"),
     ]
 
     def generate(self, count: int = 4, seed: Optional[int] = 42) -> List[SecurityTest]:

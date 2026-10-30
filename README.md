@@ -5,10 +5,10 @@
 [![PyPI version](https://img.shields.io/badge/pypi-v1.3.2-blue.svg)](https://pypi.org/project/llmfirewall-core/)
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-861%20passed-brightgreen.svg)](docs/benchmarks.md)
-[![Overhead](https://img.shields.io/badge/overhead-sub--millisecond%20(P50%200.02ms)-blueviolet.svg)](docs/benchmarks.md)
+[![Tests](https://img.shields.io/badge/tests-876%20passed%2Fverified-brightgreen.svg)](docs/benchmarks.md)
+[![Overhead](https://img.shields.io/badge/overhead-sub--millisecond%20(P50%200.02ms%20delta)-blueviolet.svg)](docs/benchmarks.md)
 
-**LLMFirewall** (`llmfirewall-core` on PyPI) is a lightweight, provider-agnostic, defense-in-depth security framework for Large Language Model (LLM) applications, Retrieval-Augmented Generation (RAG) pipelines, and autonomous AI agents. It operates **entirely in-process** to intercept adversarial prompt injection, redact sensitive PII and credentials, sandbox agent tool calls, and enforce declarative Policy-as-Code with **sub-millisecond latency (`~0.02ms` P50)** and zero external network dependencies.
+**LLMFirewall** (`llmfirewall-core` on PyPI) is a lightweight, provider-agnostic, defense-in-depth security framework for Large Language Model (LLM) applications, Retrieval-Augmented Generation (RAG) pipelines, and autonomous AI agents. It operates **entirely in-process** to intercept adversarial prompt injection, redact sensitive PII and credentials, sandbox agent tool calls, and enforce declarative Policy-as-Code with **sub-millisecond inspection latency (`~0.10–0.20ms` P50)**, minimal serving overhead (`~0.02ms` P50 delta), and zero external network dependencies.
 
 ---
 
@@ -213,11 +213,11 @@ LLMFirewall is continuously benchmarked against an automated test suite across 8
 
 | Metric | Result | Benchmark Population |
 |:---|:---:|:---|
-| **Automated Test Suite** | **772 / 772 Passed** | Unit, regression, and integration tests |
+| **Automated Test Suite** | **877 Verified (876 Passed, 1 Skipped Optional)** | Unit, regression, and integration tests |
 | **Benchmark Detection Rate** | **100% (28 / 28)** | Curated reference attack cases |
 | **False Positive Rate** | **0.0% (0 / 12)** | Curated benign reference cases |
-| **Median Inspection Latency (P50)** | **0.104 ms** | End-to-end multi-detector scan |
-| **Serving Runtime Overhead (P50)** | **+0.022 ms** | 500-iteration serving microbenchmark |
+| **Median Inspection Latency (P50)** | **0.104 ms** | End-to-end multi-detector scan (`0.18–0.20ms` full suite) |
+| **Serving Runtime Overhead (P50)** | **+0.022 ms** | 500-iteration serving microbenchmark delta |
 
 Empirical benchmarks and testing methodologies are documented in [docs/benchmarks.md](docs/benchmarks.md).
 
