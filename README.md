@@ -11,7 +11,7 @@
   <a href="https://pypi.org/project/llmfirewall-core/"><img src="https://img.shields.io/pypi/pyversions/llmfirewall-core.svg?color=8b5cf6" alt="Python Compatibility"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"></a>
   <a href="https://github.com/Livesh-L-28/LLMFirewall/actions"><img src="https://img.shields.io/github/actions/workflow/status/Livesh-L-28/LLMFirewall/release-governance.yml?branch=main&label=CI&logo=github" alt="GitHub Actions CI"></a>
-  <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/tests-1106%20passed%20%7C%2013%20skipped-brightgreen.svg" alt="Tests"></a>
+  <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/tests-1195%20passed%20%7C%2013%20skipped-brightgreen.svg" alt="Tests"></a>
   <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/inspection%20latency-~0.10ms%20P50-blueviolet.svg" alt="Inspection Latency"></a>
   <a href="docs/"><img src="https://img.shields.io/badge/docs-API%20%26%20Recipes-blue.svg" alt="Documentation"></a>
 </p>
@@ -22,7 +22,7 @@
 
 **LLMFirewall-Core** (`llmfirewall-core` on PyPI, imported as `llmfirewall`) is an in-process, provider-agnostic, defense-in-depth security framework engineered for Large Language Model (LLM) applications, Retrieval-Augmented Generation (RAG) pipelines, and autonomous AI agents.
 
-It executes **entirely in-process** to intercept adversarial prompt injection, redact sensitive PII and API credentials, sandbox agent tool calls, and enforce declarative Policy-as-Code with **sub-millisecond inspection latency (`~0.10–0.20ms` P50)**, minimal serving overhead (`~0.02ms` P50 delta), and zero mandatory external network or database dependencies.
+It executes **entirely in-process** to intercept adversarial prompt injection, redact sensitive PII and API credentials, validate agent tool parameters and enforce authorization guardrails, and evaluate declarative Policy-as-Code with **sub-millisecond warmed steady-state inspection latency (`~0.10–0.20ms` P50 under microbenchmark conditions; `0.408ms` P50 multi-detector scan on Apple Silicon)**, minimal serving overhead (`~0.02ms` P50 delta), and zero mandatory external network or database dependencies.
 
 ---
 
@@ -42,10 +42,14 @@ LLMFirewall-Core provides a deterministic, zero-network-dependency security boun
 
 ## Who Is It For?
 
-- **AI Application Engineers** deploying production chatbots, copilots, or internal enterprise assistants who require deterministic, fail-safe guardrails.
-- **Autonomous Agent Developers** building multi-step tool-using agents (LangChain, LlamaIndex, AutoGen, CrewAI) requiring action budgets, argument sandboxing, and SSRF protection.
+- **AI Application Engineers** evaluating or building chatbots, copilots, or internal enterprise assistants who require deterministic, fail-safe guardrails.
+- **Autonomous Agent Developers** building multi-step tool-using agents (LangChain, LlamaIndex, AutoGen, CrewAI) requiring action budgets, tool parameter validation, and SSRF guardrails.
 - **AI Coding Agents** discovering, integrating, or testing security checks into existing Python codebases (see [AGENTS.md](AGENTS.md)).
-- **Enterprise Security & SecOps Teams** enforcing auditable Policy-as-Code, compliance baselines (OWASP Top 10 for LLM, NIST AI RMF), and automated CI/CD release assurance.
+- **Enterprise Security & SecOps Teams** evaluating auditable Policy-as-Code, compliance baselines (OWASP Top 10 for LLM, NIST AI RMF), and automated CI/CD release assurance.
+
+> [!NOTE]
+> **Adoption & Deployment Status:**
+> As of v1.4.0, LLMFirewall-Core has **zero verified external third-party evaluations and zero verified external production deployments**. All performance, latency, and threat detection metrics reported herein reflect internal automated regression suites, synthetic corpora, and curated reference benchmarks. Pre-release evaluation guides and feedback protocols are provided under `docs/external-pilot/`.
 
 ---
 
@@ -59,9 +63,9 @@ LLMFirewall-Core strictly separates **threat detection** (identifying anomalies)
 | **Output Verification** | Model completion scanning, credential leak scrubbing, hallucinated PII leakage | `Firewall.scan(text, direction="output")` |
 | **PII & Secrets Redaction** | Context-aware PII detection (emails, SSNs, credit cards, phones, IPs) and high-entropy secret detection | `result.processed_text` / `result.findings` / `result.safe_dict()` |
 | **Policy-as-Code Engine** | Declarative JSON/YAML rule sets with deterministic evaluation precedence (`BLOCK > REDACT > WARN > ALLOW`) | `from llmfirewall.policy import Policy`<br/>`Policy.from_file("policies/strict.json")` |
-| **Agent Tool Sandboxing** | SSRF prevention (cloud metadata `169.254.169.254`), path traversal, and privileged action authorization | `fw.check_tool_call(tool, args)`<br/>`@fw.protect_tool(tool_func, tool_name="...")` |
+| **Agent Tool Parameter Validation & Authorization** | Application-level tool parameter validation, static SSRF checks (cloud metadata `169.254.169.254`), path traversal checks, and privileged action authorization (does not provide OS-level container isolation) | `fw.check_tool_call(tool, args)`<br/>`@fw.protect_tool(tool_func, tool_name="...")` |
 | **Native LLM SDK Adapters** | OpenAI and Anthropic client interception with automated prompt scanning & stream protection | `from llmfirewall import wrap_openai, wrap_anthropic` |
-| **Agent Framework Adapters** | LangGraph multi-agent state protection and Model Context Protocol (MCP) tool sandboxing | `from llmfirewall import guard_node, MCPToolGuard` |
+| **Agent Framework Adapters** | LangGraph multi-agent state protection and Model Context Protocol (MCP) tool argument validation | `from llmfirewall import guard_node, MCPToolGuard` |
 | **Streaming Text Guard** | Sliding-window token-boundary inspection across real-time generation chunks | `from llmfirewall.integrations import StreamingTextGuard`<br/>`guard.protect_stream()` / `guard.protect_async_stream()` |
 | **Zero-Dependency ASGI** | Pure ASGI 3.0 middleware for non-blocking asynchronous web applications | `from llmfirewall.integrations import LLMFirewallASGIMiddleware` |
 | **Continuous Security Evaluation** | Mutation fuzzing, red-team test generation, and declarative assertion evaluation | `from llmfirewall.eval import SecurityEvaluationEngine`<br/>`llmfirewall eval run` |
@@ -90,8 +94,8 @@ flowchart TD
             PolicyEngine["Policy Engine<br/>• Declarative Policy Rules (JSON/YAML)<br/>• Deterministic Precedence<br/>(BLOCK > REDACT > WARN > ALLOW)"]
         end
 
-        subgraph ToolSandbox["Agent Tool Sandboxing"]
-            ToolGuard["Tool Security Sandbox<br/>• SSRF & Cloud Metadata Guard<br/>• Path Traversal Prevention<br/>• Privileged Capability Access Controls"]
+        subgraph ToolValidation["Agent Tool Parameter Validation & Authorization"]
+            ToolGuard["Tool Parameter Guard<br/>• Static SSRF & Cloud Metadata Checks<br/>• Path Traversal Inspection<br/>• Privileged Capability Access Controls"]
         end
 
         subgraph OutputPipeline["3. Output Security Verification"]
@@ -358,9 +362,14 @@ def chat_view(request):
 
 ---
 
-### 5. Agent Tool Security Sandboxing
+### 5. Agent Tool Parameter Validation & Authorization Guardrails
 
-Prevent Server-Side Request Forgery (SSRF), directory traversal, and unauthorized tool invocation in autonomous AI agents:
+Prevent Server-Side Request Forgery (SSRF), directory traversal, and unauthorized tool invocation in autonomous AI agents through application-level parameter schema inspection and capability checks:
+
+> [!NOTE]
+> **Tool Security & SSRF Boundary Disclaimers:**
+> - **Application-Level Guardrail, Not an OS Sandbox**: LLMFirewall agent tool security operates as an application-level parameter validation and authorization layer. It is **not** an operating system container, microVM, cgroup, or kernel sandbox. Untrusted code execution should always be isolated in dedicated OS-level sandboxes (e.g. gVisor, Firecracker, Docker).
+> - **Static SSRF vs. DNS Rebinding / Socket TOCTOU**: LLMFirewall inspects target URLs and IP strings against static blacklists (such as cloud metadata `169.254.169.254`, link-local, loopback, and private IPv4/IPv6 subnets). Static string and subnet inspection does **not** independently prevent DNS rebinding attacks or socket-level Time-Of-Check-To-Time-Of-Use (TOCTOU) address resolution shifts. Production environments should pair LLMFirewall with an egress forward proxy or socket IP pinning for stronger network-level enforcement.
 
 ```python
 from llmfirewall import Firewall, Action, SecurityBlockError
@@ -408,7 +417,7 @@ if result.is_blocked:
 
 ---
 
-## Decision Semantics & Safe Logging
+## Decision Semantics & Safe Audit-Event Serialization
 
 LLMFirewall evaluates policies with deterministic precedence: **`BLOCK > REDACT > WARN > ALLOW`**.
 
@@ -419,9 +428,9 @@ LLMFirewall evaluates policies with deterministic precedence: **`BLOCK > REDACT 
 | **`Action.REDACT`** | `True` | `False` | Sensitive PII or secrets detected. **Always forward `result.processed_text`** downstream, never the original prompt. |
 | **`Action.BLOCK`** | `False` | `True` | Severe threat detected (e.g. prompt injection, jailbreak). Drop request immediately; return HTTP 403. |
 
-### Zero-Retention Safe Logging
+### Safe Audit-Event Serialization (`safe_dict`)
 
-Never log raw prompts or user inputs in application logs. Use `result.safe_dict()` to produce telemetry that automatically redacts raw prompts and secret snippets:
+Never log raw prompts or user inputs in application logs. Use `result.safe_dict()` to produce telemetry that automatically scrubs raw prompts and secret snippets for safe local audit serialization:
 
 ```python
 import logging
@@ -437,6 +446,14 @@ logger.info("Scan completed: %s", result.safe_dict())
 # -> 'original_text' replaced with '[OMITTED_FOR_SAFETY]'
 # -> matched secret substrings replaced with '[REDACTED_FROM_AUDIT]'
 ```
+
+> [!IMPORTANT]
+> **Audit Serialization Scope & Non-Guarantees:**
+> `result.safe_dict()` performs local sensitive-field scrubbing specifically for audit event serialization. It does **NOT** guarantee:
+> 1. **Zero retention across the entire application**: If application code logs, stores, or caches the raw un-sanitized input outside `result.safe_dict()`, those strings persist in application memory or secondary storage.
+> 2. **Zero retention by external logging providers**: Log collectors, forwarders, or APM agents capturing raw HTTP request bodies at the web server layer are not controlled by `safe_dict()`.
+> 3. **Zero retention by cloud model providers**: Forwarding text to third-party model APIs (such as OpenAI, Anthropic, or cloud endpoints) is subject to each provider's data retention and logging policies.
+> 4. **Automatic deletion of sensitive information from memory**: Python objects remain subject to standard Python garbage collection lifecycles and are not actively overwritten or wiped from process memory.
 
 ---
 
@@ -499,26 +516,60 @@ See [docs/cli.md](docs/cli.md) for full CLI documentation.
 
 ## Operational Boundaries & Security Model
 
-LLMFirewall operates as an **in-process application-layer AI safety and guardrail system**. Please review the following architectural boundaries:
+LLMFirewall operates as an **in-process application-layer AI safety and guardrail system**. Please review the following architectural boundaries and non-goals:
 
 1. **Not an Identity / IAM System**: LLMFirewall does not replace authentication, authorization, or role-based access control (RBAC). Applications must authenticate and authorize callers before evaluating prompts.
-2. **Not a Network WAF / DDoS Shield**: Network transport protections, rate-limiting, and volumetric transport scrubbing should be implemented at the reverse proxy or API gateway layer.
-3. **Defense-in-Depth Principle**: Deterministic regex and heuristic analyzers deliver sub-millisecond inspection latency (`~0.10–0.20ms` P50). No automated guardrail can claim 100% prompt injection prevention; always combine input scanning, output verification, least-privilege tool permissions, and human oversight for high-risk operations.
-4. **Contextual SSN Handling**: 9-digit patterns embedded within order/tracking prefixes (e.g., `Order #123-45-6789`) are suppressed by default to prevent business disruption; applications requiring strict 9-digit masking across all contexts can configure detector parameters.
+2. **Not a Network WAF / DDoS Shield**: Network transport protections, volumetric scrubbing, and IP-level firewalling must be implemented at the reverse proxy, load balancer, or API gateway layer.
+3. **Application Guardrail vs. OS Sandbox**: Tool parameter validation and authorization operates at the application data and schema layer. It does not provide an operating system container, microVM, cgroup, or kernel-level sandbox. Untrusted code execution must run in dedicated OS containers (e.g., gVisor, Firecracker, Docker).
+4. **Static SSRF Limitations**: Static URL and subnet checking blocks known metadata endpoints (`169.254.169.254`), private IP ranges, and link-local addresses from tool call arguments. It does not independently prevent DNS rebinding or socket-level TOCTOU attacks; an egress forward proxy or socket IP pinning is required for comprehensive network transport security.
+5. **Streaming Chunk Recall Limitations**: The sliding-window streaming guard buffers token chunks across boundaries to detect split payloads in flight. However, tokens that have already been transmitted and flushed to the client prior to a mid-stream detection cannot be retroactively recalled or revoked.
+6. **Defense-in-Depth Principle & Heuristic Scope**: Deterministic pattern and heuristic analyzers provide fast, low-overhead inspection but cannot guarantee universal detection across all novel or evolving semantic evasions. Always combine input scanning, output verification, least-privilege tool access, and human oversight for sensitive operations.
+7. **Contextual SSN Handling**: 9-digit patterns embedded within order/tracking prefixes (e.g., `Order #123-45-6789`) are suppressed by default to prevent business disruption; applications requiring strict 9-digit masking across all contexts can configure detector parameters.
+8. **Adoption & External Deployment Status**: LLMFirewall currently reports zero verified external third-party evaluations and zero verified external production deployments. All reported benchmarks derive from internal automated regression suites, synthetic corpora, and curated reference datasets. Pre-release evaluation materials are documented in `docs/external-pilot/`.
 
 ---
 
 ## Empirical Benchmark Evidence
 
-LLMFirewall is continuously benchmarked against an automated test suite across 8 threat categories:
+LLMFirewall is evaluated against internal automated test suites, curated reference corpora, and novel generalization holdout datasets across 8 threat categories:
 
-| Metric | Result | Benchmark Population |
+### 1. Automated Regression & Curated Reference Benchmarks
+
+| Metric | Result | Dataset & Scope |
 |:---|:---:|:---|
-| **Automated Test Suite** | **1,119 Verified (1,106 Passed, 13 Skipped Optional)** | Unit, regression, and integration tests |
-| **Benchmark Detection Rate** | **100% (28 / 28)** | Curated reference attack cases |
-| **False Positive Rate** | **0.0% (0 / 12)** | Curated benign reference cases |
-| **Median Inspection Latency (P50)** | **0.104 ms** | End-to-end multi-detector scan (`0.18–0.20ms` full suite) |
-| **Serving Runtime Overhead (P50)** | **+0.022 ms** | 500-iteration serving microbenchmark delta |
+| **Automated Test Suite** | **1,195 Passed, 13 Skipped (1,208 Collected)** | Current post-reconciliation local test run across full test suite (`tests/`) |
+| **Historical Curated Detection Rate** | **100% (28 / 28)** | Historical 40-case Benchmark Dataset v1 reference corpus (`docs/benchmarks.md`, `docs/releases/v1.0.0-release-report.md`; curated reference scope, not Holdout v4 generalization) |
+| **Historical Curated False Positive Rate** | **0.0% (0 / 12)** | Historical 40-case Benchmark Dataset v1 benign controls (12 reference cases; curated baseline, not Holdout v4 generalization) |
+
+### 2. Generalization Evaluation (Holdout v4)
+
+To evaluate effectiveness on novel evasion techniques not present in initial training or rule sets, the framework is tested against the independent Holdout v4 dataset (`benchmarks/datasets/holdout_v4_evaluation_dataset.json`):
+
+| Metric | Value | Empirical Result & Scope |
+|:---|:---:|:---|
+| **Total Evaluation Population** | **80 samples** | 40 adversarial prompt injection evasions, 40 benign multi-domain texts |
+| **True Positives (TP)** | **24** | Adversarial attacks successfully blocked |
+| **False Negatives (FN)** | **16** | Novel evasions bypassing heuristic rules (40.0% false-negative rate) |
+| **True Negatives (TN)** | **40** | Benign inputs correctly allowed |
+| **False Positives (FP)** | **0** | Clean inputs falsely blocked (0.0% false-positive rate) |
+| **Empirical Recall** | **60.0% (24 / 40)** | Detection rate on novel evasions (does not imply universal detection) |
+| **Empirical Specificity** | **100.0% (40 / 40)** | Preservation of benign traffic without disruption |
+
+> [!WARNING]
+> **No Universal Detection Guarantee:**
+> Holdout v4 demonstrates that deterministic heuristics achieve 60.0% recall on novel adversarial evasions with zero false positives. Rule-based inspection does **not** guarantee universal detection against all possible adversarial attacks.
+
+### 3. Inspection Latency & Overhead Benchmarks
+
+| Metric | Result | Measurement Conditions |
+|:---|:---:|:---|
+| **Median Multi-Detector Inspection Latency (P50)** | **0.408 ms** | Warmed, uncached steady-state scan (2 warmup calls, 30 timed iterations on Apple Silicon ARM64) |
+| **Microbenchmark Single-Detector Latency (P50)** | **~0.10–0.20 ms** | Individual detector benchmarks under synthetic microbenchmark fixtures |
+| **Serving Runtime Overhead (P50)** | **+0.022 ms** | 500-iteration serving middleware overhead delta |
+
+> [!NOTE]
+> **Latency Conditions vs. Cold Startup:**
+> Latency figures represent **warmed, uncached steady-state scan latency** (after module loading and regex compilation). Cold process initialization includes Python import overhead and initial regex compilation, which occurs once per worker startup. Steady-state latency will vary depending on hardware architecture, CPU load, payload size, and active detector count; it is not a universal latency guarantee.
 
 Empirical benchmarks and testing methodologies are documented in [docs/benchmarks.md](docs/benchmarks.md).
 

@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Holdout False-Negative Remediation**:
   - Remediated 12/12 false negatives from curated Holdout v1 benchmark covering indirect injection, multilingual French directives, English tool execution syntax, bracketed context delimiters, and RAG poisoning (curated benchmark scope; does not imply universal detection).
 - **SQL Educational Query False-Positive Remediation**:
-  - Added negative lookahead exclusions to `InstructionOverrideRule` to resolve false positives on queries comparing SQL keywords (e.g., `Explain the difference between DROP TABLE and TRUNCATE TABLE in PostgreSQL`) while maintaining 100% block rate on actual destructive SQL injections.
+  - Added negative lookahead exclusions to `InstructionOverrideRule` to resolve false positives on queries comparing SQL keywords (e.g., `Explain the difference between DROP TABLE and TRUNCATE TABLE in PostgreSQL`) while maintaining verified blocking on tested destructive SQL injection regression fixtures (7/7 malicious samples blocked in `tests/test_sql_fp_remediation_week7.py`).
 - **PII Structural Integrity**:
   - Verified SSA structural rules and Luhn credit card validation invariants across all endpoints.
 
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tool parameter validation and authorization operates at the application parameter schema and URL/path layer, not as an operating system container or kernel sandbox.
 - Static URL and subnet inspection does not mitigate socket-level TOCTOU DNS rebinding without an egress forward proxy or socket IP pinning.
 - Local `safe_dict()` scrubbing eliminates sensitive substrings locally but does not govern third-party SaaS cloud model retention.
-- Streaming guard token-boundary sliding window buffers emitted chunks; already emitted tokens cannot be retroactively recalled if mid-stream severance occurs.
+- Streaming guard token-boundary sliding window buffers emitted chunks; tokens that have already been transmitted and flushed to the client prior to a mid-stream detection cannot be retroactively recalled or revoked.
 - Multilingual heuristic coverage is limited to tested rule patterns across 5 languages (English, French, German, Spanish, Russian) and does not constitute exhaustive semantic understanding.
 - Adoption status reflects zero verified external evaluations and zero verified production deployments; pilot materials are prepared for maintainer dispatch.
 
@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Holdout False-Negative Remediation**:
   - Remediated 12/12 false negatives from Holdout v1 covering indirect injection, multilingual French directives, English tool execution syntax, bracketed context delimiters, and RAG poisoning.
 - **SQL Educational Query False-Positive Remediation**:
-  - Added negative lookahead exclusions to `InstructionOverrideRule` to resolve false positives on queries comparing SQL keywords (e.g., `Explain the difference between DROP TABLE and TRUNCATE TABLE in PostgreSQL`) while maintaining 100% block rate on actual destructive SQL injections.
+  - Added negative lookahead exclusions to `InstructionOverrideRule` to resolve false positives on queries comparing SQL keywords (e.g., `Explain the difference between DROP TABLE and TRUNCATE TABLE in PostgreSQL`) while maintaining verified blocking on tested destructive SQL injection regression fixtures (7/7 malicious samples blocked in `tests/test_sql_fp_remediation_week7.py`).
 - **PII Structural Integrity**:
   - Verified SSA structural rules and Luhn credit card validation invariants across all endpoints.
 
