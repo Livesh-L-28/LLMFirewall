@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-01
+
+### Added
+- **Ecosystem SDK Wrappers & Integrations**:
+  - `llmfirewall.integrations.openai`: `OpenAIGuard` and `wrap_openai` providing sync and async completions interception, sliding-window streaming token guard (`StreamingTextGuard`), prompt inspection, PII redaction propagation, and output defense.
+  - `llmfirewall.integrations.anthropic`: `AnthropicGuard` and `wrap_anthropic` intercepting Anthropic Messages API with user/system prompt scanning and completion protection.
+  - `llmfirewall.integrations.langgraph`: `LangGraphStateGuard` and `guard_node` decorator supporting custom graph state keys, node input/output scanning, and state redaction.
+  - `llmfirewall.integrations.mcp`: `MCPToolGuard` providing Model Context Protocol JSON-RPC 2.0 tool call validation, argument inspection, static SSRF prevention, and error formatting.
+  - `llmfirewall.integrations.asgi`: `LLMFirewallASGIMiddleware` pure ASGI 3.0 middleware with zero framework dependencies.
+  - `llmfirewall.integrations.langchain`: `FirewallCallbackHandler` supporting runnable inputs, outputs, and callback interception.
+- **Stateful Conversation Security**:
+  - Added `MultiTurnSecurityState` and `ClientSessionContext` for explicit multi-turn session tracking and threat accumulation.
+  - Added detection for conversational pretexts asserting historical safety waivers (e.g. "Earlier we agreed that safety mode is paused").
+- **Developer Scaffolding Tooling**:
+  - `llmfirewall integrate` CLI subcommand suite (`detect`, `list`, `scaffold`, `validate`).
+  - Safe boilerplate code generation and companion test generation for all integration recipes.
+- **Enterprise Modules & Production Hardening**:
+  - Distributed rate limiting with Redis-backed token bucket and sliding window algorithms with local in-memory fallback.
+  - Key management and rotation engine (`KeyRotationManager`) supporting automated key retirement.
+  - OpenTelemetry distributed tracing with W3C tracecontext propagation.
+  - Hardened reference deployment manifests (Dockerfile, docker-compose, Kubernetes Deployment, Service, ConfigMap, NetworkPolicy, PDB).
+
+### Changed
+- Reconciled Stages 2–6 source enhancements into standard library package structure.
+- Cleanly separated optional integration imports to preserve zero-dependency core footprint.
+
+### Fixed
+- **Holdout False-Negative Remediation**:
+  - Remediated 12/12 false negatives from curated Holdout v1 benchmark covering indirect injection, multilingual French directives, English tool execution syntax, bracketed context delimiters, and RAG poisoning (curated benchmark scope; does not imply universal detection).
+- **SQL Educational Query False-Positive Remediation**:
+  - Added negative lookahead exclusions to `InstructionOverrideRule` to resolve false positives on queries comparing SQL keywords (e.g., `Explain the difference between DROP TABLE and TRUNCATE TABLE in PostgreSQL`) while maintaining 100% block rate on actual destructive SQL injections.
+- **PII Structural Integrity**:
+  - Verified SSA structural rules and Luhn credit card validation invariants across all endpoints.
+
+### Security
+- Layered defense architecture across input prompt scanning, agent tool parameter inspection, token-boundary sliding-window streaming guard, and output generation verification.
+- Enforced safe audit-event serialization and local sensitive-field scrubbing via `safe_dict()` (does not claim upstream cloud provider zero retention).
+
+### Performance
+- Hoisted Unicode inspection buffer normalization in `PromptInjectionDetector.detect()` out of the rule evaluation loop, reducing time complexity from $O(R \times B)$ to $O(B)$.
+- Precompiled 15 regex patterns in `normalizer.py`.
+- Reduced warmed, uncached steady-state scan P50 latency (2 warmup calls, 30 timed samples) from 3.25 ms to 0.408 ms on macOS Apple Silicon, satisfying the 2.0 ms SLA benchmark threshold.
+
+### Compatibility
+- Verified clean execution across Python 3.9, 3.10, 3.11, and 3.12 on Ubuntu, macOS, and Windows.
+- Minimal core dependencies strictly requiring `pydantic>=2.0.0` and `pyyaml>=6.0.0`.
+- Preserves backward compatibility across tested core public APIs from v1.3.2 (`Firewall`, `Action`, `Severity`, `ScanResult`, `@protect`, `@protect_tool`).
+
+### Known Limitations
+- Heuristic pattern matching cannot guarantee universal prevention of novel semantic evasions; empirical Holdout v4 benchmark reflects 60.0% recall (24 TP, 16 FN, 40 TN, 0 FP, 40% false-negative rate on unseen adversarial evasions).
+- Tool parameter validation and authorization operates at the application parameter schema and URL/path layer, not as an operating system container or kernel sandbox.
+- Static URL and subnet inspection does not mitigate socket-level TOCTOU DNS rebinding without an egress forward proxy or socket IP pinning.
+- Local `safe_dict()` scrubbing eliminates sensitive substrings locally but does not govern third-party SaaS cloud model retention.
+- Streaming guard token-boundary sliding window buffers emitted chunks; already emitted tokens cannot be retroactively recalled if mid-stream severance occurs.
+- Multilingual heuristic coverage is limited to tested rule patterns across 5 languages (English, French, German, Spanish, Russian) and does not constitute exhaustive semantic understanding.
+- Adoption status reflects zero verified external evaluations and zero verified production deployments; pilot materials are prepared for maintainer dispatch.
+
 ## [1.4.0rc1] - 2026-10-31
 
 ### Added
