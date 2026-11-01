@@ -11,7 +11,7 @@
   <a href="https://pypi.org/project/llmfirewall-core/"><img src="https://img.shields.io/pypi/pyversions/llmfirewall-core.svg?color=8b5cf6" alt="Python Compatibility"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"></a>
   <a href="https://github.com/Livesh-L-28/LLMFirewall/actions"><img src="https://img.shields.io/github/actions/workflow/status/Livesh-L-28/LLMFirewall/release-governance.yml?branch=main&label=CI&logo=github" alt="GitHub Actions CI"></a>
-  <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/tests-876%20passed%20%7C%201%20skipped-brightgreen.svg" alt="Tests"></a>
+  <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/tests-1106%20passed%20%7C%2013%20skipped-brightgreen.svg" alt="Tests"></a>
   <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/inspection%20latency-~0.10ms%20P50-blueviolet.svg" alt="Inspection Latency"></a>
   <a href="docs/"><img src="https://img.shields.io/badge/docs-API%20%26%20Recipes-blue.svg" alt="Documentation"></a>
 </p>
@@ -60,6 +60,8 @@ LLMFirewall-Core strictly separates **threat detection** (identifying anomalies)
 | **PII & Secrets Redaction** | Context-aware PII detection (emails, SSNs, credit cards, phones, IPs) and high-entropy secret detection | `result.processed_text` / `result.findings` / `result.safe_dict()` |
 | **Policy-as-Code Engine** | Declarative JSON/YAML rule sets with deterministic evaluation precedence (`BLOCK > REDACT > WARN > ALLOW`) | `from llmfirewall.policy import Policy`<br/>`Policy.from_file("policies/strict.json")` |
 | **Agent Tool Sandboxing** | SSRF prevention (cloud metadata `169.254.169.254`), path traversal, and privileged action authorization | `fw.check_tool_call(tool, args)`<br/>`@fw.protect_tool(tool_func, tool_name="...")` |
+| **Native LLM SDK Adapters** | OpenAI and Anthropic client interception with automated prompt scanning & stream protection | `from llmfirewall import wrap_openai, wrap_anthropic` |
+| **Agent Framework Adapters** | LangGraph multi-agent state protection and Model Context Protocol (MCP) tool sandboxing | `from llmfirewall import guard_node, MCPToolGuard` |
 | **Streaming Text Guard** | Sliding-window token-boundary inspection across real-time generation chunks | `from llmfirewall.integrations import StreamingTextGuard`<br/>`guard.protect_stream()` / `guard.protect_async_stream()` |
 | **Zero-Dependency ASGI** | Pure ASGI 3.0 middleware for non-blocking asynchronous web applications | `from llmfirewall.integrations import LLMFirewallASGIMiddleware` |
 | **Continuous Security Evaluation** | Mutation fuzzing, red-team test generation, and declarative assertion evaluation | `from llmfirewall.eval import SecurityEvaluationEngine`<br/>`llmfirewall eval run` |
@@ -476,15 +478,22 @@ See [docs/cli.md](docs/cli.md) for full CLI documentation.
 
 | Topic | Reference Document | Description |
 |:---|:---|:---|
-| **API Reference** | [docs/api.md](docs/api.md) | Complete public classes, functions, models, and exceptions |
+| **Installation Guide** | [docs/installation.md](docs/installation.md) | Virtual environment setup, PyPI installation, optional extras, and verification |
+| **5-Minute Quickstart** | [docs/quickstart.md](docs/quickstart.md) | End-to-end scanning walkthrough, three golden invariants, and safe text consumption |
+| **Configuration & Presets** | [docs/configuration.md](docs/configuration.md) | Security presets (`default`, `privacy`, `strict`), custom YAML/JSON policies, and linting |
+| **API Reference** | [docs/api.md](docs/api.md) | Complete public classes, functions, models, adapters, and exceptions |
+| **Framework Integrations** | [docs/integrations/](docs/integrations/) | Step-by-step verified integration guides for OpenAI, Anthropic, LangGraph, MCP, etc. |
 | **System Architecture** | [docs/architecture.md](docs/architecture.md) | Four-stage deterministic security pipeline and internal subsystems |
+| **Troubleshooting Guide** | [docs/troubleshooting.md](docs/troubleshooting.md) | Common developer pitfalls, missing extras, unhandled exceptions, and diagnostic traces |
+| **Known Limitations** | [docs/limitations.md](docs/limitations.md) | Architectural boundaries, heuristic limits, and Holdout v4 empirical metrics |
+| **Frequently Asked Questions** | [docs/faq.md](docs/faq.md) | Latency benchmarks, air-gapped deployment, WAF comparison, and split-token defense |
+| **Documentation Index** | [docs/index.md](docs/index.md) | Complete categorized documentation sitemap and learning paths |
 | **Security Policy** | [SECURITY.md](SECURITY.md) | Coordinated vulnerability disclosure and private reporting guidelines |
 | **Empirical Benchmarks** | [docs/benchmarks.md](docs/benchmarks.md) | Latency, throughput, and multi-vector threat detection rate benchmarks |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) | Release history, version notes, and migration guidance |
 | **Contribution Guide** | [CONTRIBUTING.md](CONTRIBUTING.md) | Local development setup, testing gates, and PR guidelines |
-| **Examples Directory** | [examples/README.md](examples/README.md) | Runnable examples for FastAPI, Flask, agents, streaming, and RAG |
+| **Examples Directory** | [examples/README.md](examples/README.md) | Standalone runnable examples for OpenAI, Anthropic, LangGraph, MCP, and web frameworks |
 | **AI Coding Agent Guide** | [AGENTS.md](AGENTS.md) | Instructions and non-negotiable security invariants for coding agents |
-| **Integration Recipes** | [docs/integrations/](docs/integrations/) | Step-by-step verified integration guides for Python frameworks |
 
 ---
 
@@ -505,7 +514,7 @@ LLMFirewall is continuously benchmarked against an automated test suite across 8
 
 | Metric | Result | Benchmark Population |
 |:---|:---:|:---|
-| **Automated Test Suite** | **877 Verified (876 Passed, 1 Skipped Optional)** | Unit, regression, and integration tests |
+| **Automated Test Suite** | **1,119 Verified (1,106 Passed, 13 Skipped Optional)** | Unit, regression, and integration tests |
 | **Benchmark Detection Rate** | **100% (28 / 28)** | Curated reference attack cases |
 | **False Positive Rate** | **0.0% (0 / 12)** | Curated benign reference cases |
 | **Median Inspection Latency (P50)** | **0.104 ms** | End-to-end multi-detector scan (`0.18–0.20ms` full suite) |

@@ -4,8 +4,18 @@ from llmfirewall.detectors.prompt_injection.context import (
     PromptSecurityContext,
     PromptSourceType,
 )
-from llmfirewall.detectors.prompt_injection.detector import PromptInjectionDetector
+from llmfirewall.detectors.prompt_injection.detector import (
+    ExtendedPromptInjectionDetector,
+    PromptInjectionDetector,
+)
 from llmfirewall.detectors.prompt_injection.normalizer import normalize_prompt_text
+from llmfirewall.detectors.prompt_injection.extended_rules import (
+    ContextualOverrideRule,
+    ExtendedIndirectInjectionRule,
+    ExtendedMultilingualRule,
+    ObfuscatedCommandRule,
+    get_extended_injection_rules,
+)
 from llmfirewall.detectors.prompt_injection.rules import (
     AuthorityImpersonationRule,
     DelimiterAttackRule,
@@ -23,6 +33,7 @@ from llmfirewall.detectors.prompt_injection.rules import (
 
 __all__ = [
     "PromptInjectionDetector",
+    "ExtendedPromptInjectionDetector",
     "InjectionRule",
     "RuleMatch",
     "InstructionOverrideRule",
@@ -35,10 +46,14 @@ __all__ = [
     "AuthorityImpersonationRule",
     "MultilingualInjectionRule",
     "ToolManipulationRule",
+    "ContextualOverrideRule",
+    "ExtendedMultilingualRule",
+    "ExtendedIndirectInjectionRule",
+    "ObfuscatedCommandRule",
+    "get_extended_injection_rules",
     "InjectionHeuristicAnalyzer",
     "normalize_prompt_text",
     "PromptSecurityContext",
     "PromptSourceType",
     "MultiTurnSecurityState",
 ]
-

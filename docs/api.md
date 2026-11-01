@@ -245,6 +245,72 @@ Ergonomic client wrappers providing synchronous and asynchronous guardrails for 
 
 ---
 
+## 3.1 Native LLM Provider & Agent Adapters (v1.4.0)
+
+Universal, provider-agnostic wrappers that secure direct calls to AI model providers and agent protocols.
+
+### OpenAI Integration (`wrap_openai` & `OpenAIGuard`)
+Wraps any `OpenAI` client instance so that `client.chat.completions.create` automatically evaluates inbound messages and outbound completions.
+
+- **Import path**: `from llmfirewall.integrations.openai import wrap_openai, OpenAIGuard`
+- **Helper Function**:
+  - `wrap_openai(client: Any, firewall: Optional[Firewall] = None, fail_closed: bool = True) -> Any`
+- **Guard Methods (`OpenAIGuard`)**:
+  - `guard_messages(messages: List[Dict[str, Any]], context: Optional[Dict] = None) -> List[Dict[str, Any]]`: Scans messages; sanitizes PII/secrets or raises `SecurityViolation` (HTTP 403).
+  - `guard_response(response: Any, context: Optional[Dict] = None) -> Any`: Scans output completions; redacts sensitive leaks.
+  - `protect_stream(stream: Any, context: Optional[Dict] = None) -> Generator[str, None, None]`: Protects streaming tokens.
+
+### Anthropic Claude Integration (`wrap_anthropic` & `AnthropicGuard`)
+Secures `Anthropic` client instances for `client.messages.create` calls, including system prompt and user message validation.
+
+- **Import path**: `from llmfirewall.integrations.anthropic import wrap_anthropic, AnthropicGuard`
+- **Helper Function**:
+  - `wrap_anthropic(client: Any, firewall: Optional[Firewall] = None, fail_closed: bool = True) -> Any`
+- **Guard Methods (`AnthropicGuard`)**:
+  - `guard_messages(messages: List[Dict], system: Optional[str] = None, context=None) -> Tuple[List[Dict], Optional[str]]`
+  - `guard_response(response: Any, context=None) -> Any`
+  - `protect_stream(stream: Any, context=None) -> Generator[str, None, None]`
+
+### LangGraph Integration (`guard_node` & `LangGraphStateGuard`)
+Protects LangGraph state dictionary transitions across multi-agent workflows.
+
+- **Import path**: `from llmfirewall.integrations.langgraph import guard_node, LangGraphStateGuard`
+- **Decorator**:
+  - `@guard_node(node_fn=None, firewall=None, input_keys=None, output_keys=None, fail_closed=True)`
+- **Guard Class (`LangGraphStateGuard`)**:
+  - `inspect_state(state: Dict[str, Any], target_keys: Optional[List[str]] = None) -> Dict[str, Any]`
+
+### Model Context Protocol (MCP) Tool Guard (`MCPToolGuard`)
+Enforces protocol-level argument sandboxing and output redaction for MCP servers and clients.
+
+- **Import path**: `from llmfirewall.integrations.mcp import MCPToolGuard`
+- **Methods**:
+  - `intercept_tool_call(name: str, arguments: Dict[str, Any], session_id=None, context=None) -> ToolSecurityDecision`
+  - `intercept_tool_result(result: Any, tool_name=None, context=None) -> Any`
+
+---
+
+## 3.2 Web Framework Middleware Helpers (Optional Extras)
+
+### FastAPI (`llmfirewall-core[fastapi]`)
+- **Import path**: `from llmfirewall.integrations.fastapi import FirewallMiddleware, get_scan_result, scan_response, firewall_dependency`
+- **Components**:
+  - `FirewallMiddleware(app, firewall=None, paths=None, exclude_paths=None, blocked_status_code=403)`: Route-level middleware.
+  - `get_scan_result(request: Request) -> Optional[ScanResult]`: Retrieves scan verdict attached to request state.
+  - `scan_response(generation: str, firewall=None) -> str`: Response sanitizer.
+
+### Flask (`llmfirewall-core[flask]`)
+- **Import path**: `from llmfirewall.integrations.flask import FirewallExtension`
+- **Component**:
+  - `FirewallExtension(app, firewall=None, paths=None, blocked_status_code=403)`: Attaches scan result to Flask's `g.firewall_scan_result`.
+
+### Django (`llmfirewall-core[django]`)
+- **Import path**: `from llmfirewall.integrations.django import FirewallMiddleware`
+- **Configuration**:
+  - Added to `settings.py` `MIDDLEWARE` list; configured via `LLMFIREWALL_CONFIG` dict. Results attached to `request.firewall_scan_result`.
+
+---
+
 ## 4. Cross-Step Agent Security & Workflow Protection (Phase 3)
 
 Provides stateful correlation and execution gating across multi-step agent reasoning cycles.
@@ -383,4 +449,3 @@ Diagnostic trace detailing context-driven risk multipliers and policy adjustment
 3. **Rule 3 (Unverified RAG Scrutiny)**: Retrieved documents with unverified provenance or untrusted origin apply a 1.25x risk multiplier and elevate heuristic findings.
 4. **Rule 4 (Anonymous Endpoint Posture)**: Unauthenticated callers (`ANONYMOUS_PUBLIC`) receive a 1.25x risk multiplier and force `Action.BLOCK` on high-risk detections (risk score >= 0.70).
 5. **Rule 5 (Bounded Heuristic Softening)**: Verified first-party documents (`is_verified=True`, `TRUSTED_INTERNAL`) may de-escalate non-critical heuristic warnings (risk score < 0.35) by a 0.85x factor, but never dismiss verified findings.
-

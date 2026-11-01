@@ -24,7 +24,7 @@ from llmfirewall.detectors.prompt_injection.rules import (
 
 class PromptInjectionDetector(Detector):
     """Local, rule-based detector for prompt injection and jailbreak patterns.
-    
+
     Architecture:
       Input Text
           ↓
@@ -35,7 +35,7 @@ class PromptInjectionDetector(Detector):
       Heuristic Span & Correlation Analysis
           ↓
       Structured Findings
-      
+
     Limitations:
       - This detector relies on pattern heuristics and normalization. It does NOT guarantee
         complete protection against all zero-day obfuscations, adversarial embeddings, or
@@ -111,3 +111,19 @@ class PromptInjectionDetector(Detector):
 
         # 3. Heuristic analysis & correlation
         return self._analyzer.analyze(text, deduped_matches, context=context)
+
+
+class ExtendedPromptInjectionDetector(PromptInjectionDetector):
+    """Extended Prompt Injection Detector utilizing both standard and advanced heuristics.
+
+    Includes additional pattern coverage for:
+    - Contextual and passive-voice instruction overrides.
+    - Non-English injection imperatives (Italian, Hindi, Tamil, Russian, Chinese, Japanese, Portuguese).
+    - Specialized indirect prompt injection parser envelopes.
+    - Decoding, reversal, and obfuscation directives.
+    """
+
+    def __init__(self, rules: Optional[List[InjectionRule]] = None) -> None:
+        from llmfirewall.detectors.prompt_injection.extended_rules import get_extended_injection_rules
+        effective_rules = rules if rules is not None else get_extended_injection_rules()
+        super().__init__(rules=effective_rules)

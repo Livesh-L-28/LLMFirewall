@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+  llmfirewall-api:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.hardened
+    image: llmfirewall/core:latest
+    container_name: llmfirewall-api
+    restart: unless-stopped
+    read_only: true
+    user: "10001:10001"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /app/tmp:rw,noexec,nosuid,size=64m
+    environment:
+      - LLMFIREWALL_ENV=production
+      - LLMFIREWALL_LOG_LEVEL=INFO
+      - LLMFIREWALL_FAILURE_POLICY=FAIL_OPEN
+      - LLMFIREWALL_RATE_LIMIT_REDIS_URL=redis://:redis_secure_pass@redis:6379/0
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=llmfirewall-core
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    depends_on:
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks:
+      - llmfirewall-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: llmfirewall-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass redis_secure_pass
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+      --appendonly yes
+      --protected-mode yes
+    ports:
+      - "127.0.0.1:6379:6379"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+      - SETUID
+      - SETGID
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_secure_pass", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - llmfirewall-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: llmfirewall-otel
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317" # OTLP gRPC receiver
+      - "127.0.0.1:4318:4318" # OTLP HTTP receiver
+      - "127.0.0.1:8889:8889" # Prometheus metrics exporter
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    networks:
+      - llmfirewall-network
+
+networks:
+  llmfirewall-network:
+    driver: bridge
+    internal: false
+
+volumes:
+  redis_data:
+    driver: local

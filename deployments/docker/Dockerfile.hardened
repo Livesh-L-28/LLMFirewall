@@ -1,0 +1,75 @@
+# syntax=docker/dockerfile:1
+# ------------------------------------------------------------------------------
+# Hardened, Multi-Stage Production Dockerfile for LLMFirewall-Core
+# Compliant with CIS Docker Benchmark & NIST SP 800-190
+# ------------------------------------------------------------------------------
+
+# --- Stage 1: Build & Dependency Resolution ---
+FROM python:3.12-slim-bookworm AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /build
+
+# Install build dependencies if needed
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy packaging specifications
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+# Build wheel package
+RUN pip install --upgrade pip build && \
+    python -m build --wheel --outdir /build/dist
+
+# --- Stage 2: Hardened Runtime Container ---
+FROM python:3.12-slim-bookworm AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.local/bin:${PATH}" \
+    PYTHONPATH="/app/src:${PYTHONPATH}"
+
+# Security: Create dedicated unprivileged system group and user
+# UID/GID: 10001 (llmfirewall)
+RUN groupadd -g 10001 -r llmfirewall && \
+    useradd -u 10001 -r -g llmfirewall -s /usr/sbin/nologin -d /app -c "LLMFirewall Service User" llmfirewall
+
+# Setup runtime application directory with read-only rootfs compliance
+WORKDIR /app
+
+# Install wheel built in stage 1
+COPY --from=builder /build/dist/*.whl /tmp/wheels/
+RUN pip install --no-cache-dir /tmp/wheels/*.whl && \
+    rm -rf /tmp/wheels
+
+# Copy application source & configurations
+COPY --chown=llmfirewall:llmfirewall src/ /app/src/
+
+# Create ephemeral writable directories for tmpfs mounts
+RUN mkdir -p /app/tmp /app/logs && \
+    chown -R llmfirewall:llmfirewall /app
+
+# Strip unnecessary setuid/setgid binaries to prevent privilege escalation
+RUN find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
+
+# Switch to non-root user
+USER 10001:10001
+
+# Expose service port
+EXPOSE 8000
+
+# Native health check (Zero curl/wget dependency)
+HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
+    CMD python3 -c "import urllib.request; sys_exit = 0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).getcode() == 200 else 1; import sys; sys.exit(sys_exit)" || exit 1
+
+# Default execution entrypoint
+ENTRYPOINT ["python3", "-m", "llmfirewall"]
+CMD ["--help"]

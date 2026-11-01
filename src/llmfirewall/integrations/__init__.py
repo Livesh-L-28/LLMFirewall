@@ -31,6 +31,21 @@ from llmfirewall.integrations.client import (
 from llmfirewall.integrations.stream import StreamingTextGuard
 from llmfirewall.integrations.openai import OpenAIGuard, wrap_openai
 from llmfirewall.integrations.anthropic import AnthropicGuard, wrap_anthropic
+from llmfirewall.integrations.context import (
+    DistributedSecurityContext,
+    SecurityContext,
+    extract_w3c_traceparent,
+    get_current_context,
+    inject_w3c_traceparent,
+    reset_current_context,
+    security_context_scope,
+    set_current_context,
+)
+from llmfirewall.integrations.langchain import (
+    FirewallCallbackHandler,
+    FirewallRunnable,
+    LLMFirewallCallbackHandler,
+)
 from llmfirewall.integrations.langgraph import LangGraphStateGuard, guard_node, get_graph_callbacks
 from llmfirewall.integrations.mcp import MCPToolGuard
 
@@ -112,4 +127,16 @@ __all__ = [
     "guard_node",
     "get_graph_callbacks",
     "MCPToolGuard",
+    "FirewallCallbackHandler",
+    "LLMFirewallCallbackHandler",
+    "FirewallRunnable",
+    # Distributed Security Context & Tracing (Stage 3)
+    "SecurityContext",
+    "DistributedSecurityContext",
+    "get_current_context",
+    "set_current_context",
+    "reset_current_context",
+    "security_context_scope",
+    "extract_w3c_traceparent",
+    "inject_w3c_traceparent",
 ]

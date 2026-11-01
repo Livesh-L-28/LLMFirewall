@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmfirewall-core
+  namespace: llmfirewall
+  labels:
+    app.kubernetes.io/name: llmfirewall-core
+    app.kubernetes.io/instance: llmfirewall-production
+    app.kubernetes.io/version: "1.4.0rc1"
+    app.kubernetes.io/component: security-guardrail
+    app.kubernetes.io/part-of: ai-platform
+    app.kubernetes.io/managed-by: gitops
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llmfirewall-core
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llmfirewall-core
+        app.kubernetes.io/component: security-guardrail
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: llmfirewall-sa
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - llmfirewall-core
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: guardrail-engine
+          image: ghcr.io/livesh-l-28/llmfirewall-core:1.4.0rc1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - configMapRef:
+                name: llmfirewall-config
+          env:
+            - name: LLMFIREWALL_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: LLMFIREWALL_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: LLMFIREWALL_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: llmfirewall-redis-credentials
+                  key: password
+                  optional: true
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+          volumeMounts:
+            - name: tmpfs-tmp
+              mountPath: /tmp
+            - name: tmpfs-app-tmp
+              mountPath: /app/tmp
+            - name: policy-volume
+              mountPath: /etc/llmfirewall/policies
+              readOnly: true
+      volumes:
+        - name: tmpfs-tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: tmpfs-app-tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: policy-volume
+          configMap:
+            name: llmfirewall-enterprise-policies
+            defaultMode: 420

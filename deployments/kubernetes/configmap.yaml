@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llmfirewall-config
+  namespace: llmfirewall
+  labels:
+    app.kubernetes.io/name: llmfirewall-core
+    app.kubernetes.io/component: configuration
+data:
+  LLMFIREWALL_ENV: "production"
+  LLMFIREWALL_LOG_LEVEL: "INFO"
+  LLMFIREWALL_FAILURE_POLICY: "FAIL_OPEN"
+  LLMFIREWALL_CIRCUIT_BREAKER_ENABLED: "true"
+  LLMFIREWALL_CIRCUIT_FAILURE_THRESHOLD: "5"
+  LLMFIREWALL_CIRCUIT_RECOVERY_TIMEOUT: "30.0"
+  LLMFIREWALL_RATE_LIMIT_ENABLED: "true"
+  LLMFIREWALL_RATE_LIMIT_DEFAULT_BURST: "60"
+  LLMFIREWALL_RATE_LIMIT_DEFAULT_RATE: "1.0"
+  OTEL_SERVICE_NAME: "llmfirewall-production"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability.svc.cluster.local:4317"
+  OTEL_EXPORTER_OTLP_INSECURE: "true"

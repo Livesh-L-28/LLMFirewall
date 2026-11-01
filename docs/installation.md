@@ -1,23 +1,48 @@
-# LLMFirewall Installation Guide
+# LLMFirewall-Core Installation Guide
 
-This guide covers installing, configuring, verifying, and troubleshooting **LLMFirewall Core v1.2.0**.
+A comprehensive guide for installing, configuring, verifying, and troubleshooting **LLMFirewall-Core**.
 
 ---
 
-## 1. System Requirements
+## 1. Version Overview
 
-- **Python Version**: Python 3.9, 3.10, 3.11, or 3.12.
-- **Operating Systems**: macOS (Apple Silicon / Intel), Linux (x86_64 / aarch64), Windows 10/11.
+| Distribution | Version | Status | PyPI Package | Python Import | CLI Command |
+|:---|:---|:---:|:---|:---|:---|
+| **Stable Release** | `v1.3.2` | Production / Published | `pip install llmfirewall-core` | `import llmfirewall` | `llmfirewall` |
+| **Development Candidate** | `v1.4.0rc1` | Release Candidate | Source / Pre-release | `import llmfirewall` | `llmfirewall` |
+
+> [!IMPORTANT]
+> **Package Name vs. Python Import**:
+> - The package distribution name on PyPI is **`llmfirewall-core`** (`pip install llmfirewall-core`).
+> - The Python module import name is **`llmfirewall`** (`import llmfirewall`).
+> - The CLI binary name is **`llmfirewall`** (`llmfirewall --version`).
+
+---
+
+## 2. System Requirements & Compatibility
+
+- **Python Versions**:
+  - `Python 3.9` (Verified minimum supported version)
+  - `Python 3.10` (Verified via CI matrix)
+  - `Python 3.11` (Verified via CI matrix)
+  - `Python 3.12` (Verified primary development version)
+- **Operating Systems**:
+  - Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+, Alpine with Python)
+  - macOS (Apple Silicon M1/M2/M3/M4 & Intel x86_64)
+  - Windows (10/11, Server 2019/2022, x86_64)
 - **Minimal Core Dependencies**:
-  - `pydantic >= 2.0.0` (data validation and schema serialization)
-  - `pyyaml >= 6.0.0` (Policy-as-Code and configuration parsing)
-- **Architecture**: In-process execution with zero external database or network dependencies.
+  - `pydantic >= 2.0.0` (Validation, models, and safe serialization)
+  - `pyyaml >= 6.0.0` (Policy-as-Code parsing)
+- **Zero Mandatory External Services**:
+  - Executes **100% in-process**.
+  - No external database (PostgreSQL, Redis, Vector DB) required.
+  - No cloud network connection required for inspection.
 
 ---
 
-## 2. Virtual Environment Setup
+## 3. Virtual Environment Setup
 
-We recommend installing in an isolated virtual environment:
+Always install LLMFirewall-Core in an isolated virtual environment to prevent dependency conflicts with other AI packages:
 
 ### macOS / Linux
 
@@ -29,7 +54,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # 3. Upgrade pip
-pip install --upgrade pip
+python -m pip install --upgrade pip
 ```
 
 ### Windows (PowerShell)
@@ -47,69 +72,70 @@ python -m pip install --upgrade pip
 
 ---
 
-## 3. Installation Methods
+## 4. Installation Methods
 
-### Option A: Standard PyPI Installation (Recommended)
+### Method 1: Standard Core Installation (Recommended)
 
-Install the core distribution from PyPI:
-
-```bash
-pip install llmfirewall-core
-```
-
-> [!NOTE]
-> **PyPI Distribution vs Python Import**:
-> - PyPI Package: `llmfirewall-core`
-> - Python Import: `import llmfirewall`
-> - CLI Command: `llmfirewall`
-
-### Option B: Pure ASGI 3.0 (Zero Framework Dependencies)
-
-If you are deploying behind FastAPI, Starlette, Quart, or any ASGI gateway (e.g., Uvicorn), you do **not** need framework extras. The pure ASGI middleware is included in the base package:
+Install the minimal core library from PyPI:
 
 ```bash
-pip install llmfirewall-core
+python -m pip install llmfirewall-core
 ```
 
-Then in Python:
-```python
-from llmfirewall.integrations import LLMFirewallASGIMiddleware
-app = LLMFirewallASGIMiddleware(base_asgi_app)
-```
+This installation provides:
+- Core `Firewall` orchestrator.
+- Deterministic heuristic threat detectors (Prompt Injection, PII, High-Entropy Secrets).
+- Policy-as-Code engine with built-in presets (`default`, `privacy`, `strict`).
+- Tool security engine (SSRF, path traversal, dangerous command inspection).
+- `StreamingTextGuard` (in-memory sliding-window token analysis).
+- Pure ASGI 3.0 middleware (`LLMFirewallASGIMiddleware`, zero external web dependencies).
+- Native SDK wrappers for OpenAI (`wrap_openai`), Anthropic (`wrap_anthropic`), LangGraph (`guard_node`), and MCP (`MCPToolGuard`).
+- CLI utility (`llmfirewall`).
 
-### Option C: Optional Framework Extras
+---
 
-Install additional integrations as needed:
+### Method 2: Optional Framework Extras
+
+When deploying with specific Python web frameworks or agent ecosystems, install the corresponding optional extras defined in `pyproject.toml`:
 
 ```bash
-# FastAPI helpers and route-level dependencies
-pip install "llmfirewall-core[fastapi]"
+# FastAPI middleware, route dependencies, and response scanners
+python -m pip install "llmfirewall-core[fastapi]"
 
-# Flask extension
-pip install "llmfirewall-core[flask]"
+# Flask application extension and context hooks
+python -m pip install "llmfirewall-core[flask]"
 
-# Django middleware
-pip install "llmfirewall-core[django]"
+# Django security middleware
+python -m pip install "llmfirewall-core[django]"
 
 # LangChain callback handler
-pip install "llmfirewall-core[langchain]"
+python -m pip install "llmfirewall-core[langchain]"
 
 # LlamaIndex node postprocessor
-pip install "llmfirewall-core[llamaindex]"
+python -m pip install "llmfirewall-core[llamaindex]"
 
-# Cryptography (AES-256-GCM encrypted persistence)
-pip install "llmfirewall-core[crypto]"
+# Cryptographic state persistence (AES-256-GCM / SHA-256)
+python -m pip install "llmfirewall-core[crypto]"
 
-# All framework integrations
-pip install "llmfirewall-core[all-integrations]"
+# All framework integrations in one command
+python -m pip install "llmfirewall-core[all-integrations]"
 ```
 
-### Option D: Source & Contributor Installation
+> [!TIP]
+> **Zero-Dependency ASGI Alternative**: If you are using FastAPI, Starlette, or Quart, you can avoid installing extra dependencies by using the built-in pure ASGI middleware:
+> ```python
+> from llmfirewall.integrations import LLMFirewallASGIMiddleware
+> app = LLMFirewallASGIMiddleware(your_asgi_app)
+> ```
 
-To run test suites or contribute to LLMFirewall:
+---
+
+### Method 3: Developer & Contributor Installation
+
+To run test suites, benchmarks, or contribute to LLMFirewall-Core:
 
 ```bash
-# 1. Clone the repository
+# 1. Clone repository
 git clone https://github.com/Livesh-L-28/LLMFirewall.git
 cd LLMFirewall
 
@@ -117,65 +143,98 @@ cd LLMFirewall
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 3. Install in editable mode with development dependencies
-pip install -e ".[dev,fastapi]"
+# 3. Upgrade pip and install in editable mode with development tooling
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,fastapi]"
 ```
 
 ---
 
-## 4. Verification
+## 5. Verifying Installation
 
-After installation, verify that the package and CLI operate correctly:
+Verify that the library and CLI are operational in your environment:
 
-### 1. Verify Package Version in Python
+### Step 1: Verify Python Import & Version
 
 ```bash
 python -c "import llmfirewall; print('LLMFirewall Version:', llmfirewall.__version__)"
 ```
-
-Expected output:
+*Expected Output:*
 ```text
-LLMFirewall Version: 1.2.0
+LLMFirewall Version: 1.4.0rc1  # (or 1.3.2 on stable release)
 ```
 
-### 2. Verify CLI Command
+### Step 2: Verify CLI Binary
 
 ```bash
 llmfirewall --version
 ```
-
-Expected output:
+*Expected Output:*
 ```text
-llmfirewall 1.2.0
+llmfirewall 1.4.0rc1  # (or 1.3.2 on stable release)
 ```
 
-### 3. Run a Quick Sanity Scan
+### Step 3: Execute a Live Sanity Scan
 
 ```bash
 llmfirewall scan "Hello, world!"
 ```
-
-Expected output:
+*Expected Output:*
 ```text
-Decision: ALLOW
-Risk Score: 0.0 (INFO)
+LLMFirewall Scan Summary
+────────────────────────────────────────
+Status       : ALLOW
+Risk Score   : 0.00
+Risk Level   : INFO
+Action       : ALLOW
+Policy       : default_ai_security_policy (v1.0)
+No security threats or policy violations detected.
 ```
 
 ---
 
-## 5. Troubleshooting
+## 6. Installation Troubleshooting
 
-### Issue: `pip install llmfirewall` fails or installs unrelated package
-- **Cause**: The PyPI package name is `llmfirewall-core`.
-- **Solution**: Run `pip install llmfirewall-core`.
+### Problem 1: `ModuleNotFoundError: No module named 'llmfirewall'`
+- **Cause**: The package was installed under an incorrect name (e.g. `pip install llmfirewall`) or installed into a different Python environment.
+- **Solution**:
+  1. Confirm active virtual environment: `which python`
+  2. Install using the correct distribution name:
+     ```bash
+     python -m pip install llmfirewall-core
+     ```
 
-### Issue: `command not found: llmfirewall`
-- **Cause**: The virtual environment's `bin/` directory is not in your shell's `PATH`.
-- **Solution**: Activate your virtual environment (`source .venv/bin/activate`), or run via Python module:
+### Problem 2: `ImportError: The 'fastapi' integration requires the optional 'fastapi' extra.`
+- **Cause**: Importing `from llmfirewall.integrations.fastapi import ...` when `fastapi` is not installed.
+- **Solution**:
   ```bash
-  python -m llmfirewall.cli.main --help
+  python -m pip install "llmfirewall-core[fastapi]"
+  ```
+  *Or use zero-dependency ASGI middleware:*
+  ```python
+  from llmfirewall.integrations import LLMFirewallASGIMiddleware
   ```
 
-### Issue: `ImportError: cannot import name 'FastAPI' from 'fastapi'`
-- **Cause**: Attempting to use `llmfirewall.integrations.fastapi` without installing the optional extra.
-- **Solution**: Either install the extra via `pip install "llmfirewall-core[fastapi]"`, or use the zero-dependency pure ASGI middleware `from llmfirewall.integrations import LLMFirewallASGIMiddleware`.
+### Problem 3: `AttributeError: type object 'Config' has no attribute ...` (Pydantic V1 Conflict)
+- **Cause**: An older Pydantic v1.x package is installed in your virtual environment.
+- **Solution**: LLMFirewall-Core requires Pydantic v2. Upgrade via:
+  ```bash
+  python -m pip install --upgrade "pydantic>=2.0.0"
+  ```
+
+### Problem 4: `command not found: llmfirewall`
+- **Cause**: Python's `bin/` directory is not in your system `$PATH`.
+- **Solution**:
+  1. Activate your virtual environment (`source .venv/bin/activate`).
+  2. Alternatively, invoke the CLI directly via Python:
+     ```bash
+     python -m llmfirewall.cli.main --help
+     ```
+
+---
+
+## 7. Next Steps
+
+- Proceed to the [Five-Minute Quickstart Guide](quickstart.md).
+- Browse verified framework integration guides in [docs/integrations/](integrations/).
+- Review [docs/troubleshooting.md](troubleshooting.md) for common configuration patterns.

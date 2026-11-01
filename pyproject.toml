@@ -112,6 +112,7 @@ minversion = "7.0"
 addopts = "-ra -q --import-mode=importlib"
 pythonpath = ["src", "."]
 testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "unit: Unit tests for isolated functions, classes, and rules",
     "integration: Cross-component and end-to-end subsystem integration tests",

@@ -63,13 +63,13 @@ from llmfirewall.runtime.session import RuntimeSession
 
 class Firewall:
     """The central orchestrator for LLMFirewall.
-    
+
     Adheres strictly to the architectural governance:
     - Detectors detect: Inspect text and emit structured findings.
     - Risk engine scores: Aggregates findings into quantified risk metrics.
     - Policy engine decides: Evaluates rules and selects policy action (ALLOW, WARN, BLOCK, REDACT).
     - Firewall orchestrates: Coordinates the entire inspection lifecycle.
-    
+
     Safe Defaults:
     - Default Detectors: PromptInjectionDetector, PIIDetector, SecretDetector
     - Default Risk Engine: Configured with standard severity weights and diminishing returns
@@ -95,7 +95,7 @@ class Firewall:
         cache_ttl: float = 1800.0,
     ) -> None:
         """Initialize the Firewall with optional configuration or explicit custom components.
-        
+
         Args:
             config: Optional master FirewallConfig object controlling runtime behavior.
                     If provided, config drives detector initialization, risk thresholds,
@@ -129,6 +129,8 @@ class Firewall:
         if detectors is not None:
             active_detectors = detectors
             effective_fail_fast = fail_fast_detectors
+            effective_prefilter = True
+            effective_heuristics = True
         elif config is not None:
             active_detectors = []
             det_cfg = config.detectors
@@ -806,7 +808,7 @@ class Firewall:
         tenant_id: Optional[str] = None,
     ) -> ScanResult:
         """Primary public entrypoint to scan and enforce security policy on a text prompt or LLM output.
-        
+
         Execution Pipeline:
         -------------------
         1. Request Envelope Normalization: Wrap input in an immutable ScanRequest.
@@ -814,7 +816,7 @@ class Firewall:
         3. Risk Engine Scoring: Quantify composite score, max severity, and category scores.
         4. Policy Engine Decision: Evaluate rules with strict precedence (BLOCK > REDACT > WARN > ALLOW).
         5. Result Construction: Build typed ScanResult with safe downstream processed_text and telemetry.
-        
+
         Args:
             text_or_request: Raw prompt string, LLM output string, or existing ScanRequest.
             direction: 'input' (user prompt) or 'output' (LLM generation). Default: 'input'.
@@ -822,7 +824,7 @@ class Firewall:
             session_id: Optional session/conversation identifier.
             context: Optional arbitrary dictionary passed to detectors and policy rules.
             tenant_id: Optional enterprise tenant identifier for multi-tenant isolation.
-            
+
         Returns:
             ScanResult: Fully populated scan outcome containing decision, risk score,
                         findings, and the safe downstream text.
@@ -1059,7 +1061,7 @@ class Firewall:
         record_to_timeline: bool = True,
     ) -> DecisionTrace:
         """Execute scan and return a comprehensive, deterministic DecisionTrace explaining why the decision was made.
-        
+
         Explains:
         - Exact sequence of detector findings
         - Risk score calculation and severity
@@ -1114,7 +1116,7 @@ class Firewall:
         context: Optional[Dict[str, Any]] = None,
     ) -> ScanResult:
         """Scan and validate an incoming user prompt before sending it to an LLM / agent.
-        
+
         Convenience wrapper explicitly enforcing direction='input'.
         """
         return self.check(
@@ -1133,7 +1135,7 @@ class Firewall:
         context: Optional[Dict[str, Any]] = None,
     ) -> ScanResult:
         """Scan and validate an outgoing LLM response before returning it to the user.
-        
+
         Convenience wrapper explicitly enforcing direction='output'.
         Scans for sensitive secrets, PII, hallucinated credentials, or toxic output.
         """
@@ -1166,7 +1168,7 @@ class Firewall:
         agent_id: Optional[str] = None,
     ) -> ToolSecurityDecision:
         """Inspect and enforce security controls on an AI agent tool call before execution.
-        
+
         Args:
             tool_call_or_name: ToolCall instance, dict representation, or tool name string.
             arguments: Dictionary of tool arguments (if tool_call_or_name is a string).
@@ -1176,7 +1178,7 @@ class Firewall:
             workflow_id: Optional cross-step workflow ID (Phase 3).
             tenant_id: Authoritative tenant ID required when workflow_id is specified.
             agent_id: Optional authorized agent role.
-            
+
         Returns:
             ToolSecurityDecision: Deterministic ALLOW, WARN, or BLOCK decision.
         """
@@ -1316,7 +1318,7 @@ class Firewall:
         agent_id: Optional[str] = None,
     ) -> ToolSecurityDecision:
         """Inspect and enforce security controls on a tool result before sending to LLM.
-        
+
         Args:
             tool_result_or_name: ToolResult instance, dict representation, or tool name string.
             output: Result string (if tool_result_or_name is a tool name string).
@@ -1324,7 +1326,7 @@ class Firewall:
             workflow_id: Optional cross-step workflow ID (Phase 3).
             tenant_id: Authoritative tenant ID required when workflow_id is specified.
             agent_id: Optional authorized agent role.
-            
+
         Returns:
             ToolSecurityDecision: ALLOW, WARN, REDACT, or BLOCK outcome.
         """
@@ -1803,5 +1805,3 @@ class Firewall:
             workflow_id=workflow_id,
             tenant_id=tenant_id,
         )
-
-

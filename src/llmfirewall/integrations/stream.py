@@ -20,6 +20,7 @@ class StreamingTextGuard:
         window_size: int = 512,
         overlap_size: Optional[int] = None,
         fail_closed: bool = True,
+        direction: str = "output",
     ) -> None:
         if window_size <= 0:
             raise ValueError("window_size must be positive")
@@ -36,6 +37,12 @@ class StreamingTextGuard:
         self.window_size = window_size
         self.overlap_size = actual_overlap
         self.fail_closed = fail_closed
+        self.direction = direction
+
+    def _scan_chunk_buffer(self, buffer: str, context: Dict[str, Any]) -> ScanResult:
+        if self.direction == "input":
+            return self.firewall.scan(buffer, direction="input", context=context)
+        return self.firewall.scan_output(buffer, context=context)
 
     def protect_stream(
         self,
@@ -55,7 +62,7 @@ class StreamingTextGuard:
 
             # When accumulated buffer exceeds window_size or contains complete tokens, scan window
             if len(buffer) >= self.window_size:
-                scan_res = self.firewall.scan_output(buffer, context=ctx)
+                scan_res = self._scan_chunk_buffer(buffer, ctx)
                 if scan_res.action == Action.BLOCK:
                     if on_violation:
                         on_violation(scan_res)
@@ -79,7 +86,7 @@ class StreamingTextGuard:
 
         # Final flush on stream termination
         if buffer:
-            scan_res = self.firewall.scan_output(buffer, context=ctx)
+            scan_res = self._scan_chunk_buffer(buffer, ctx)
             if scan_res.action == Action.BLOCK:
                 if on_violation:
                     on_violation(scan_res)
@@ -111,7 +118,7 @@ class StreamingTextGuard:
             buffer += chunk
 
             if len(buffer) >= self.window_size:
-                scan_res = self.firewall.scan_output(buffer, context=ctx)
+                scan_res = self._scan_chunk_buffer(buffer, ctx)
                 if scan_res.action == Action.BLOCK:
                     if on_violation:
                         on_violation(scan_res)
@@ -131,7 +138,7 @@ class StreamingTextGuard:
 
         # Final flush
         if buffer:
-            scan_res = self.firewall.scan_output(buffer, context=ctx)
+            scan_res = self._scan_chunk_buffer(buffer, ctx)
             if scan_res.action == Action.BLOCK:
                 if on_violation:
                     on_violation(scan_res)
