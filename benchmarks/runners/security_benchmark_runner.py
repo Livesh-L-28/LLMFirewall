@@ -349,11 +349,21 @@ class SecurityBenchmarkRunner:
             "logical_cpus": os.cpu_count() or 1,
         }
 
-    def _bench_cold_scanning(self, count: int = 100) -> Dict[str, Any]:
+    def _bench_cold_scanning(self, count: int = 100, warmup: int = 2) -> Dict[str, Any]:
         """Cold end-to-end scanning without caching."""
         fw = Firewall(enable_cache=False)
         latencies: List[float] = []
         errors = 0
+
+        # Discard initial warm-up calls to eliminate Python 3.12 bytecode specialization & OS cold cache skew
+        for _ in range(warmup):
+            try:
+                _ = fw.check(
+                    f"Explain database normalization. Warmup ID: {uuid.uuid4()}",
+                    direction="input",
+                )
+            except Exception:
+                pass
 
         # Unique prompts to prevent any internal caching
         for i in range(count):

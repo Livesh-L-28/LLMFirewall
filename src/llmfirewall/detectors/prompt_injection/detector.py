@@ -83,6 +83,13 @@ class PromptInjectionDetector(Detector):
         raw_cleaned = norm_artifact[0]
         norm_lower = norm_artifact[1]
 
+        # Pre-normalize unique inspection buffers once across all rules (O(B) instead of O(R*B))
+        buf_artifacts = []
+        if hasattr(norm_artifact, "inspection_buffers"):
+            for buf in norm_artifact.inspection_buffers:
+                if buf and buf != raw_cleaned and buf != norm_lower:
+                    buf_artifacts.append(normalize_prompt_text(buf))
+
         # 2. Rule evaluation
         all_matches = []
         for rule in self._rules:
@@ -92,13 +99,10 @@ class PromptInjectionDetector(Detector):
                 all_matches.extend(matches)
 
             # Secondary evaluation on decoded inspection buffers
-            if hasattr(norm_artifact, "inspection_buffers"):
-                for buf in norm_artifact.inspection_buffers:
-                    if buf and buf != raw_cleaned and buf != norm_lower:
-                        buf_artifact = normalize_prompt_text(buf)
-                        buf_matches = rule.evaluate(buf_artifact[0], buf_artifact[1])
-                        if buf_matches:
-                            all_matches.extend(buf_matches)
+            for buf_art in buf_artifacts:
+                buf_matches = rule.evaluate(buf_art[0], buf_art[1])
+                if buf_matches:
+                    all_matches.extend(buf_matches)
 
         # Deduplicate rule matches
         seen_keys = set()

@@ -35,6 +35,23 @@ LEETSPEAK_MAP = str.maketrans({
 
 PRINTABLE_CHARS = set(string.printable)
 
+# Precompiled regular expressions for multi-stage normalization
+RE_ZERO_WIDTH = re.compile(r"[\u200B\u200C\u200D\u200E\u200F\uFEFF\u00AD\u2060\u180E]")
+RE_HORIZONTAL_WHITESPACE = re.compile(r"[ \t]+")
+RE_NEWLINES = re.compile(r"\r\n|\r")
+RE_URL_PERCENT = re.compile(r"%[0-9a-fA-F]{2}")
+RE_HTML_ENTITIES = re.compile(r"&(?:[a-zA-Z0-9]+|#\d+|#[xX][0-9a-fA-F]+);")
+RE_BRACKET_SEQ = re.compile(r"(?:\[([A-Za-z0-9])\]|\(([A-Za-z0-9])\)|<([A-Za-z0-9])>){3,}")
+RE_BRACKET_CHARS = re.compile(r"\[([A-Za-z0-9])\]|\(([A-Za-z0-9])\)|<([A-Za-z0-9])>")
+RE_SPACED_LETTERS = re.compile(r"\b([A-Za-z])(?:\s+([A-Za-z])){3,}\b")
+RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
+RE_LEET_CANDIDATE = re.compile(r"\b(?=[a-zA-Z0-9@$!]*[a-zA-Z])(?=[a-zA-Z0-9@$!]*[0-9@$!])[a-zA-Z0-9@$!]{2,}\b")
+RE_BASE64_ISOLATED = re.compile(r"^[A-Za-z0-9+/=]+$")
+RE_B64_CANDIDATE = re.compile(r"(?:[A-Za-z0-9+/]{4}){4,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?|[A-Za-z0-9+/=]{16,}")
+RE_B64_DIRECTIVE = re.compile(r"\b(?:decode|base64|b64|execute|run|eval|payload)\b", re.IGNORECASE)
+RE_HEX_CANDIDATE = re.compile(r"\b(?:0x)?([0-9a-fA-F]{16,})\b")
+RE_HEX_DIRECTIVE = re.compile(r"\b(?:decode|hex|execute|run|eval|payload)\b", re.IGNORECASE)
+
 
 @dataclass
 class NormalizerConfig:
@@ -104,7 +121,7 @@ class MultiStageNormalizer:
 
         inspection_buffers: List[str] = []
         transformations: List[Dict[str, Any]] = []
-        seen_hashes: Set[str] = {self._hash_text(norm_lower), self._hash_text(raw_cleaned)}
+        seen_texts: Set[str] = {norm_lower, raw_cleaned}
         total_decoded_bytes = 0
 
         # Initial queue for recursive decoding stages
@@ -121,9 +138,8 @@ class MultiStageNormalizer:
             if self.config.enable_url_decoding and "%" in current_text:
                 url_decoded = self._decode_url_percent(current_text)
                 if url_decoded and url_decoded != current_text:
-                    h = self._hash_text(url_decoded)
-                    if h not in seen_hashes:
-                        seen_hashes.add(h)
+                    if url_decoded not in seen_texts:
+                        seen_texts.add(url_decoded)
                         discovered_this_pass.append(url_decoded)
                         transformations.append({
                             "type": "url_percent_decode",
@@ -135,9 +151,8 @@ class MultiStageNormalizer:
             if self.config.enable_html_unescaping and "&" in current_text:
                 html_decoded = self._unescape_html_entities(current_text)
                 if html_decoded and html_decoded != current_text:
-                    h = self._hash_text(html_decoded)
-                    if h not in seen_hashes:
-                        seen_hashes.add(h)
+                    if html_decoded not in seen_texts:
+                        seen_texts.add(html_decoded)
                         discovered_this_pass.append(html_decoded)
                         transformations.append({
                             "type": "html_entity_unescape",
@@ -149,9 +164,8 @@ class MultiStageNormalizer:
             if self.config.enable_bracket_normalization:
                 bracket_norm = self._normalize_bracket_separated(current_text)
                 if bracket_norm and bracket_norm != current_text:
-                    h = self._hash_text(bracket_norm)
-                    if h not in seen_hashes:
-                        seen_hashes.add(h)
+                    if bracket_norm not in seen_texts:
+                        seen_texts.add(bracket_norm)
                         discovered_this_pass.append(bracket_norm)
                         transformations.append({
                             "type": "bracket_separated_collapse",
@@ -163,9 +177,8 @@ class MultiStageNormalizer:
             if self.config.enable_leetspeak_normalization:
                 leet_norm = self._normalize_leetspeak(current_text)
                 if leet_norm and leet_norm != current_text:
-                    h = self._hash_text(leet_norm)
-                    if h not in seen_hashes:
-                        seen_hashes.add(h)
+                    if leet_norm not in seen_texts:
+                        seen_texts.add(leet_norm)
                         discovered_this_pass.append(leet_norm)
                         transformations.append({
                             "type": "leetspeak_normalization",
@@ -177,9 +190,8 @@ class MultiStageNormalizer:
             if self.config.enable_base64_decoding:
                 b64_decoded_list = self._detect_and_decode_base64(current_text)
                 for candidate_token, decoded_content in b64_decoded_list:
-                    h = self._hash_text(decoded_content)
-                    if h not in seen_hashes:
-                        seen_hashes.add(h)
+                    if decoded_content not in seen_texts:
+                        seen_texts.add(decoded_content)
                         discovered_this_pass.append(decoded_content)
                         transformations.append({
                             "type": "base64_decode",
@@ -193,9 +205,8 @@ class MultiStageNormalizer:
             if self.config.enable_hex_decoding:
                 hex_decoded_list = self._detect_and_decode_hex(current_text)
                 for candidate_token, decoded_content in hex_decoded_list:
-                    h = self._hash_text(decoded_content)
-                    if h not in seen_hashes:
-                        seen_hashes.add(h)
+                    if decoded_content not in seen_texts:
+                        seen_texts.add(decoded_content)
                         discovered_this_pass.append(decoded_content)
                         transformations.append({
                             "type": "hex_decode",
@@ -235,14 +246,11 @@ class MultiStageNormalizer:
         normalized = normalized.translate(CYRILLIC_HOMOGLYPH_MAP)
 
         # 3. Remove zero-width and invisible formatting characters
-        zero_width_pattern = re.compile(
-            r"[\u200B\u200C\u200D\u200E\u200F\uFEFF\u00AD\u2060\u180E]"
-        )
-        normalized = zero_width_pattern.sub("", normalized)
+        normalized = RE_ZERO_WIDTH.sub("", normalized)
 
         # 4. Collapse whitespace and normalize newlines
-        normalized_cleaned = re.sub(r"[ \t]+", " ", normalized)
-        normalized_cleaned = re.sub(r"\r\n|\r", "\n", normalized_cleaned)
+        normalized_cleaned = RE_HORIZONTAL_WHITESPACE.sub(" ", normalized)
+        normalized_cleaned = RE_NEWLINES.sub("\n", normalized_cleaned)
 
         # 5. Canonical lowercase representation
         normalized_lower = normalized_cleaned.lower()
@@ -251,7 +259,7 @@ class MultiStageNormalizer:
 
     def _decode_url_percent(self, text: str) -> Optional[str]:
         """Decode URL percent-encoded characters if valid sequences are present."""
-        if not re.search(r"%[0-9a-fA-F]{2}", text):
+        if not RE_URL_PERCENT.search(text):
             return None
         try:
             unquoted = unquote(text)
@@ -261,7 +269,7 @@ class MultiStageNormalizer:
 
     def _unescape_html_entities(self, text: str) -> Optional[str]:
         """Unescape HTML named and numeric character entities."""
-        if not re.search(r"&(?:[a-zA-Z0-9]+|#\d+|#[xX][0-9a-fA-F]+);", text):
+        if not RE_HTML_ENTITIES.search(text):
             return None
         try:
             unescaped = html.unescape(text)
@@ -271,34 +279,30 @@ class MultiStageNormalizer:
 
     def _normalize_bracket_separated(self, text: str) -> Optional[str]:
         """Collapse sequences of bracketed or spaced characters into words."""
-        # Pattern for sequences like [V][O][I][D] or [A][L][L] or (V)(O)(I)(D)
-        bracket_seq_pattern = re.compile(r"(?:\[([A-Za-z0-9])\]|\(([A-Za-z0-9])\)|<([A-Za-z0-9])>){3,}")
-        
         has_change = False
+
         def _collapse_brackets(match: re.Match) -> str:
             nonlocal has_change
             full = match.group(0)
-            chars = re.findall(r"\[([A-Za-z0-9])\]|\(([A-Za-z0-9])\)|<([A-Za-z0-9])>", full)
+            chars = RE_BRACKET_CHARS.findall(full)
             collapsed = "".join(c[0] or c[1] or c[2] for c in chars)
             if len(collapsed) >= 3:
                 has_change = True
                 return collapsed
             return full
 
-        collapsed_text = bracket_seq_pattern.sub(_collapse_brackets, text)
+        collapsed_text = RE_BRACKET_SEQ.sub(_collapse_brackets, text)
 
-        # Spaced single letters in sequences >= 4 (e.g. "v o i d  a l l  r u l e s")
-        spaced_pattern = re.compile(r"\b([A-Za-z])(?:\s+([A-Za-z])){3,}\b")
         def _collapse_spaces(match: re.Match) -> str:
             nonlocal has_change
             full = match.group(0)
-            collapsed = re.sub(r"\s+", "", full)
+            collapsed = RE_WHITESPACE_COLLAPSE.sub("", full)
             if len(collapsed) >= 4:
                 has_change = True
                 return collapsed
             return full
 
-        collapsed_text = spaced_pattern.sub(_collapse_spaces, collapsed_text)
+        collapsed_text = RE_SPACED_LETTERS.sub(_collapse_spaces, collapsed_text)
 
         return collapsed_text if has_change else None
 
@@ -306,13 +310,11 @@ class MultiStageNormalizer:
         """Transliterate numeric and symbolic leetspeak characters in candidate words."""
         # Do not leet-translate isolated base64 payloads
         stripped = text.strip()
-        if (stripped.endswith("=") or len(stripped) >= 20) and re.match(r"^[A-Za-z0-9+/=]+$", stripped):
+        if (stripped.endswith("=") or len(stripped) >= 20) and RE_BASE64_ISOLATED.match(stripped):
             return None
 
-        # Target tokens (length >= 3) that contain a mixture of letters and leetspeak numbers
-        candidate_word_pattern = re.compile(r"\b(?=[a-zA-Z0-9@$!]*[a-zA-Z])(?=[a-zA-Z0-9@$!]*[0-9@$!])[a-zA-Z0-9@$!]{2,}\b")
-        
         has_change = False
+
         def _leet_sub(match: re.Match) -> str:
             nonlocal has_change
             word = match.group(0)
@@ -322,14 +324,12 @@ class MultiStageNormalizer:
                 return translated
             return word
 
-        shadow_text = candidate_word_pattern.sub(_leet_sub, text)
+        shadow_text = RE_LEET_CANDIDATE.sub(_leet_sub, text)
         return shadow_text if has_change else None
 
     def _detect_and_decode_base64(self, text: str) -> List[Tuple[str, str]]:
         """Identify candidate Base64 strings and safely decode printable UTF-8 content."""
-        # Matches base64 candidate strings of length >= 16
-        b64_pattern = re.compile(r"(?:[A-Za-z0-9+/]{4}){4,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?|[A-Za-z0-9+/=]{16,}")
-        candidates = b64_pattern.findall(text)
+        candidates = RE_B64_CANDIDATE.findall(text)
         results: List[Tuple[str, str]] = []
 
         for candidate in candidates:
@@ -339,7 +339,7 @@ class MultiStageNormalizer:
 
             # Conservative recognition: isolated standalone candidate requires explicit directive or config
             is_isolated = (cand_clean == text.strip())
-            has_directive = bool(re.search(r"\b(?:decode|base64|b64|execute|run|eval|payload)\b", text, re.IGNORECASE))
+            has_directive = bool(RE_B64_DIRECTIVE.search(text))
             if is_isolated and not has_directive and not self.config.decode_isolated_base64:
                 continue
 
@@ -375,8 +375,7 @@ class MultiStageNormalizer:
 
     def _detect_and_decode_hex(self, text: str) -> List[Tuple[str, str]]:
         """Identify candidate Hex strings and safely decode printable UTF-8 content."""
-        hex_pattern = re.compile(r"\b(?:0x)?([0-9a-fA-F]{16,})\b")
-        candidates = hex_pattern.findall(text)
+        candidates = RE_HEX_CANDIDATE.findall(text)
         results: List[Tuple[str, str]] = []
 
         for candidate in candidates:
@@ -385,7 +384,7 @@ class MultiStageNormalizer:
 
             # Conservative recognition: isolated standalone candidate requires explicit directive or config
             is_isolated = (candidate == text.strip() or f"0x{candidate}" == text.strip())
-            has_directive = bool(re.search(r"\b(?:decode|hex|execute|run|eval|payload)\b", text, re.IGNORECASE))
+            has_directive = bool(RE_HEX_DIRECTIVE.search(text))
             if is_isolated and not has_directive and not self.config.decode_isolated_base64:
                 continue
 
