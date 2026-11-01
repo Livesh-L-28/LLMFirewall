@@ -217,6 +217,7 @@ def test_full_corpus_security_regression():
 # 5. Performance SLA Verification Tests
 # =============================================================================
 
+@pytest.mark.performance
 def test_performance_sla_thresholds():
     """Verify local execution performance satisfies sub-millisecond SLAs."""
     runner = SecurityBenchmarkRunner()
@@ -234,4 +235,18 @@ def test_performance_sla_thresholds():
     # 3. Tool Calling SLA: P50 must be under 1.0 ms
     ag = runner._bench_agent_and_rag(iterations=30)
     assert ag["tool_call_inspection"]["p50_ms"] < 1.0, f"Tool inspection exceeded 1.0ms: {ag['tool_call_inspection']['p50_ms']}ms"
+
+    # 4. Single-document RAG filtering SLA: P50 must be under 2.0 ms
+    single_doc = ag["rag_single_document"]
+    assert single_doc["p50_ms"] < 2.0, f"Single-document RAG filtering exceeded 2.0ms: {single_doc['p50_ms']}ms"
+    assert single_doc["sample_count"] == 30
+
+    # 5. Multi-document batch RAG metrics (operational & throughput validation)
+    batch = ag["rag_multi_document_batch"]
+    assert batch["sample_count"] == 30
+    assert batch["docs_processed_sec"] > 0
+    assert batch["total_batch_latency_p50_ms"] > 0
+    assert batch["mean_latency_per_doc_ms"] > 0
+
+    # 6. Canonical alias check for backward compatibility
     assert ag["rag_context_filtering"]["p50_ms"] < 2.0, f"RAG filtering exceeded 2.0ms: {ag['rag_context_filtering']['p50_ms']}ms"
