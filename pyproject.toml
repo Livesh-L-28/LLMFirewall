@@ -118,6 +118,7 @@ markers = [
     "integration: Cross-component and end-to-end subsystem integration tests",
     "security: Security enforcement, information leakage, and attack payload tests",
     "regression: Security regression tests for preventing past vulnerability recurrence",
+    "performance: Performance SLA verification benchmarks and latency measurements",
     "fastapi: Tests for optional FastAPI ASGI middleware and helpers",
     "cli: Tests for command-line interface execution and exit codes",
 ]

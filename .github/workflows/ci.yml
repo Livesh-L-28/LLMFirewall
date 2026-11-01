@@ -44,7 +44,11 @@ jobs:
 
       - name: Run Test Suite
         run: |
-          pytest --cov=llmfirewall -v
+          pytest --cov=llmfirewall -m "not performance" -v
+
+      - name: Run Performance Benchmark Suite
+        run: |
+          pytest -m performance -v
 
       - name: Run Security Suite
         run: |
