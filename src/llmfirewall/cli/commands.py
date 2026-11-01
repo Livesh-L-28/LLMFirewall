@@ -153,6 +153,7 @@ def handle_eval_run(
     category: Optional[str] = None,
     severity: Optional[str] = None,
     tag: Optional[str] = None,
+    suite: Optional[str] = None,
     format_type: str = "human",
     output_file: Optional[str] = None,
 ) -> int:
@@ -200,8 +201,10 @@ def handle_eval_run(
     # Run evaluation
     try:
         engine = SecurityEvaluationEngine(policy=explicit_policy)
+        suite_name = suite if suite and suite.lower() not in ("default", "core") else "core-security-suite"
         report = engine.run_suite(
             baseline_file=baseline_file,
+            suite_name=suite_name,
             category_filter=cat_filter,
             severity_filter=sev_filter,
             tag_filter=tag_filter,

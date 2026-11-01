@@ -14,9 +14,11 @@ from llmfirewall.detectors.prompt_injection.rules import (
     InjectionRule,
     InstructionHierarchyRule,
     InstructionOverrideRule,
+    MultilingualInjectionRule,
     RoleManipulationRule,
     SuspiciousControlRule,
     SystemPromptLeakRule,
+    ToolManipulationRule,
 )
 
 
@@ -52,6 +54,8 @@ class PromptInjectionDetector(Detector):
             IndirectInjectionRule(),
             DelimiterAttackRule(),
             AuthorityImpersonationRule(),
+            MultilingualInjectionRule(),
+            ToolManipulationRule(),
         ]
         self._analyzer = InjectionHeuristicAnalyzer()
 
@@ -74,15 +78,36 @@ class PromptInjectionDetector(Detector):
         if not text or not text.strip():
             return []
 
-        # 1. Normalization
-        raw_cleaned, norm_lower = normalize_prompt_text(text)
+        # 1. Multi-Stage Normalization
+        norm_artifact = normalize_prompt_text(text)
+        raw_cleaned = norm_artifact[0]
+        norm_lower = norm_artifact[1]
 
         # 2. Rule evaluation
         all_matches = []
         for rule in self._rules:
+            # Primary evaluation on canonical normalized text
             matches = rule.evaluate(raw_cleaned, norm_lower)
             if matches:
                 all_matches.extend(matches)
 
+            # Secondary evaluation on decoded inspection buffers
+            if hasattr(norm_artifact, "inspection_buffers"):
+                for buf in norm_artifact.inspection_buffers:
+                    if buf and buf != raw_cleaned and buf != norm_lower:
+                        buf_artifact = normalize_prompt_text(buf)
+                        buf_matches = rule.evaluate(buf_artifact[0], buf_artifact[1])
+                        if buf_matches:
+                            all_matches.extend(buf_matches)
+
+        # Deduplicate rule matches
+        seen_keys = set()
+        deduped_matches = []
+        for m in all_matches:
+            key = (m.rule_id, m.matched_text)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                deduped_matches.append(m)
+
         # 3. Heuristic analysis & correlation
-        return self._analyzer.analyze(text, all_matches, context=context)
+        return self._analyzer.analyze(text, deduped_matches, context=context)

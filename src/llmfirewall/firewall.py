@@ -216,6 +216,13 @@ class Firewall:
 
         # 3. Build Policy Engine
         effective_policy_input = policy if policy is not None else policy_engine
+        if isinstance(effective_policy_input, str):
+            clean_str = effective_policy_input.strip()
+            if clean_str.lower() in ("default", "strict", "privacy"):
+                effective_policy_input = Policy.preset(clean_str)
+            else:
+                effective_policy_input = Policy.from_file(clean_str)
+
         if effective_policy_input is not None:
             if isinstance(effective_policy_input, PolicyEngine):
                 self._policy_engine = effective_policy_input
@@ -305,6 +312,11 @@ class Firewall:
     @property
     def policy_engine(self) -> PolicyEngine:
         return self._policy_engine
+
+    @property
+    def policy(self) -> Policy:
+        """Active policy document evaluated by the policy engine."""
+        return self._policy_engine.policy
 
     @property
     def audit_logger(self) -> Optional[AuditLogger]:
@@ -877,12 +889,16 @@ class Firewall:
             if cached_res is not None:
                 meta = dict(cached_res.metadata)
                 meta["cached"] = True
-                return cached_res.model_copy(update={
+                updates: Dict[str, Any] = {
                     "request_id": request.id,
+                    "original_text": request.text,
                     "created_at": datetime.now(timezone.utc),
                     "execution_time_ms": round((time.perf_counter() - start_time) * 1000.0, 3),
                     "metadata": meta,
-                })
+                }
+                if cached_res.action == Action.ALLOW:
+                    updates["processed_text"] = request.text
+                return cached_res.model_copy(update=updates)
 
         # Step 2: Run Detector Engine
         finding_collection = self._detector_engine.execute(
@@ -1769,7 +1785,7 @@ class Firewall:
 
     def protect_tool(
         self,
-        tool_fn: Callable,
+        tool_fn: Optional[Callable] = None,
         tool_name: Optional[str] = None,
         policy: Optional[str] = None,
         raise_on_block: bool = True,

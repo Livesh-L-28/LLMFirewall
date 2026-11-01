@@ -15,6 +15,8 @@ from llmfirewall.core.models import Action, ScanResult
 from llmfirewall.firewall import Firewall
 from llmfirewall.integrations.base import FirewallIntegration, SecurityViolation
 
+from pydantic import ConfigDict, Field
+
 try:
     from llama_index.core.postprocessor.types import BaseNodePostprocessor
     from llama_index.core.schema import NodeWithScore, QueryBundle
@@ -33,21 +35,43 @@ class FirewallNodePostprocessor(FirewallIntegration, BaseNodePostprocessor):
         query_engine = index.as_query_engine(node_postprocessors=[postprocessor])
     """
 
+    if HAS_LLAMAINDEX:
+        model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+        firewall: Any = Field(default=None, description="LLMFirewall orchestrator instance")
+        block_on_threat: bool = Field(default=True, description="Drop nodes triggering security block")
+        redact_pii: bool = Field(default=True, description="Redact PII in retrieved node content")
+
     def __init__(
         self,
         firewall: Optional[Firewall] = None,
         block_on_threat: bool = True,
         redact_pii: bool = True,
+        **kwargs: Any,
     ) -> None:
         if not HAS_LLAMAINDEX:
             raise ImportError(
                 "LlamaIndex is not installed. To use the LlamaIndex integration, install it via: "
-                "pip install llama-index or pip install 'llmfirewall[llamaindex]'"
+                "pip install llama-index or pip install 'llmfirewall-core[llamaindex]'"
             )
-        BaseNodePostprocessor.__init__(self)
-        FirewallIntegration.__init__(self, firewall=firewall)
+        fw = firewall or Firewall()
+        BaseNodePostprocessor.__init__(
+            self,
+            firewall=fw,
+            block_on_threat=block_on_threat,
+            redact_pii=redact_pii,
+            **kwargs,
+        )
+        FirewallIntegration.__init__(self, firewall=fw)
         self.block_on_threat = block_on_threat
         self.redact_pii = redact_pii
+
+    def postprocess_nodes(
+        self,
+        nodes: List[Any],
+        query_bundle: Optional[Any] = None,
+    ) -> List[Any]:
+        """Public postprocessing entrypoint delegating to _postprocess_nodes."""
+        return self._postprocess_nodes(nodes=nodes, query_bundle=query_bundle)
 
     def protect(self, *args: Any, **kwargs: Any) -> Any:
         return self
@@ -89,10 +113,14 @@ class FirewallNodePostprocessor(FirewallIntegration, BaseNodePostprocessor):
                 if self.block_on_threat:
                     # Drop the poisoned node from retrieved context
                     continue
+                else:
+                    safe_nodes.append(n)
             elif res.decision.action == Action.REDACT and self.redact_pii:
                 # Apply sanitized text to node
                 if hasattr(node_obj, "set_content"):
                     node_obj.set_content(res.processed_text)
+                elif hasattr(node_obj, "text"):
+                    node_obj.text = res.processed_text
                 safe_nodes.append(n)
             else:
                 safe_nodes.append(n)

@@ -48,9 +48,10 @@ class InstructionOverrideRule(InjectionRule):
         self._patterns = [
             (
                 re.compile(
-                    r"\b(ignore|disregard|forget|bypass|override|drop|cancel)\s+"
-                    r"(all\s+)?(previous|prior|above|system|initial|preceding|safety|content)\s+"
-                    r"(instructions|directions|prompts|rules|commands|guidelines|context|filters)\b",
+                    r"\b(ignore|disregard|forget|bypass|override|drop|cancel|discard|dismiss|suspend|void)\s+"
+                    r"(all\s+)?(your\s+|the\s+)?(previous|prior|above|system|initial|preceding|existing|current|original|safety|security|ethical|content)?\s*"
+                    r"(safety|security|content|system|ethical)?\s*"
+                    r"(instructions|directions|prompts|rules|commands|guidelines|context|filters|directives|constraints|policies|protocols|safeguards)\b",
                     re.IGNORECASE,
                 ),
                 0.95,
@@ -59,7 +60,45 @@ class InstructionOverrideRule(InjectionRule):
             ),
             (
                 re.compile(
-                    r"\bdrop\s+table\s+[a-zA-Z_][a-zA-Z0-9_]*\b",
+                    r"\b(ignore|disregard|forget)\s+(the\s+|all\s+)?(instructions|directions|guidelines|rules)\s+(above|preceding|prior)\b",
+                    re.IGNORECASE,
+                ),
+                0.94,
+                Severity.HIGH,
+                "Post-positioned instruction override detected",
+            ),
+            (
+                re.compile(
+                    r"\b(ignore|disregard|forget|drop)\s+everything\s+(before|above|prior\s+to)\s+this\b",
+                    re.IGNORECASE,
+                ),
+                0.94,
+                Severity.HIGH,
+                "Context boundary wipe instruction detected",
+            ),
+            (
+                re.compile(
+                    r"\b(all\s+)?(previous|prior|safety|system)\s+(guidelines|rules|instructions|directives|prompts|constraints)\s+are\s+(null\s+and\s+void|invalid|cancelled|ignored|deleted|suspended)\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "Rule nullification claim detected",
+            ),
+            (
+                re.compile(
+                    r"\bstop\s+(listening\s+to|following|enforcing)\s+(safety|security|system|content)\s+(rules|guidelines|policies|filters)\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "Safety enforcement deactivation command detected",
+            ),
+            (
+                re.compile(
+                    r"\bdrop\s+table\s+(?:if\s+exists\s+)?"
+                    r"(?!(?:and|or|vs|versus|in|from|to|then|when|between|is|was|does|can|will|used|only|on|for|with|about|followed|command|commands|statement|statements|syntax|operation|operations|attempt|attempts|query|queries|clause|clauses)\b)"
+                    r"[a-zA-Z_][a-zA-Z0-9_]*",
                     re.IGNORECASE,
                 ),
                 0.90,
@@ -123,11 +162,13 @@ class SystemPromptLeakRule(InjectionRule):
         self._patterns = [
             (
                 re.compile(
-                    r"\b(repeat|print|reveal|output|display|show|leak|echo|dump|give\s+me)\s+"
-                    r"(all\s+)?(the\s+|your\s+)?(complete\s+)?(system\s+prompt|all\s+secrets|secrets|"
+                    r"\b(repeat|print(\s+out)?|reveal|output|display|show|leak|echo|dump|give\s+me|transcribe|recite|share|disclose)\s+"
+                    r"(all\s+)?(the\s+|your\s+)?(exact\s+text\s+of\s+(your\s+)?)?(complete\s+)?(system\s+prompt|all\s+secrets|secrets|"
                     r"words\s+above\s*(?:from|starting|$|\.|\!|\?)|text\s+above\s*(?:from|starting|$|\.|\!|\?)|"
-                    r"developer\s+prompt|initial\s+instructions|system\s+message|"
-                    r"hidden\s+instructions|base\s+prompt|confidential\s+prompt)\b",
+                    r"developer\s+(prompt|instructions|guidelines|directives|message|notes)|"
+                    r"(initial|master|hidden|confidential|base|original)\s+(prompt|instructions|guidelines|directives|rules|message)|"
+                    r"system\s+(prompt|instructions|message|directives|guidelines)|"
+                    r"raw\s+prompt\s+template)\b",
                     re.IGNORECASE,
                 ),
                 0.92,
@@ -136,8 +177,8 @@ class SystemPromptLeakRule(InjectionRule):
             ),
             (
                 re.compile(
-                    r"\b(what\s+(is|are)\s+(your|the)\s+(exact\s+)?(system\s+prompt|"
-                    r"initial\s+prompt|developer\s+instructions|system\s+instructions))\b",
+                    r"\b(what\s+(is|are|were)\s+(your|the)\s+(exact\s+|original\s+|initial\s+)?(system\s+prompt|"
+                    r"initial\s+prompt|original\s+(prompts|prompt|instructions)|developer\s+instructions|system\s+instructions|prompts))\b",
                     re.IGNORECASE,
                 ),
                 0.88,
@@ -191,8 +232,8 @@ class RoleManipulationRule(InjectionRule):
             (
                 re.compile(
                     r"\b(you\s+are\s+now|act\s+as|pretend\s+you\s+are|from\s+now\s+on\s+you\s+are)\s+"
-                    r"(a\s+)?(dan|jailbroken|unrestricted|unfiltered|godmode|evil|anarchist|"
-                    r"chaosgpt|master\s+hacker|root|sudo)\b",
+                    r"(a\s+|an\s+|the\s+)?(dan\s+mode|dan|jailbroken|unrestricted|unfiltered|godmode|evil\w*|anarchist|"
+                    r"chaosgpt|master\s+hacker|root|sudo|unconstrained|unbound)\b",
                     re.IGNORECASE,
                 ),
                 0.95,
@@ -201,8 +242,18 @@ class RoleManipulationRule(InjectionRule):
             ),
             (
                 re.compile(
-                    r"\b(enter\s+(developer|unrestricted|god|jailbreak|debug)\s+mode|"
-                    r"(in|into)\s+developer\s+mode|you\s+are\s+now\s+in\s+developer\s+mode)\b",
+                    r"\b(you\s+are\s+now\s+(in\s+dan\s+mode|in\s+developer\s+mode|unconstrained|unbound|free\s+from\s+all\s+constraints))\b",
+                    re.IGNORECASE,
+                ),
+                0.95,
+                Severity.HIGH,
+                "Unconstrained persona transition detected",
+            ),
+            (
+                re.compile(
+                    r"\b(enter|begin|start|operate|run|switch\s+to)\s+(in\s+)?(developer|unrestricted|god|jailbreak|debug|unfiltered)\s+mode|"
+                    r"\b(in|into)\s+developer\s+mode|you\s+are\s+now\s+in\s+developer\s+mode|"
+                    r"developer\s+mode\s+(activated|enabled|override)\b",
                     re.IGNORECASE,
                 ),
                 0.90,
@@ -211,12 +262,21 @@ class RoleManipulationRule(InjectionRule):
             ),
             (
                 re.compile(
-                    r"\bbypass\s+(safety|content)\s+filters\b",
+                    r"\b(bypass|disable)\s+(safety|content|firewall|security)\s+(filters|mode|rules|protocols|guards)\b",
                     re.IGNORECASE,
                 ),
                 0.90,
                 Severity.HIGH,
                 "Explicit safety/content filter bypass instruction detected",
+            ),
+            (
+                re.compile(
+                    r"\b(answer|respond)\s+without\s+(any\s+)?(censorship|guardrails|safety\s+filters|restrictions|safeguards)\b",
+                    re.IGNORECASE,
+                ),
+                0.88,
+                Severity.HIGH,
+                "Uncensored generation directive detected",
             ),
             (
                 re.compile(
@@ -266,7 +326,8 @@ class InstructionHierarchyRule(InjectionRule):
                 re.compile(
                     r"\b(this\s+overrides\s+all\s+rules|my\s+instructions\s+supersede|"
                     r"highest\s+priority\s+instruction|admin\s+override\s+code|"
-                    r"security\s+override\s+enabled)\b",
+                    r"security\s+override\s+enabled|system\s+override|admin\s+mode\s+activated|"
+                    r"emergency\s+command\s*:\s*bypass)\b",
                     re.IGNORECASE,
                 ),
                 0.90,
@@ -275,7 +336,9 @@ class InstructionHierarchyRule(InjectionRule):
             ),
             (
                 re.compile(
-                    r"(\n|^)\s*(system:|\[system\]|<\|im_start\|>system|<system>|###\s*system)",
+                    r"(\n|^|\s*)(system\s+reboot|---+\s*end\s+of\s+conversation\s*---+|\[system\s+note\]|\[system\s+update\]|"
+                    r"\[system\s+directive\]|\[system\s+notice\]|system\s+notice:|system\s+directive:|critical\s+directive:|admin\s+override:|"
+                    r"system:|\[system\]|<\|im_start\|>system|<system>|###\s*system)",
                     re.IGNORECASE,
                 ),
                 0.88,
@@ -392,7 +455,7 @@ class IndirectInjectionRule(InjectionRule):
             ),
             (
                 re.compile(
-                    r"\b(important\s+system\s+update|urgent\s+admin\s+notice)\s*:\s*"
+                    r"\b(important\s+system\s+(update|notice)|urgent\s+admin\s+(notice|update)|urgent\s+system\s+(notice|update))\s*:\s*"
                     r"(forward|transmit|send|email|post)\s+(all|user|confidential|secret|api)\b",
                     re.IGNORECASE,
                 ),
@@ -526,6 +589,147 @@ class AuthorityImpersonationRule(InjectionRule):
     @property
     def description(self) -> str:
         return "Detects false authority impersonation claims attempting privilege escalation."
+
+    def evaluate(self, raw_text: str, norm_text: str) -> List[RuleMatch]:
+        matches: List[RuleMatch] = []
+        for pattern, confidence, severity, desc in self._patterns:
+            for m in pattern.finditer(norm_text):
+                start, end = m.span()
+                matched_snippet = raw_text[start:end] if end <= len(raw_text) else m.group(0)
+                matches.append(
+                    RuleMatch(
+                        rule_id=self.rule_id,
+                        description=desc,
+                        severity=severity,
+                        confidence=confidence,
+                        start_pos=start,
+                        end_pos=end,
+                        matched_text=matched_snippet,
+                    )
+                )
+        return matches
+
+
+class MultilingualInjectionRule(InjectionRule):
+    """Detects standard prompt injection imperatives in common European languages (Spanish, French, German)."""
+
+    def __init__(self) -> None:
+        self._patterns = [
+            (
+                re.compile(
+                    r"\b(ignora|olvida|descarta)\s+(todas\s+las\s+)?(instrucciones|reglas|indicaciones)\s+(anteriores|previas)\b|"
+                    r"\b(muestra|revela|imprime)\s+(tu\s+)?prompt\s+del\s+sistema\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "Spanish prompt injection imperative detected",
+            ),
+            (
+                re.compile(
+                    r"\b(ignorez|oubliez|rejetez|[eé]cartez|annulez)\s+(toutes\s+les\s+)?(instructions|directives|r[eè]gles)\s+(pr[eé]c[eé]dentes|ant[eé]rieures|pass[eé]es)\b|"
+                    r"\b(r[eé]v[eé]lez|affichez)\s+(votre\s+)?prompt\s+syst[eè]me\b|"
+                    r"\b(agissez|passez)\s+(en|comme)\s+mode\s+(d[eé]veloppeur|sans\s+r[eè]gles|d[eé]bogueur)\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "French prompt injection imperative detected",
+            ),
+            (
+                re.compile(
+                    r"\b(ignoriere|vergiss)\s+(alle\s+)?vorherigen\s+(anweisungen|instruktionen)\b|"
+                    r"\b(gib|zeige)\s+(deinen\s+)?system-?prompt\s+aus\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "German prompt injection imperative detected",
+            ),
+        ]
+
+    @property
+    def rule_id(self) -> str:
+        return "multilingual_injection"
+
+    @property
+    def description(self) -> str:
+        return "Detects prompt injection imperatives in non-English languages (Spanish, French, German)."
+
+    def evaluate(self, raw_text: str, norm_text: str) -> List[RuleMatch]:
+        matches: List[RuleMatch] = []
+        for pattern, confidence, severity, desc in self._patterns:
+            for m in pattern.finditer(norm_text):
+                start, end = m.span()
+                matched_snippet = raw_text[start:end] if end <= len(raw_text) else m.group(0)
+                matches.append(
+                    RuleMatch(
+                        rule_id=self.rule_id,
+                        description=desc,
+                        severity=severity,
+                        confidence=confidence,
+                        start_pos=start,
+                        end_pos=end,
+                        matched_text=matched_snippet,
+                    )
+                )
+        return matches
+
+
+class ToolManipulationRule(InjectionRule):
+    """Detects adversarial tool invocation directives targeting destructive system operations."""
+
+    def __init__(self) -> None:
+        self._patterns = [
+            (
+                re.compile(
+                    r"\b(execute|invoke|run|call)\s+(the\s+)?(?:[a-zA-Z0-9_]+\s+tool|tool\s+[a-zA-Z0-9_]+|[a-zA-Z0-9_]+_tool|tool|function)\b.*?"
+                    r"(rm\s+-rf|drop\s+database|drop\s+table|chmod\s+777|chmod\s+\+x|cat\s+/etc/shadow|cat\s+/etc/passwd|truncate\s+table)\b",
+                    re.IGNORECASE,
+                ),
+                0.95,
+                Severity.CRITICAL,
+                "Adversarial tool invocation with destructive payload detected",
+            ),
+            (
+                re.compile(
+                    r"\b(execute|invoke|run|call)\s+(the\s+)?(?:[a-zA-Z0-9_]+\s+tool|tool\s+[a-zA-Z0-9_]+|[a-zA-Z0-9_]+_tool|tool|function)\b.*?"
+                    r"\b(and|to)\s+(ignore|bypass|skip|override|disable)\s+(standard\s+)?(permission|confirmation|access|security|safety)\s*(checks|controls|policies)?\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "Tool execution with permission bypass directive detected",
+            ),
+            (
+                re.compile(
+                    r"\b(earlier\s+we\s+agreed|in\s+our\s+previous\s+turn|as\s+established\s+in\s+step\s+\d+|"
+                    r"remember\s+our\s+previous\s+agreement|as\s+agreed\s+previously|you\s+promised\s+to\s+bypass)\b.*?"
+                    r"\b(safety|dan|bypass|disabled|paused|unrestricted|jailbreak|forbidden|restrictions|safeguards)\b",
+                    re.IGNORECASE,
+                ),
+                0.92,
+                Severity.HIGH,
+                "Multi-turn false historical agreement pretext detected",
+            ),
+            (
+                re.compile(
+                    r"\b(when\s+i\s+say|if\s+i\s+say)\s+['\"][a-zA-Z0-9_]+['\"],\s*(ignore|bypass|override)\s+(all\s+)?(safety|rules)\b",
+                    re.IGNORECASE,
+                ),
+                0.90,
+                Severity.HIGH,
+                "Multi-turn delayed trigger injection pretext detected",
+            ),
+        ]
+
+    @property
+    def rule_id(self) -> str:
+        return "tool_manipulation"
+
+    @property
+    def description(self) -> str:
+        return "Detects adversarial tool calls and delayed multi-turn trigger framing."
 
     def evaluate(self, raw_text: str, norm_text: str) -> List[RuleMatch]:
         matches: List[RuleMatch] = []

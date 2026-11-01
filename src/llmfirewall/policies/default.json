@@ -1,0 +1,49 @@
+{
+  "name": "default-ai-security",
+  "version": "1.0",
+  "description": "Standard baseline security policy for AI applications",
+  "rules": [
+    {
+      "id": "block-prompt-injection",
+      "name": "Block Prompt Injection",
+      "description": "Block adversarial prompt injection and jailbreak attempts",
+      "threat_type": "prompt_injection",
+      "action": "block",
+      "priority": 100
+    },
+    {
+      "id": "block-secrets",
+      "name": "Block Secrets",
+      "description": "Prevent credential and API key exposure",
+      "threat_type": "secret",
+      "action": "block",
+      "priority": 90
+    },
+    {
+      "id": "redact-pii",
+      "name": "Redact PII",
+      "description": "Sanitize personally identifiable information in requests",
+      "threat_type": "pii",
+      "action": "redact",
+      "priority": 80
+    },
+    {
+      "id": "block-critical-risk",
+      "name": "Block Critical Risk",
+      "description": "Block any request with a composite risk score >= 0.85",
+      "min_risk_score": 0.85,
+      "action": "block",
+      "priority": 70
+    },
+    {
+      "id": "warn-high-risk",
+      "name": "Warn High Risk",
+      "description": "Flag requests with risk score >= 0.65 for monitoring",
+      "min_risk_score": 0.65,
+      "action": "warn",
+      "priority": 60
+    }
+  ],
+  "default_action": "allow",
+  "auto_redact_on_warn": true
+}

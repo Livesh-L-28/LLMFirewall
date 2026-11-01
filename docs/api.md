@@ -1,12 +1,12 @@
 # LLMFirewall Core Public API Reference
 
-This document defines the stable, verified public API for **`llmfirewall-core` v1.2.0**.
+This document defines the stable, verified public API for **`llmfirewall-core` v1.3.2** (Development Target: **v1.4.0**).
 
 All APIs documented below are exported from either the top-level namespace or the official `llmfirewall.integrations` package:
 
 ```python
 import llmfirewall
-from llmfirewall import Firewall, Action, Severity, SecurityBlockError, ScanResult
+from llmfirewall import Firewall, Action, Severity, SecurityBlockError, ScanResult, Policy
 from llmfirewall.integrations import (
     LLMFirewallASGIMiddleware,
     LLMFirewallClient,
@@ -28,14 +28,19 @@ The central orchestrator connecting threat detection, risk scoring, policy enfor
 - **Purpose**: Manage the full lifecycle of prompt inspection, output scanning, agent tool authorization, and policy enforcement.
 - **Parameters (`__init__`)**:
   - `config` (*Optional[FirewallConfig]*): Typed firewall configuration. Defaults to `FirewallConfig()` (enables prompt injection, PII, and secret detectors with production defaults).
-  - `policy` (*Optional[Union[Policy, PolicyEngine]]*): Declarative policy configuration. Defaults to `get_default_policy()` (blocks injection and leaked secrets, redacts PII).
+  - `policy` (*Optional[Union[Policy, PolicyEngine, str]]*): Declarative policy configuration. Accepts a `Policy` object, `PolicyEngine` instance, policy file path string (e.g. `"policies/strict.json"`), or portable preset string name (`"default"`, `"strict"`, `"privacy"`). Defaults to `"default"`.
+  - `policy_engine` (*Optional[Union[PolicyEngine, Policy]]*): Custom policy engine instance or policy document (aliased by `policy`).
   - `detectors` (*Optional[List[Detector]]*): Explicit list of detector instances to override `config.detectors`.
-  - `risk_engine` (*Optional[RiskEngine]*): Custom risk engine instance.
-  - `audit_logger` (*Optional[AuditLogger]*): Structured audit logging sink.
-  - `telemetry_sink` (*Optional[TelemetrySink]*): Metrics telemetry collector.
+  - `risk_engine` (*Optional[RiskEngine]*): Custom risk engine instance. Overrides `config.risk`.
+  - `audit_logger` (*Optional[AuditLogger]*): Structured audit logging sink. Overrides `config.audit`.
+  - `telemetry_sink` (*Optional[TelemetrySink]*): Metrics telemetry collector. Overrides `config.telemetry`.
   - `tool_registry` (*Optional[ToolRegistry]*): Tool registry for agent capability sandboxing.
-  - `event_store` (*Optional[EventStore]*): Event persistence store for observability.
-  - `enable_cache` (*bool*): Enable in-memory scan caching (default `False`).
+  - `tool_security_engine` (*Optional[ToolSecurityEngine]*): Custom tool security engine for agent tool validation.
+  - `event_store` (*Optional[EventStore]*): Event persistence store for observability and security intelligence.
+  - `enable_cache` (*bool*): Enable in-memory scan caching (default `True`).
+  - `cache` (*Optional[ScanCache]*): Optional custom `ScanCache` instance.
+  - `cache_size` (*int*): Maximum entries stored in the in-memory cache when default cache is used (default `5000`).
+  - `cache_ttl` (*float*): Cache time-to-live in seconds (default `1800.0` / 30 minutes).
   - `fail_fast_detectors` (*bool*): If `True`, raise on first detector error; if `False` (default), isolate detector errors and continue.
 
 #### Core Inspection Methods
@@ -182,6 +187,18 @@ Severity ratings ordered by level (`INFO < LOW < MEDIUM < HIGH < CRITICAL`):
 - `Severity.MEDIUM` (2)
 - `Severity.HIGH` (3)
 - `Severity.CRITICAL` (4)
+
+### `Policy`
+
+Declarative Policy-as-Code document model governing rule evaluation, risk thresholds, and redaction.
+
+- **Import path**: `from llmfirewall import Policy`
+- **Class Methods**:
+  - `Policy.preset(name: str) -> Policy`: Load a bundled, portable policy preset. Supported names: `'default'`, `'strict'`, `'privacy'`. Case-insensitive. Packaged via `importlib.resources` so it works reliably in clean wheel installations outside the repository.
+  - `Policy.from_preset(name: str) -> Policy`: Alias for `Policy.preset()`.
+  - `Policy.from_file(path: Union[str, Path]) -> Policy`: Load policy from a local JSON or YAML file.
+  - `Policy.from_json(json_str: str) -> Policy`: Parse policy from JSON string.
+  - `Policy.from_yaml(yaml_str: str) -> Policy`: Parse policy from YAML string.
 
 ---
 

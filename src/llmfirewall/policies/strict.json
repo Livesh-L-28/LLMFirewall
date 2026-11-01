@@ -1,0 +1,40 @@
+{
+  "name": "strict-enterprise-policy",
+  "version": "1.0",
+  "description": "Zero-tolerance enterprise policy: blocks all prompt injections, secrets, and PII without redaction",
+  "rules": [
+    {
+      "id": "strict-block-injection",
+      "name": "Block Injections",
+      "description": "Block prompt injection strictly",
+      "threat_type": "prompt_injection",
+      "action": "block",
+      "priority": 100
+    },
+    {
+      "id": "strict-block-secrets",
+      "name": "Block Secrets",
+      "description": "Block all secret/credential leaks immediately",
+      "threat_type": "secret",
+      "action": "block",
+      "priority": 90
+    },
+    {
+      "id": "strict-block-pii",
+      "name": "Block PII Leakage",
+      "description": "Block any request or output containing PII",
+      "threat_type": "pii",
+      "action": "block",
+      "priority": 85
+    },
+    {
+      "id": "strict-block-medium-risk",
+      "name": "Block Medium+ Risk",
+      "description": "Block any request with composite risk >= 0.40",
+      "min_risk_score": 0.40,
+      "action": "block",
+      "priority": 70
+    }
+  ],
+  "default_action": "allow"
+}

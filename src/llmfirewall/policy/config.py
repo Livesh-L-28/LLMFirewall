@@ -375,6 +375,64 @@ class Policy(BaseModel):
         except Exception as exc:
             raise PolicyValidationError(f"Failed to parse YAML policy: {exc}") from exc
 
+    @classmethod
+    def preset(cls, name: str) -> "Policy":
+        """Load a built-in Policy-as-Code preset bundled with LLMFirewall.
+
+        Supported presets:
+            - 'default': Standard baseline policy (blocks injection/secrets, redacts PII).
+            - 'strict': High-assurance policy with strict thresholds and lower risk tolerances.
+            - 'privacy': Privacy-first policy focused on stringent PII and secrets masking.
+
+        Args:
+            name: Preset name ('default', 'strict', or 'privacy'). Case-insensitive.
+
+        Returns:
+            Policy: Validated Policy instance.
+
+        Raises:
+            ValueError: If an unknown preset name is requested.
+            PolicyValidationError: If the bundled preset cannot be loaded or parsed.
+        """
+        normalized = str(name).strip().lower()
+        if normalized.endswith(".json"):
+            normalized = normalized[:-5]
+
+        valid_presets = ("default", "strict", "privacy")
+        if normalized not in valid_presets:
+            raise ValueError(
+                f"Unknown policy preset '{name}'. Supported presets: {', '.join(repr(p) for p in valid_presets)}."
+            )
+
+        # 1. Try loading via importlib.resources (standard packaging)
+        try:
+            import importlib.resources as pkg_resources
+            ref = pkg_resources.files("llmfirewall.policies").joinpath(f"{normalized}.json")
+            if ref.is_file():
+                content = ref.read_text(encoding="utf-8")
+                return cls.from_json(content)
+        except Exception:
+            pass
+
+        # 2. Fallback to package relative path
+        pkg_path = Path(__file__).resolve().parent.parent / "policies" / f"{normalized}.json"
+        if pkg_path.is_file():
+            return cls.from_file(pkg_path)
+
+        # 3. Fallback to current working directory policies
+        cwd_path = Path.cwd() / "policies" / f"{normalized}.json"
+        if cwd_path.is_file():
+            return cls.from_file(cwd_path)
+
+        raise PolicyValidationError(
+            f"Could not locate bundled policy preset '{normalized}'. Ensure 'llmfirewall-core' is properly installed."
+        )
+
+    @classmethod
+    def from_preset(cls, name: str) -> "Policy":
+        """Alias for Policy.preset(name)."""
+        return cls.preset(name)
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize policy to a dictionary."""
         return self.model_dump(mode="json")

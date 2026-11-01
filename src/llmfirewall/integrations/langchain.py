@@ -51,7 +51,7 @@ class FirewallCallbackHandler(FirewallIntegration, BaseCallbackHandler):
         if not HAS_LANGCHAIN:
             raise ImportError(
                 "LangChain is not installed. To use the LangChain integration, install it via: "
-                "pip install langchain or pip install 'llmfirewall[langchain]'"
+                "pip install langchain or pip install 'llmfirewall-core[langchain]'"
             )
         BaseCallbackHandler.__init__(self)
         FirewallIntegration.__init__(self, firewall=firewall)
@@ -193,3 +193,7 @@ class FirewallCallbackHandler(FirewallIntegration, BaseCallbackHandler):
                             scan_result=res,
                             request_id=res.request_id,
                         )
+
+
+# Backward-compatible alias for convenient naming
+LLMFirewallCallbackHandler = FirewallCallbackHandler

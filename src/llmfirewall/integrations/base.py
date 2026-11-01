@@ -34,6 +34,7 @@ class SecurityViolation(LLMFirewallError):
         status_code: int = 403,
     ) -> None:
         super().__init__(message)
+        self.message = str(message)
         self.scan_result = scan_result
         self.request_id = request_id or (scan_result.request_id if scan_result else None)
         self.status_code = status_code

@@ -1,0 +1,33 @@
+{
+  "name": "privacy-first-policy",
+  "version": "1.0",
+  "description": "Privacy-focused policy that aggressively redacts all PII and warns on external identifiers",
+  "rules": [
+    {
+      "id": "block-secrets",
+      "name": "Block Secrets",
+      "description": "Never allow credentials in prompts or outputs",
+      "threat_type": "secret",
+      "action": "block",
+      "priority": 100
+    },
+    {
+      "id": "redact-all-pii",
+      "name": "Redact All PII",
+      "description": "Sanitize emails, phones, IPs, and payment cards",
+      "threat_type": "pii",
+      "action": "redact",
+      "priority": 90
+    },
+    {
+      "id": "warn-medium-risk",
+      "name": "Warn on Medium Risk",
+      "description": "Log warnings on medium risk score >= 0.35",
+      "min_risk_score": 0.35,
+      "action": "warn",
+      "priority": 50
+    }
+  ],
+  "default_action": "allow",
+  "auto_redact_on_warn": true
+}

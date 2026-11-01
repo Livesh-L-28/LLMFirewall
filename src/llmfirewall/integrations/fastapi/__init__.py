@@ -9,7 +9,7 @@ try:
 except ImportError as err:
     raise ImportError(
         "The 'fastapi' integration requires the optional 'fastapi' extra. "
-        "Install it via: pip install 'llmfirewall[fastapi]'"
+        "Install it via: pip install 'llmfirewall-core[fastapi]'"
     ) from err
 
 from llmfirewall.integrations.fastapi.exceptions import (

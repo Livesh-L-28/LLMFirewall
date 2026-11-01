@@ -51,7 +51,7 @@ class FirewallMiddleware(FirewallIntegration):
         if not HAS_DJANGO:
             raise ImportError(
                 "Django is not installed. To use the Django integration, install it via: "
-                "pip install django or pip install 'llmfirewall[django]'"
+                "pip install django or pip install 'llmfirewall-core[django]'"
             )
         super().__init__(firewall=firewall)
         self.get_response = get_response
@@ -111,6 +111,19 @@ class FirewallMiddleware(FirewallIntegration):
                 },
                 status=self.blocked_status_code,
             )
+
+        if res.decision.action == Action.REDACT and res.processed_text:
+            request.firewall_sanitized_text = res.processed_text
+            if request.content_type == "application/json":
+                try:
+                    data = json.loads(request.body.decode("utf-8"))
+                    for field in self.input_fields:
+                        if field in data and isinstance(data[field], str):
+                            data[field] = res.processed_text
+                            break
+                    request._body = json.dumps(data).encode("utf-8")
+                except Exception:
+                    pass
 
         response = self.get_response(request)
         response["X-LLMFirewall-Request-ID"] = req_id

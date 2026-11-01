@@ -1,7 +1,7 @@
 """Agent and tool-call security engine coordinating identity, permissions, arguments, and results."""
 
 import time
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import json
 
 from llmfirewall.core.exceptions import LLMFirewallError
@@ -80,6 +80,9 @@ class ToolSecurityEngine:
         enforce_capabilities: Optional[bool] = None,
         argument_limits: Optional[ArgumentLimits] = None,
         enable_replay_protection: bool = False,
+        allowed_tools: Optional[Set[str]] = None,
+        enforce_allowlist: bool = False,
+        validate_dns: bool = False,
     ) -> None:
         """
         Args:
@@ -92,6 +95,9 @@ class ToolSecurityEngine:
             enforce_capabilities: If True, require explicit capability grants for all mapped tools.
             argument_limits: Boundaries on tool argument sizes and nesting depth.
             enable_replay_protection: If True, detect and block repeated identical tool calls.
+            allowed_tools: Explicit set of permitted tool names.
+            enforce_allowlist: If True, require all tool calls to belong to allowed_tools.
+            validate_dns: If True, validate domain resolution to prevent DNS rebinding to private IPs.
         """
         self._registry = registry or default_tool_registry
         self._policy_engine = policy_engine or PolicyEngine()
@@ -102,6 +108,9 @@ class ToolSecurityEngine:
         self._enforce_capabilities = enforce_capabilities if enforce_capabilities is not None else (capability_engine is not None)
         self._argument_limits = argument_limits or ArgumentLimits()
         self._enable_replay_protection = enable_replay_protection
+        self._allowed_tools = {t.strip().lower() for t in allowed_tools} if allowed_tools is not None else None
+        self._enforce_allowlist = enforce_allowlist
+        self._validate_dns = validate_dns
         self._seen_invocations: Set[str] = set()
 
     @property
@@ -115,6 +124,22 @@ class ToolSecurityEngine:
     @property
     def capability_engine(self) -> CapabilityEngine:
         return self._capability_engine
+
+    @staticmethod
+    def _extract_argument_strings(arguments: Any, prefix: str = "") -> List[Tuple[str, str]]:
+        """Recursively extract string arguments from nested dictionaries, lists, and tuples."""
+        results: List[Tuple[str, str]] = []
+        if isinstance(arguments, dict):
+            for k, v in arguments.items():
+                key_path = f"{prefix}.{k}" if prefix else str(k)
+                results.extend(ToolSecurityEngine._extract_argument_strings(v, key_path))
+        elif isinstance(arguments, (list, tuple)):
+            for i, v in enumerate(arguments):
+                key_path = f"{prefix}[{i}]"
+                results.extend(ToolSecurityEngine._extract_argument_strings(v, key_path))
+        elif isinstance(arguments, str):
+            results.append((prefix, arguments))
+        return results
 
     def check_tool_call(
         self,
@@ -181,6 +206,20 @@ class ToolSecurityEngine:
         # -------------------------------------------------------------
         # 1. Tool Identity & Denylist / Allowlist Enforcement
         # -------------------------------------------------------------
+        if self._enforce_allowlist or self._allowed_tools is not None:
+            allowed_set = self._allowed_tools or set()
+            if call.tool_name.lower() not in allowed_set:
+                findings.append(
+                    Finding(
+                        detector_name="tool_identity",
+                        threat_type=ThreatType.POLICY_VIOLATION,
+                        description=f"Tool '{call.tool_name}' is not in authorized tool allowlist.",
+                        severity=Severity.CRITICAL,
+                        confidence=1.0,
+                        metadata={"tool": call.tool_name, "violation": "tool_not_in_allowlist"},
+                    )
+                )
+
         if active_policy.denied_tools:
             denied_normalized = {t.strip().lower() for t in active_policy.denied_tools}
             if call.tool_name in denied_normalized:
@@ -274,43 +313,43 @@ class ToolSecurityEngine:
         # -------------------------------------------------------------
         dest_class: Optional[str] = None
 
-        for key, val in call.arguments.items():
-            if isinstance(val, str):
-                if "url" in key.lower() or val.startswith(("http://", "https://", "ftp://", "file://")):
-                    url_finding = validate_url_safety(val)
-                    if url_finding:
-                        findings.append(url_finding)
-                        dest_class = url_finding.metadata.get("violation", "unsafe_url")
-                    elif tool_def and tool_def.allowed_domains is not None:
-                        from urllib.parse import urlparse
-                        host = (urlparse(val).hostname or "").lower()
-                        if host not in {d.lower() for d in tool_def.allowed_domains}:
-                            findings.append(
-                                Finding(
-                                    detector_name="url_security",
-                                    threat_type=ThreatType.POLICY_VIOLATION,
-                                    description=f"Domain '{host}' is not in allowed domains for tool '{call.tool_name}'.",
-                                    severity=Severity.HIGH,
-                                    confidence=1.0,
-                                    metadata={"host": host, "violation": "domain_not_allowed"},
-                                )
+        extracted_args = self._extract_argument_strings(call.arguments)
+        for key, val in extracted_args:
+            if "url" in key.lower() or val.startswith(("http://", "https://", "ftp://", "file://", "gopher://")):
+                url_finding = validate_url_safety(val, validate_dns=self._validate_dns)
+                if url_finding:
+                    findings.append(url_finding)
+                    dest_class = url_finding.metadata.get("violation", "unsafe_url")
+                elif tool_def and tool_def.allowed_domains is not None:
+                    from urllib.parse import urlparse
+                    host = (urlparse(val).hostname or "").lower()
+                    if host not in {d.lower() for d in tool_def.allowed_domains}:
+                        findings.append(
+                            Finding(
+                                detector_name="url_security",
+                                threat_type=ThreatType.POLICY_VIOLATION,
+                                description=f"Domain '{host}' is not in allowed domains for tool '{call.tool_name}'.",
+                                severity=Severity.HIGH,
+                                confidence=1.0,
+                                metadata={"host": host, "violation": "domain_not_allowed"},
                             )
+                        )
 
-                if "path" in key.lower() or "file" in key.lower() or "/" in val or "\\" in val:
-                    allowed_paths = tool_def.allowed_paths if tool_def else None
-                    path_finding = validate_path_safety(val, allowed_base_dirs=allowed_paths)
-                    if path_finding:
-                        findings.append(path_finding)
+            if "path" in key.lower() or "file" in key.lower() or "/" in val or "\\" in val:
+                allowed_paths = tool_def.allowed_paths if tool_def else None
+                path_finding = validate_path_safety(val, allowed_base_dirs=allowed_paths)
+                if path_finding:
+                    findings.append(path_finding)
 
-                if "cmd" in key.lower() or "command" in key.lower() or "exec" in key.lower() or "shell" in call.tool_name:
-                    cmd_finding = inspect_command_safety(val)
-                    if cmd_finding:
-                        findings.append(cmd_finding)
+            if "cmd" in key.lower() or "command" in key.lower() or "exec" in key.lower() or "shell" in call.tool_name.lower():
+                cmd_finding = inspect_command_safety(val)
+                if cmd_finding:
+                    findings.append(cmd_finding)
 
-                if "sql" in key.lower() or "query" in key.lower():
-                    sql_finding = inspect_sql_safety(val)
-                    if sql_finding:
-                        findings.append(sql_finding)
+            if "sql" in key.lower() or "query" in key.lower():
+                sql_finding = inspect_sql_safety(val)
+                if sql_finding:
+                    findings.append(sql_finding)
 
         # -------------------------------------------------------------
         # 5. Sensitive Argument Scanning (PII, Secrets, Injection)

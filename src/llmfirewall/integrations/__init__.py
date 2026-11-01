@@ -29,6 +29,10 @@ from llmfirewall.integrations.client import (
     LLMFirewallClient,
 )
 from llmfirewall.integrations.stream import StreamingTextGuard
+from llmfirewall.integrations.openai import OpenAIGuard, wrap_openai
+from llmfirewall.integrations.anthropic import AnthropicGuard, wrap_anthropic
+from llmfirewall.integrations.langgraph import LangGraphStateGuard, guard_node, get_graph_callbacks
+from llmfirewall.integrations.mcp import MCPToolGuard
 
 
 class IntegrationRegistry:
@@ -41,6 +45,10 @@ class IntegrationRegistry:
         "django": "llmfirewall.integrations.django:FirewallMiddleware",
         "langchain": "llmfirewall.integrations.langchain:FirewallCallbackHandler",
         "llamaindex": "llmfirewall.integrations.llamaindex:FirewallNodePostprocessor",
+        "openai": "llmfirewall.integrations.openai:OpenAIGuard",
+        "anthropic": "llmfirewall.integrations.anthropic:AnthropicGuard",
+        "langgraph": "llmfirewall.integrations.langgraph:LangGraphStateGuard",
+        "mcp": "llmfirewall.integrations.mcp:MCPToolGuard",
     }
 
     @classmethod
@@ -51,8 +59,9 @@ class IntegrationRegistry:
     @classmethod
     def is_installed(cls, name: str) -> bool:
         """Check if third-party dependency for integration is installed in the current environment."""
-        if name.lower() == "asgi":
-            return True  # Pure ASGI has zero external dependencies!
+        if name.lower() in ("asgi", "openai", "anthropic", "langgraph", "mcp"):
+            # Universal adapters work with zero mandatory third-party dependencies!
+            return True
         dep_modules = {
             "fastapi": "fastapi",
             "flask": "flask",
@@ -94,4 +103,13 @@ __all__ = [
     "StreamingTextGuard",
     "ClientSessionContext",
     "AsyncClientSessionContext",
+    # Ecosystem Integrations (Week 4 Sprint)
+    "OpenAIGuard",
+    "wrap_openai",
+    "AnthropicGuard",
+    "wrap_anthropic",
+    "LangGraphStateGuard",
+    "guard_node",
+    "get_graph_callbacks",
+    "MCPToolGuard",
 ]

@@ -13,10 +13,12 @@ from llmfirewall.detectors.prompt_injection.rules import (
     InjectionRule,
     InstructionHierarchyRule,
     InstructionOverrideRule,
+    MultilingualInjectionRule,
     RoleManipulationRule,
     RuleMatch,
     SuspiciousControlRule,
     SystemPromptLeakRule,
+    ToolManipulationRule,
 )
 
 __all__ = [
@@ -31,6 +33,8 @@ __all__ = [
     "IndirectInjectionRule",
     "DelimiterAttackRule",
     "AuthorityImpersonationRule",
+    "MultilingualInjectionRule",
+    "ToolManipulationRule",
     "InjectionHeuristicAnalyzer",
     "normalize_prompt_text",
     "PromptSecurityContext",

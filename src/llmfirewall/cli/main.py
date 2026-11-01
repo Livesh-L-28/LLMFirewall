@@ -189,6 +189,7 @@ def build_parser() -> argparse.ArgumentParser:
     eval_run_parser.add_argument("--category", "-c", dest="category", default=None, help="Filter by attack category")
     eval_run_parser.add_argument("--severity", "-s", dest="severity", default=None, help="Filter by severity")
     eval_run_parser.add_argument("--tag", "-t", dest="tag", default=None, help="Filter by tag")
+    eval_run_parser.add_argument("--suite", dest="suite", default=None, help="Evaluation suite name or preset (e.g. 'default', 'core').")
     eval_run_parser.add_argument("--format", "-f", dest="format_type", choices=["human", "json", "sarif", "junit"], default="human", help="Output format")
     eval_run_parser.add_argument("--output", "-o", dest="output_file", default=None, help="Write output to file")
 
@@ -503,6 +504,15 @@ def build_parser() -> argparse.ArgumentParser:
     g_impact_parser.add_argument("--graph", "-g", dest="graph_file", default=None, help="Path to knowledge graph JSON file.")
     g_impact_parser.add_argument("--format", dest="format_type", default=None, help="Output format: 'json' or human-readable.")
     g_impact_parser.add_argument("--json", action="store_true", dest="json_mode", help="Output impact as JSON.")
+
+    # graph blast-radius (convenience alias for impact --mode blast)
+    g_blast_parser = graph_subparsers.add_parser("blast-radius", help="Analyze blast radius for an asset (alias for 'impact --mode blast').")
+    g_blast_parser.add_argument("asset_id", nargs="?", default=None, help="Asset identifier to analyze.")
+    g_blast_parser.add_argument("--node-id", dest="node_id", default=None, help="Node/Asset identifier to analyze.")
+    g_blast_parser.add_argument("--max-depth", "-d", dest="max_depth", type=int, default=2, help="Maximum traversal depth (default: 2).")
+    g_blast_parser.add_argument("--graph", "-g", dest="graph_file", default=None, help="Path to knowledge graph JSON file.")
+    g_blast_parser.add_argument("--format", dest="format_type", default=None, help="Output format: 'json' or human-readable.")
+    g_blast_parser.add_argument("--json", action="store_true", dest="json_mode", help="Output blast radius as JSON.")
 
     # graph export
     g_exp_parser = graph_subparsers.add_parser("export", help="Export security knowledge graph to JSON.")
@@ -965,6 +975,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 category=args.category,
                 severity=args.severity,
                 tag=args.tag,
+                suite=getattr(args, "suite", None),
                 format_type=args.format_type,
                 output_file=args.output_file,
             )
@@ -1219,6 +1230,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             return handle_graph_impact(
                 asset_id=args.asset_id,
                 mode=args.mode,
+                max_depth=args.max_depth,
+                json_mode=json_m,
+                graph_file=args.graph_file,
+            )
+        elif args.graph_subcommand == "blast-radius":
+            target_id = getattr(args, "node_id", None) or getattr(args, "asset_id", None)
+            if not target_id:
+                print("Error: Must specify asset identifier (positional or via --node-id)", file=sys.stderr)
+                return EXIT_USAGE_ERROR
+            json_m = args.json_mode or (getattr(args, "format_type", None) == "json")
+            return handle_graph_impact(
+                asset_id=target_id,
+                mode="blast",
                 max_depth=args.max_depth,
                 json_mode=json_m,
                 graph_file=args.graph_file,

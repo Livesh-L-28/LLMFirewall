@@ -46,37 +46,62 @@ To safeguard our users from supply-chain risks, all contributions must adhere to
 
 ## 3. Development Workflow
 
+### Setup Environment
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/livesh/LLMFirewall.git
+   git clone https://github.com/Livesh-L-28/LLMFirewall.git
    cd LLMFirewall
    ```
 
-2. **Create a virtual environment (Python >= 3.9):**
+2. **Create and activate a virtual environment (Python >= 3.9):**
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    ```
 
-3. **Install editable with dev extras:**
+3. **Install in editable mode with development dependencies:**
    ```bash
-   pip install -e ".[dev]"
+   pip install --upgrade pip
+   pip install -e ".[dev,fastapi]"
    ```
 
-4. **Verify tests and security checks:**
-   ```bash
-   # Run all tests
-   pytest
+### Quality Assurance & Testing Gates
+Run local verification before submitting pull requests:
 
-   # Run dedicated security tests
-   pytest -m security
+```bash
+# 1. Run full test suite
+pytest -q
 
-   # Run code linters
-   ruff check .
-   ```
+# 2. Run dedicated security regression test suites
+pytest tests/test_sec*.py -v
+
+# 3. Run PII & SSN validation tests
+pytest tests/test_pii.py -v
+
+# 4. Run policy & governance tests
+pytest tests/test_governance.py -v
+
+# 5. Run static code analysis & linting
+ruff check src tests
+
+# 6. Check for git whitespace defects
+git diff --check
+```
+
+### Protected File Invariant
+`tests/test_secrets.py` is a protected baseline test suite. Its SHA-256 hash must remain exactly:
+`d5ca47fd85349bf4ef6d7944ab9a9f131aa27877b58bb90b31532203d7420e41`.
+Do not modify or replace this file.
+
+### Pull Request Guidelines
+1. Create a focused topic branch from `main` (`git checkout -b feature/my-enhancement`).
+2. Adhere strictly to the zero-leakage invariant (no live secrets or raw user prompts in tests, logs, or exceptions).
+3. Ensure all tests and Ruff checks pass cleanly.
+4. Stage only explicitly modified files (never `git add .` or `git add -A`).
+5. Open a Pull Request using our [PR Template](.github/pull_request_template.md).
 
 ---
 
 ## 4. Reporting Security Vulnerabilities
 
-Please do not report security vulnerabilities through public GitHub issues. Follow the coordinated disclosure instructions outlined in [SECURITY.md](file:///Users/livesh/LLMFirewall/SECURITY.md).
+Please do not report security vulnerabilities through public GitHub issues. Follow the coordinated disclosure instructions outlined in [SECURITY.md](SECURITY.md).

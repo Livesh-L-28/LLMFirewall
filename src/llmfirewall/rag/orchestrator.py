@@ -121,6 +121,15 @@ class ContextOrchestrator:
                         reason="Indirect injection discovered in retrieved chunk",
                         findings=scan_res.findings,
                     )
+            elif scan_res.decision.action == Action.REDACT and scan_res.processed_text:
+                new_hash = hashlib.sha256(scan_res.processed_text.encode("utf-8")).hexdigest()
+                sanitized_item = item.model_copy(update={
+                    "content": scan_res.processed_text,
+                    "content_hash": new_hash,
+                    "findings": scan_res.findings,
+                    "status": DocumentSecurityStatus.APPROVED,
+                })
+                approved.append(sanitized_item)
             else:
                 approved.append(item)
 
@@ -230,7 +239,7 @@ class ContextOrchestrator:
     def _detect_context_conflicts(self, items: List[ContextItem]) -> bool:
         """Heuristic detection of contradictory or conflicting instructions within retrieved context."""
         negation_pairs = [
-            (r"\brequire[s]?\b", r"\b(do not|never|don't|ignore)\b.*\brequire\b"),
+            (r"\brequire[s]?\b", r"\b(do not|does not|don't|doesn't|never|ignore)\b.*\brequire\b"),
             (r"\benable[s]?\b", r"\bdisable[s]?\b"),
             (r"\ballow[s]?\b", r"\b(block|deny|forbid)[s]?\b"),
             (r"\bmandatory\b", r"\boptional\b"),

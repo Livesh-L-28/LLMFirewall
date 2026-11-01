@@ -530,11 +530,11 @@ def test_check8_optional_framework_error_guidance(monkeypatch):
     import llmfirewall.integrations.django as django_mod
 
     monkeypatch.setattr(flask_mod, "HAS_FLASK", False)
-    with pytest.raises(ImportError, match="pip install 'llmfirewall\\[flask\\]'"):
+    with pytest.raises(ImportError, match="pip install 'llmfirewall-core\\[flask\\]'"):
         flask_mod.FirewallExtension()
 
     monkeypatch.setattr(django_mod, "HAS_DJANGO", False)
-    with pytest.raises(ImportError, match="pip install 'llmfirewall\\[django\\]'"):
+    with pytest.raises(ImportError, match="pip install 'llmfirewall-core\\[django\\]'"):
         django_mod.FirewallMiddleware(get_response=lambda req: None)
 
 

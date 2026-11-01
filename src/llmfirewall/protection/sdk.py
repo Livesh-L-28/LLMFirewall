@@ -7,6 +7,7 @@ import inspect
 from typing import Any, Callable, Dict, Optional, Union
 
 from llmfirewall.core.exceptions import LLMFirewallError
+from llmfirewall.core.models import Action
 from llmfirewall.protection.models import PolicyDecision, RuntimeRequest
 
 
@@ -108,7 +109,7 @@ def protect(
 
 def protect_tool(
     engine_or_fw: Any,
-    tool_fn: Callable,
+    tool_fn: Optional[Callable] = None,
     tool_name: Optional[str] = None,
     policy_name: Optional[str] = None,
     raise_on_block: bool = True,
@@ -118,21 +119,35 @@ def protect_tool(
     """Wraps a tool function with pre-execution authorization check.
 
     Supports both single-turn runtime inspection and Phase 3 cross-step workflow enforcement.
+    Safely supports both synchronous and asynchronous (coroutine) tool functions.
 
     Usage:
-        # Cross-step protected tool
-        protected_db = firewall.protect_tool(
-            database_query,
-            tool_name="database",
-            workflow_id="wf-123",
-            tenant_id="tenant-a"
-        )
+        # Direct wrap
+        guarded = firewall.protect_tool(db_query, tool_name="db")
+
+        # Decorator syntax
+        @firewall.protect_tool
+        def query(sql: str): ...
+
+        # Decorator with kwargs
+        @firewall.protect_tool(tool_name="db", workflow_id="wf-1", tenant_id="t-1")
+        async def query(sql: str): ...
     """
+    if tool_fn is None:
+        return lambda fn: protect_tool(
+            engine_or_fw,
+            tool_fn=fn,
+            tool_name=tool_name,
+            policy_name=policy_name,
+            raise_on_block=raise_on_block,
+            workflow_id=workflow_id,
+            tenant_id=tenant_id,
+        )
+
     engine = getattr(engine_or_fw, "protection", engine_or_fw)
     name = tool_name or getattr(tool_fn, "__name__", "tool")
 
-    @functools.wraps(tool_fn)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def _pre_execution_check(args: tuple, kwargs: dict) -> tuple:
         active_wf_id = kwargs.pop("workflow_id", workflow_id)
         active_tenant_id = kwargs.pop("tenant_id", tenant_id)
         active_agent_id = kwargs.pop("agent_id", None)
@@ -157,43 +172,88 @@ def protect_tool(
                 if raise_on_block:
                     raise
                 reason = getattr(exc, "reason", str(exc))
-                return {"status": "error", "error": f"Tool blocked by policy: {reason}"}
+                return active_wf_id, active_tenant_id, active_agent_id, {"status": "error", "error": f"Tool blocked by policy: {reason}"}
 
-            result = tool_fn(*args, **kwargs)
+            return active_wf_id, active_tenant_id, active_agent_id, None
 
-            # Post-execution result scan in workflow
-            if isinstance(result, str):
-                try:
-                    engine_or_fw.cross_step_enforcer.enforce_tool_result(
-                        workflow_id=active_wf_id,
-                        tool_name=name,
-                        output=result,
-                        tenant_id=active_tenant_id,
-                        agent_id=active_agent_id,
-                    )
-                except Exception as exc:
-                    if raise_on_block:
-                        raise
-                    reason = getattr(exc, "reason", str(exc))
-                    return {"status": "error", "error": f"Tool result blocked by policy: {reason}"}
+        # 1. Runtime policy inspection
+        req = RuntimeRequest(
+            tool={"name": name, "arguments": kwargs or ({"args": list(args)} if args else {})},
+            metadata={"policy": policy_name} if policy_name else {},
+        )
+        if engine and hasattr(engine, "inspect"):
+            dec = engine.inspect(req)
+            if dec.is_blocked or dec.decision in (PolicyDecision.BLOCK, PolicyDecision.REVIEW):
+                if raise_on_block:
+                    raise SecurityBlockError(dec.reason, decision=dec)
+                return active_wf_id, active_tenant_id, active_agent_id, {"status": "error", "error": f"Tool blocked by policy: {dec.reason}"}
+
+        # 2. Hardened ToolSecurityEngine inspection (SSRF, path traversal, commands, allowlists)
+        if hasattr(engine_or_fw, "check_tool_call"):
+            tool_args = dict(kwargs) if kwargs else ({"args": list(args)} if args else {})
+            tool_dec = engine_or_fw.check_tool_call(tool_call_or_name=name, arguments=tool_args)
+            if getattr(tool_dec, "is_blocked", False) or getattr(tool_dec, "action", None) == Action.BLOCK:
+                block_reason = f"Tool '{name}' blocked: {tool_dec.reason}"
+                if raise_on_block:
+                    raise SecurityBlockError(block_reason, decision=tool_dec)
+                return active_wf_id, active_tenant_id, active_agent_id, {"status": "error", "error": block_reason}
+
+        return active_wf_id, active_tenant_id, active_agent_id, None
+
+    def _post_execution_check(
+        result: Any,
+        active_wf_id: Optional[str],
+        active_tenant_id: Optional[str],
+        active_agent_id: Optional[str],
+    ) -> Optional[dict]:
+        if isinstance(result, str) and active_wf_id and hasattr(engine_or_fw, "cross_step_enforcer"):
+            try:
+                engine_or_fw.cross_step_enforcer.enforce_tool_result(
+                    workflow_id=active_wf_id,
+                    tool_name=name,
+                    output=result,
+                    tenant_id=active_tenant_id,
+                    agent_id=active_agent_id,
+                )
+            except Exception as exc:
+                if raise_on_block:
+                    raise
+                reason = getattr(exc, "reason", str(exc))
+                return {"status": "error", "error": f"Tool result blocked by policy: {reason}"}
+        return None
+
+    if inspect.iscoroutinefunction(tool_fn):
+        @functools.wraps(tool_fn)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            active_wf_id, active_tenant_id, active_agent_id, err = _pre_execution_check(args, kwargs)
+            if err is not None:
+                return err
+
+            result = await tool_fn(*args, **kwargs)
+
+            post_err = _post_execution_check(result, active_wf_id, active_tenant_id, active_agent_id)
+            if post_err is not None:
+                return post_err
 
             return result
 
-        # Single-turn runtime policy inspection
-        req = RuntimeRequest(
-            tool={"name": name, "arguments": kwargs or ({"args": args} if args else {})},
-            metadata={"policy": policy_name} if policy_name else {},
-        )
-        dec = engine.inspect(req)
+        return async_wrapper
+    else:
+        @functools.wraps(tool_fn)
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            active_wf_id, active_tenant_id, active_agent_id, err = _pre_execution_check(args, kwargs)
+            if err is not None:
+                return err
 
-        if dec.is_blocked or dec.decision in (PolicyDecision.BLOCK, PolicyDecision.REVIEW):
-            if raise_on_block:
-                raise SecurityBlockError(dec.reason, decision=dec)
-            return {"status": "error", "error": f"Tool blocked by policy: {dec.reason}"}
+            result = tool_fn(*args, **kwargs)
 
-        return tool_fn(*args, **kwargs)
+            post_err = _post_execution_check(result, active_wf_id, active_tenant_id, active_agent_id)
+            if post_err is not None:
+                return post_err
 
-    return wrapper
+            return result
+
+        return sync_wrapper
 
 
 class LLMFirewallMiddleware:

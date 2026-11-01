@@ -46,7 +46,7 @@ class FirewallExtension(FirewallIntegration):
         if not HAS_FLASK:
             raise ImportError(
                 "Flask is not installed. To use the Flask integration, install it via: "
-                "pip install flask or pip install 'llmfirewall[flask]'"
+                "pip install flask or pip install 'llmfirewall-core[flask]'"
             )
         super().__init__(firewall=firewall)
         self.paths = paths
@@ -145,6 +145,20 @@ class FirewallExtension(FirewallIntegration):
                 "message": "Request rejected by security policy.",
                 "request_id": req_id,
             }), self.blocked_status_code
+
+        if res.decision.action == Action.REDACT and res.processed_text:
+            flask.g.firewall_sanitized_text = res.processed_text
+            if flask.request.is_json and hasattr(flask.request, "_cached_json"):
+                try:
+                    cached = flask.request.get_json(silent=True)
+                    if isinstance(cached, dict):
+                        for field in self.input_fields:
+                            if field in cached and isinstance(cached[field], str):
+                                cached[field] = res.processed_text
+                                break
+                        flask.request._cached_json = (cached, cached)
+                except Exception:
+                    pass
 
         return None
 
