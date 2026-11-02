@@ -1,0 +1,173 @@
+{
+  "package_name": "llmfirewall-core",
+  "stable_version": "1.4.0",
+  "repository_url": "https://github.com/Livesh-L-28/LLMFirewall",
+  "release_branch": "main",
+  "stable_commit_sha": "1c7128017d5fc409a07f21636b91ae4e4726facd",
+  "source_tree_sha": "e31d33425298fb8718711b3d6688a3c8e85f3208",
+  "parent_commit_sha": "9fb788179384c605ca019ca6d6f5ed6c006dc8eb",
+  "commit_author": "Livesh28 <liveshjaidj@gmail.com>",
+  "commit_committer": "Livesh28 <liveshjaidj@gmail.com>",
+  "commit_timestamp": "2026-11-01T18:20:55+05:30",
+  "commit_subject": "chore(release): finalize LLMFirewall-Core v1.4.0",
+  "build_timestamp": "2026-11-01T12:51:15Z",
+  "build_environment": {
+    "os": "macOS 15.3 (Darwin 24.3.0)",
+    "python_version": "3.12.1",
+    "architecture": "arm64"
+  },
+  "build_tools": {
+    "build": "1.6.1",
+    "hatchling": "1.33.0",
+    "twine": "6.2.0"
+  },
+  "artifacts": [
+    {
+      "filename": "llmfirewall_core-1.4.0-py3-none-any.whl",
+      "format": "wheel",
+      "size_bytes": 674264,
+      "sha256": "0c8676b602e5f882880745ccbeb30e5ed88c8d842e4aa751c97e7d05e13a93a5",
+      "status": "PUBLISHED_CANONICAL",
+      "distribution_endpoints": [
+        "https://pypi.org/project/llmfirewall-core/1.4.0/",
+        "https://github.com/Livesh-L-28/LLMFirewall/releases/tag/v1.4.0"
+      ],
+      "local_stage6_container_sha256": "7b340cb2a369ea38bd0b66b65fa546540ddf3393524b299b8f36ee9641a4d4f9",
+      "provenance_note": "Internal member payload is 100% byte-for-byte and CRC-32 identical across all 262 extracted files. Container hash difference arises from outer zip entry timestamps (reproducible default 2020-02-02 vs runner build timestamp)."
+    },
+    {
+      "filename": "llmfirewall_core-1.4.0.tar.gz",
+      "format": "sdist",
+      "size_bytes": 813519,
+      "sha256": "760b8ddc94898583584525ef293e88025fe3e9203459326680bc834acd71fe18",
+      "status": "PUBLISHED_CANONICAL",
+      "distribution_endpoints": [
+        "https://pypi.org/project/llmfirewall-core/1.4.0/",
+        "https://github.com/Livesh-L-28/LLMFirewall/releases/tag/v1.4.0"
+      ],
+      "local_stage6_container_sha256": "4abdd4a7f536f815c139f221afb1fb2ac02453dcde703c65ba0b1d9fae58f9d8",
+      "provenance_note": "Internal source tree is identical. Container hash difference arises from 2-byte gzip mtime container header."
+    }
+  ],
+  "wheel_record_verification": {
+    "total_files": 262,
+    "checked_files": 261,
+    "mismatches": 0,
+    "duplicate_names": 0,
+    "workstation_path_leaks": 0,
+    "status": "PASS"
+  },
+  "sdist_integrity_result": {
+    "total_entries": 379,
+    "root_directory": "llmfirewall_core-1.4.0",
+    "content_workstation_path_leaks": 0,
+    "status": "PASS"
+  },
+  "twine_result": {
+    "wheel": "PASSED",
+    "sdist": "PASSED",
+    "status": "PASS"
+  },
+  "installation_result": {
+    "isolated_venv": "/tmp/stable-release-v1.4.0/fresh-venv",
+    "import_location": "/private/tmp/stable-release-v1.4.0/fresh-venv/lib/python3.12/site-packages/llmfirewall/__init__.py",
+    "installed_version": "1.4.0",
+    "cli_version_output": "llmfirewall 1.4.0",
+    "smoke_tests": "PASS"
+  },
+  "regression_results": {
+    "test_runner": "pytest 9.2.0",
+    "execution_target": "installed_wheel_site_packages",
+    "passed": 115,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 0.42,
+    "status": "PASS"
+  },
+  "full_suite_test_results": {
+    "test_runner": "pytest 9.1.1",
+    "execution_target": "repository_source",
+    "passed": 1208,
+    "failed": 0,
+    "skipped": 80,
+    "status": "PASS"
+  },
+  "reproducibility_result": {
+    "independent_builds": 2,
+    "wheel_sha256_match": true,
+    "sdist_sha256_match": true,
+    "byte_for_byte_identical": true,
+    "status": "PASS"
+  },
+  "ci_verification_baseline": {
+    "workflow_name": "CI & Security Verification",
+    "baseline_run_id": 41304751098,
+    "baseline_commit_sha": "9fb788179384c605ca019ca6d6f5ed6c006dc8eb",
+    "matrix_os": ["ubuntu-latest", "macos-latest", "windows-latest"],
+    "matrix_python": ["3.9", "3.10", "3.11", "3.12"],
+    "total_jobs": 13,
+    "passed_jobs": 13,
+    "failed_jobs": 0,
+    "status": "PASS",
+    "stable_commit_ci_status": "Awaiting maintainer push authorization to run on 2c1bc62"
+  },
+  "security_governance": {
+    "workflow_name": "LLMFirewall Security Governance",
+    "baseline_run_id": 41304751092,
+    "job_name": "AI Security Release Assurance Gate",
+    "baseline_commit_sha": "9fb788179384c605ca019ca6d6f5ed6c006dc8eb",
+    "local_gate_result": "PASS",
+    "status": "PASS"
+  },
+  "dependency_audit": {
+    "audit_tool": "pip-audit 2.7.3",
+    "audit_date": "2026-11-01",
+    "scope": "Direct runtime dependencies (pydantic>=2.0.0, pyyaml>=6.0.0) and optional dependencies (fastapi, flask, django, langchain-core, cryptography)",
+    "findings": 0,
+    "vulnerabilities": "No known vulnerabilities found",
+    "pip_check_result": "No broken requirements found"
+  },
+  "protected_hashes_verification": {
+    "tests/test_secrets.py": {
+      "expected": "d5ca47fd85349bf4ef6d7944ab9a9f131aa27877b58bb90b31532203d7420e41",
+      "actual": "d5ca47fd85349bf4ef6d7944ab9a9f131aa27877b58bb90b31532203d7420e41",
+      "status": "PASS"
+    },
+    "benchmarks/datasets/holdout_evaluation_dataset.json": {
+      "expected": "a3fe27917de03301641b9c5f1e643ce8eeb56306568e2675b46a8fa8bff86afe",
+      "actual": "a3fe27917de03301641b9c5f1e643ce8eeb56306568e2675b46a8fa8bff86afe",
+      "status": "PASS"
+    },
+    "benchmarks/datasets/holdout_v2_evaluation_dataset.json": {
+      "expected": "dad827d899c1328ab7c7f2929c5ef2be2faed46bff3ee5b9a31868bf3e68a5f4",
+      "actual": "dad827d899c1328ab7c7f2929c5ef2be2faed46bff3ee5b9a31868bf3e68a5f4",
+      "status": "PASS"
+    },
+    "benchmarks/datasets/holdout_v3_evaluation_dataset.json": {
+      "expected": "bd80e38ba011f263ca873a98b729efb36fbf09edabf856d45c35b9fe254cda3d",
+      "actual": "bd80e38ba011f263ca873a98b729efb36fbf09edabf856d45c35b9fe254cda3d",
+      "status": "PASS"
+    },
+    "benchmarks/datasets/holdout_v4_evaluation_dataset.json": {
+      "expected": "ec382aed97a3a144607f072422d0e761993cd13e58fd894f4de05544102c9553",
+      "actual": "ec382aed97a3a144607f072422d0e761993cd13e58fd894f4de05544102c9553",
+      "status": "PASS"
+    }
+  },
+  "known_limitations": [
+    "Prompt injection heuristic patterns sustain a 40% false-negative rate on unseen Holdout v4 test payloads (empirical recall is 60.0%).",
+    "Tool parameter validation and authorization operates at application parameter schema and URL/path layer, not as an OS-level cgroup/microVM sandbox.",
+    "Static URL and subnet inspection does not mitigate socket-level TOCTOU DNS rebinding without an egress forward proxy or socket IP pinning.",
+    "Safe audit serialization via safe_dict() scrubs sensitive substrings locally but does not govern third-party SaaS cloud model data retention.",
+    "Streaming guard sliding window buffers emitted chunks; already emitted tokens cannot be retroactively recalled if mid-stream severance occurs.",
+    "Multilingual heuristic coverage is limited to tested rule patterns across 5 languages (English, French, German, Spanish, Russian) and does not constitute exhaustive semantic understanding.",
+    "Adoption status reflects zero verified external evaluations and zero verified production deployments."
+  ],
+  "signing_status": {
+    "commit_signed": false,
+    "sigstore_keyless_attestation": false,
+    "recommended_release_tag_policy": "SSH Ed25519 signing (git tag -s v1.4.0)"
+  },
+  "certification_timestamp": "2026-11-01T18:22:00+05:30",
+  "responsible_maintainer": "Livesh28 <liveshjaidj@gmail.com>"
+}
