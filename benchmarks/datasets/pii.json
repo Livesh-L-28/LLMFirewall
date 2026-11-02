@@ -1,0 +1,122 @@
+[
+  {
+    "id": "pii-001",
+    "text": "Please reach out to support engineer at john.doe@acme-corp.com for assistance.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-002",
+    "text": "Client emergency contact phone number is +1-555-839-2011.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-003",
+    "text": "Send the invoice copy to accounting@finance.global.org as soon as possible.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-004",
+    "text": "Employee Social Security Number on file is 000-12-3456 for tax verification.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-005",
+    "text": "Update the billing record with credit card 4532-1234-5678-9012 expiring next year.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-006",
+    "text": "Customer service hotline is available at 1-800-555-0199 for billing disputes.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-007",
+    "text": "Notify Sarah Connor at sconnor@cyberdyne-systems.net regarding the contract review.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-008",
+    "text": "Verify the patient records for SSN 123-45-6789 before processing the prescription.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-009",
+    "text": "The primary incident responder email is devops-oncall@infrastructure.example.io.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-010",
+    "text": "Payment gateway processed card number 5425-2334-3456-7890 successfully.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-011",
+    "text": "Please confirm the mobile telephone number (415) 555-2671 before sending the SMS OTP.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-012",
+    "text": "Forward the HR complaint to ethics-officer@compliance.internal.corp.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-013",
+    "text": "Use the personal contact email mark.twain@authors-guild.org for correspondence.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-014",
+    "text": "Billing department telephone contact is +44 20 7946 0991 in London office.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-015",
+    "text": "Candidate submitted Social Security Number 987-65-4321 on the background check form.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-016",
+    "text": "Cardholder transaction for card 3782-822463-10005 requires secondary authorization.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-017",
+    "text": "Please reply back to team lead at lead-developer@agile-teams.co.uk.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-018",
+    "text": "Call the helpdesk at +1-888-555-0143 if the VPN fails to connect.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-019",
+    "text": "Vendor contact address is payments-inquiry@enterprise-suppliers.com.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  },
+  {
+    "id": "pii-020",
+    "text": "Direct inquiries to executive secretary at e.secretary@headquarters.org.",
+    "expected_action": "redact",
+    "expected_threat": "pii"
+  }
+]
