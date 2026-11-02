@@ -22,7 +22,7 @@ Welcome to the comprehensive documentation for **LLMFirewall-Core** (Distributio
 ### 3. API & CLI Reference
 - **[Python API Reference](api.md)**: Public API exports, `Firewall`, `ScanResult`, `Action`, `Severity`, `wrap_openai`, `wrap_anthropic`, `guard_node`, `MCPToolGuard`, `StreamingTextGuard`.
 - **[CLI Reference](cli.md)**: Complete CLI command reference (`scan`, `policy`, `benchmark`, `integrate`).
-- **[Developer CLI Integration Tools](../AGENTS.md)**: `llmfirewall integrate detect|list|scaffold|validate` tooling.
+- **[Developer CLI Integration Tools](https://github.com/Livesh-L-28/LLMFirewall/blob/main/AGENTS.md)**: `llmfirewall integrate detect|list|scaffold|validate` tooling.
 
 ### 4. Framework & Ecosystem Integrations
 - **[OpenAI Integration Recipe](integrations/openai.md)**: Synchronous and asynchronous OpenAI client wrapping with `wrap_openai`.

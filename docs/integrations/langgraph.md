@@ -93,4 +93,4 @@ def should_route_to_tools(state: Dict[str, Any]) -> str:
 
 ## 5. Offline Testing
 
-See the standalone runnable example at [`examples/langgraph/langgraph_node_guard_example.py`](../../examples/langgraph/langgraph_node_guard_example.py).
+See the standalone runnable example at [`examples/langgraph/langgraph_node_guard_example.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/examples/langgraph/langgraph_node_guard_example.py).

@@ -2,8 +2,8 @@
 
 **Distribution**: `llmfirewall-core`
 **Python Package**: `llmfirewall`
-**Release Candidate**: `v1.4.0rc1` (Development Candidate)
-**Stable Release**: `v1.3.2`
+**Current Stable Release**: `v1.4.0` (Published on PyPI)
+**Previous Stable Release**: `v1.3.2`
 
 This document provides the authoritative, evidence-backed compatibility matrix across supported LLM providers, agent frameworks, protocols, and web runtimes.
 

@@ -104,4 +104,4 @@ except SecurityViolation as exc:
 
 ## 5. Offline Testing
 
-See the standalone runnable example at [`examples/mcp/mcp_tool_guard_example.py`](../../examples/mcp/mcp_tool_guard_example.py).
+See the standalone runnable example at [`examples/mcp/mcp_tool_guard_example.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/examples/mcp/mcp_tool_guard_example.py).

@@ -8,8 +8,8 @@ A comprehensive guide for installing, configuring, verifying, and troubleshootin
 
 | Distribution | Version | Status | PyPI Package | Python Import | CLI Command |
 |:---|:---|:---:|:---|:---|:---|
-| **Stable Release** | `v1.3.2` | Production / Published | `pip install llmfirewall-core` | `import llmfirewall` | `llmfirewall` |
-| **Development Candidate** | `v1.4.0rc1` | Release Candidate | Source / Pre-release | `import llmfirewall` | `llmfirewall` |
+| **Stable Release** | `v1.4.0` | Production / Published | `pip install llmfirewall-core` | `import llmfirewall` | `llmfirewall` |
+| **Maintenance Release** | `v1.3.2` | Active Maintenance | `pip install llmfirewall-core==1.3.2` | `import llmfirewall` | `llmfirewall` |
 
 > [!IMPORTANT]
 > **Package Name vs. Python Import**:
@@ -161,7 +161,7 @@ python -c "import llmfirewall; print('LLMFirewall Version:', llmfirewall.__versi
 ```
 *Expected Output:*
 ```text
-LLMFirewall Version: 1.4.0rc1  # (or 1.3.2 on stable release)
+LLMFirewall Version: 1.4.0
 ```
 
 ### Step 2: Verify CLI Binary
@@ -171,7 +171,7 @@ llmfirewall --version
 ```
 *Expected Output:*
 ```text
-llmfirewall 1.4.0rc1  # (or 1.3.2 on stable release)
+llmfirewall 1.4.0
 ```
 
 ### Step 3: Execute a Live Sanity Scan

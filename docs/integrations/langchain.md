@@ -94,4 +94,4 @@ handler = FirewallCallbackHandler(firewall=fw, inspect_tools=True)
 
 ## 6. Offline Testing
 
-See [`tests/test_framework_ecosystem_week8.py`](../../tests/test_framework_ecosystem_week8.py) for complete test recipes using LCEL and LangChain callbacks.
+See [`tests/test_framework_ecosystem_week8.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/tests/test_framework_ecosystem_week8.py) for complete test recipes using LCEL and LangChain callbacks.

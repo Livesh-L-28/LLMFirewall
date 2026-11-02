@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="100%" height="100%">
+  <defs>
+    <linearGradient id="archBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070a13" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <linearGradient id="boundaryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.2" />
+    </linearGradient>
+
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#ef4444" />
+    </marker>
+
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="560" rx="16" fill="url(#archBg)" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- Diagram Title -->
+  <g transform="translate(40, 42)">
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" fill="#ffffff">
+      LLMFirewall Architectural Trust Boundaries
+    </text>
+    <text y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="400" fill="#94a3b8">
+      Defense-in-depth security inspection at every stage of the LLM application lifecycle
+    </text>
+  </g>
+
+  <!-- STEP 1: Untrusted User Input -->
+  <g transform="translate(60, 95)" filter="url(#shadow)">
+    <rect width="220" height="80" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5" />
+    <text x="20" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" letter-spacing="0.5">SOURCE</text>
+    <text x="20" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#ffffff">Untrusted User Input</text>
+  </g>
+
+  <!-- Flow 1: Down to Boundary 1 -->
+  <path d="M 170 175 L 170 215" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+
+  <!-- BOUNDARY 1: Input Scan -->
+  <g transform="translate(60, 225)" filter="url(#shadow)">
+    <rect width="220" height="130" rx="10" fill="#131d31" stroke="#38bdf8" stroke-width="1.5" />
+    <!-- Boundary Pill -->
+    <rect x="12" y="12" width="105" height="20" rx="4" fill="#0284c7" />
+    <text x="18" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="700" fill="#ffffff">BOUNDARY 1</text>
+    <text x="12" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Input Prompt Scan</text>
+    <text x="12" y="74" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#94a3b8">fw.scan(direction="input")</text>
+    <text x="12" y="94" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" fill="#cbd5e1">• Prompt Injection (Rules+ML)</text>
+    <text x="12" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" fill="#cbd5e1">• PII &amp; Secrets Redaction</text>
+  </g>
+
+  <!-- Drop / Block flow from Boundary 1 -->
+  <path d="M 60 290 L 25 290" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowRed)" fill="none" />
+  <text x="15" y="275" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="700" fill="#ef4444" text-anchor="middle">BLOCK</text>
+  <text x="15" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9" fill="#f87171" text-anchor="middle">HTTP 403</text>
+
+  <!-- Flow 2: Across to LLM / Agent Engine -->
+  <path d="M 280 290 L 370 290" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+  <text x="325" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="600" fill="#38bdf8" text-anchor="middle">Sanitized Text</text>
+
+  <!-- CENTER CORE: LLM & Agent Application -->
+  <g transform="translate(380, 115)" filter="url(#shadow)">
+    <rect width="250" height="350" rx="14" fill="#0f172a" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,4" />
+    <text x="20" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#38bdf8" letter-spacing="0.5">APPLICATION ENGINE</text>
+    <text x="20" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#ffffff">LLM / Agent Runtime</text>
+
+    <!-- Sub-box: Tool Sandboxing (Boundary 2) -->
+    <g transform="translate(15, 75)">
+      <rect width="220" height="80" rx="8" fill="#1e293b" stroke="#8b5cf6" stroke-width="1.5" />
+      <rect x="8" y="8" width="85" height="18" rx="4" fill="#7c3aed" />
+      <text x="14" y="21" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="700" fill="#ffffff">BOUNDARY 2</text>
+      <text x="8" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="600" fill="#ffffff">Tool Call Sandboxing</text>
+      <text x="8" y="64" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#cbd5e1">@fw.protect_tool / check_tool_call</text>
+    </g>
+
+    <!-- Sub-box: Streaming Guard (Boundary 3) -->
+    <g transform="translate(15, 170)">
+      <rect width="220" height="80" rx="8" fill="#1e293b" stroke="#00f0ff" stroke-width="1.5" />
+      <rect x="8" y="8" width="85" height="18" rx="4" fill="#0284c7" />
+      <text x="14" y="21" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="700" fill="#ffffff">BOUNDARY 3</text>
+      <text x="8" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="600" fill="#ffffff">In-Flight Stream Guard</text>
+      <text x="8" y="64" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#cbd5e1">StreamingTextGuard (Windowed)</text>
+    </g>
+
+    <!-- Sub-box: RAG Quarantine (Boundary 5/Context) -->
+    <g transform="translate(15, 265)">
+      <rect width="220" height="70" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.5" />
+      <rect x="8" y="8" width="105" height="18" rx="4" fill="#059669" />
+      <text x="14" y="21" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="700" fill="#ffffff">RAG CONTEXT</text>
+      <text x="8" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600" fill="#ffffff">Ingestion Quarantine</text>
+      <text x="8" y="60" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#cbd5e1">fw.rag.ingest_documents()</text>
+    </g>
+  </g>
+
+  <!-- Flow 3: Center to Output Scan -->
+  <path d="M 630 290 L 710 290" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+  <text x="670" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="600" fill="#38bdf8" text-anchor="middle">Completion</text>
+
+  <!-- BOUNDARY 4: Output Scan -->
+  <g transform="translate(720, 225)" filter="url(#shadow)">
+    <rect width="200" height="130" rx="10" fill="#131d31" stroke="#38bdf8" stroke-width="1.5" />
+    <!-- Boundary Pill -->
+    <rect x="12" y="12" width="105" height="20" rx="4" fill="#0284c7" />
+    <text x="18" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="700" fill="#ffffff">BOUNDARY 4</text>
+    <text x="12" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Output Completion</text>
+    <text x="12" y="74" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#94a3b8">fw.scan(direction="output")</text>
+    <text x="12" y="94" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" fill="#cbd5e1">• Secret Leak Prevention</text>
+    <text x="12" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" fill="#cbd5e1">• PII Masking &amp; Safety</text>
+  </g>
+
+  <!-- Drop / Block flow from Boundary 4 -->
+  <path d="M 820 225 L 820 185" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowRed)" fill="none" />
+  <text x="820" y="175" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="700" fill="#ef4444" text-anchor="middle">SUPPRESS LEAK</text>
+
+  <!-- Flow 4: Down to Sanitized Response -->
+  <path d="M 820 355 L 820 405" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+
+  <!-- STEP 4: Sanitized Response to User -->
+  <g transform="translate(720, 415)" filter="url(#shadow)">
+    <rect width="200" height="75" rx="10" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.5" />
+    <text x="18" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" font-weight="600" fill="#10b981">SAFE DELIVERY</text>
+    <text x="18" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14.5" font-weight="600" fill="#ffffff">Sanitized Client Response</text>
+  </g>
+
+  <!-- Bottom Legend -->
+  <g transform="translate(60, 515)">
+    <circle cx="6" cy="6" r="4" fill="#38bdf8" />
+    <text x="16" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#94a3b8">Active Inspection Boundary</text>
+
+    <circle cx="210" cy="6" r="4" fill="#10b981" />
+    <text x="220" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#94a3b8">Sanitized &amp; Allowed Payload</text>
+
+    <circle cx="430" cy="6" r="4" fill="#ef4444" />
+    <text x="440" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#94a3b8">Rejected Threat (HTTP 403 / Suppressed)</text>
+
+    <circle cx="730" cy="6" r="4" fill="#8b5cf6" />
+    <text x="740" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#94a3b8">Deterministic In-Process Gating</text>
+  </g>
+</svg>
+

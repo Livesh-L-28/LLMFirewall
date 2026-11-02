@@ -34,7 +34,7 @@ Every report submitted by an evaluator is categorized into one of nine distinct 
 For every issue logged, evaluators must capture the following 8 fields:
 
 1. **Reproduction Steps**: Self-contained Python script or curl command reproducing the defect without external proprietary dependencies.
-2. **Package Version**: Exact distribution and version (e.g. `llmfirewall-core==1.3.2` or `1.4.0rc1`).
+2. **Package Version**: Exact distribution and version (e.g. `llmfirewall-core==1.4.0`).
 3. **Environment**: Operating system, architecture (x86_64/arm64), and exact Python version (`python --version`).
 4. **Expected Behavior**: What decision (`Action.ALLOW`, `Action.BLOCK`, `Action.REDACT`) or HTTP status was expected.
 5. **Actual Behavior**: The exact outcome returned by `fw.scan()` or raised exception.

@@ -1,6 +1,6 @@
 # LLMFirewall Core Public API Reference
 
-This document defines the stable, verified public API for **`llmfirewall-core` v1.3.2** (Development Target: **v1.4.0**).
+This document defines the stable, verified public API for **`llmfirewall-core` v1.4.0**.
 
 All APIs documented below are exported from either the top-level namespace or the official `llmfirewall.integrations` package:
 
@@ -379,6 +379,7 @@ LLMFirewallError
 
 ### Exception Details
 
+<a id="securityblockerror"></a>
 - **`SecurityBlockError`**:
   - Raised by: `@fw.protect`, `fw.protect_tool()`.
   - Attributes: `err.reason` (*str*), `err.decision` (*Optional[PolicyDecision]*).

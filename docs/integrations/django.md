@@ -79,4 +79,4 @@ def chat_view(request):
 
 ## 5. Offline Testing
 
-See [`tests/test_optional_extra_error_messages.py`](../../tests/test_optional_extra_error_messages.py) and [`tests/test_framework_integrations.py`](../../tests/test_framework_integrations.py).
+See [`tests/test_optional_extra_error_messages.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/tests/test_optional_extra_error_messages.py) and [`tests/test_framework_integrations.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/tests/test_framework_integrations.py).

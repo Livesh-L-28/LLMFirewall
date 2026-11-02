@@ -100,7 +100,7 @@ except SecurityViolation as exc:
 
 ## 5. Offline Testing Without Live API Keys
 
-See the standalone runnable example at [`examples/anthropic/anthropic_guard_example.py`](../../examples/anthropic/anthropic_guard_example.py), which includes an in-memory mock client for local verification.
+See the standalone runnable example at [`examples/anthropic/anthropic_guard_example.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/examples/anthropic/anthropic_guard_example.py), which includes an in-memory mock client for local verification.
 
 ---
 

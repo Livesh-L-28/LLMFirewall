@@ -98,7 +98,7 @@ except SecurityViolation as exc:
 
 ## 5. Offline Testing Without Live API Keys
 
-To verify your integration without making network requests or using live API keys, see the standalone runnable example at [`examples/openai/openai_guard_example.py`](../../examples/openai/openai_guard_example.py), which includes an in-memory mock client.
+To verify your integration without making network requests or using live API keys, see the standalone runnable example at [`examples/openai/openai_guard_example.py`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/examples/openai/openai_guard_example.py), which includes an in-memory mock client.
 
 ---
 

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 160" width="100%" height="100%">
+  <defs>
+    <!-- Shield Gradient -->
+    <linearGradient id="logoShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+
+    <!-- Core Glow Gradient -->
+    <linearGradient id="logoCoreGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.3" />
+    </linearGradient>
+
+    <filter id="logoGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Shield Icon Group on Left -->
+  <g transform="translate(85, 80)">
+    <!-- Outer Shield Stroke with Glow -->
+    <path d="M 0 -62 L 52 -38 C 52 24 26 58 0 72 C -26 58 -52 24 -52 -38 Z"
+          fill="#090d16" stroke="url(#logoShieldGrad)" stroke-width="3.5" filter="url(#logoGlow)" opacity="0.4" />
+    <path d="M 0 -62 L 52 -38 C 52 24 26 58 0 72 C -26 58 -52 24 -52 -38 Z"
+          fill="#090d16" stroke="url(#logoShieldGrad)" stroke-width="3" />
+
+    <!-- Inner Shield Layer -->
+    <path d="M 0 -48 L 40 -28 C 40 18 20 44 0 54 C -20 44 -40 18 -40 -28 Z"
+          fill="url(#logoCoreGlow)" stroke="#38bdf8" stroke-width="1.8" opacity="0.8" />
+
+    <!-- Neural Network Node / Firewall Core inside Shield -->
+    <g transform="translate(0, 4)">
+      <!-- Center Core -->
+      <circle cx="0" cy="0" r="8" fill="#00f0ff" filter="url(#logoGlow)" />
+      <circle cx="0" cy="0" r="5" fill="#ffffff" />
+
+      <!-- Satellite Nodes -->
+      <circle cx="-22" cy="-16" r="4" fill="#38bdf8" />
+      <circle cx="22" cy="-16" r="4" fill="#38bdf8" />
+      <circle cx="-17" cy="19" r="4" fill="#818cf8" />
+      <circle cx="17" cy="19" r="4" fill="#818cf8" />
+
+      <!-- Synaptic Connection Lines -->
+      <line x1="0" y1="0" x2="-22" y2="-16" stroke="#00f0ff" stroke-width="1.8" opacity="0.85" />
+      <line x1="0" y1="0" x2="22" y2="-16" stroke="#00f0ff" stroke-width="1.8" opacity="0.85" />
+      <line x1="0" y1="0" x2="-17" y2="19" stroke="#818cf8" stroke-width="1.8" opacity="0.85" />
+      <line x1="0" y1="0" x2="17" y2="19" stroke="#818cf8" stroke-width="1.8" opacity="0.85" />
+      <line x1="-22" y1="-16" x2="22" y2="-16" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2,3" opacity="0.5" />
+      <line x1="-17" y1="19" x2="17" y2="19" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="2,3" opacity="0.5" />
+    </g>
+  </g>
+
+  <!-- Typography on Right -->
+  <g transform="translate(165, 88)">
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif"
+          font-size="52" font-weight="800" letter-spacing="-0.8" fill="#0f172a">
+      <tspan fill="#0f172a">LLM</tspan><tspan fill="url(#logoShieldGrad)">Firewall</tspan><tspan fill="#64748b" font-size="32" font-weight="400" letter-spacing="0.5"> core</tspan>
+    </text>
+    <text y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif"
+          font-size="15" font-weight="500" fill="#64748b" letter-spacing="0.2">
+      Security infrastructure for LLM-powered applications
+    </text>
+  </g>
+</svg>
+

@@ -9,7 +9,7 @@ This document is the authoritative instruction manual for AI coding agents (Clau
 - **Distribution Name (PyPI)**: `llmfirewall-core` (`pip install llmfirewall-core`)
 - **Python Module**: `llmfirewall` (`import llmfirewall`)
 - **CLI Binary**: `llmfirewall`
-- **Current Version**: `1.3.2`
+- **Current Version**: `1.4.0`
 - **Minimal Core Dependencies**: `pydantic>=2.0.0`, `pyyaml>=6.0.0` (zero external network/database dependencies).
 
 ### Directory Layout
@@ -127,8 +127,8 @@ Agents must adhere strictly to the following non-negotiable rules:
    When `result.action == Action.REDACT`, `result.is_allowed` is `True`. **Never forward the original input text to downstream models.** You must forward `result.processed_text` (or `result.sanitized_text`).
 2. **Never Bypass Block Decisions**:
    If `result.action == Action.BLOCK` (or `result.is_blocked` is `True`), terminate the request immediately. Do not log a warning and proceed.
-3. **Zero-Retention Safe Logging**:
-   Never log raw prompts or user inputs in exception handlers or audit logs. Always use `result.safe_dict()`, which automatically scrubs raw text and secret substrings.
+3. **Local Audit Log Sanitization (Scrubbing Cleartext)**:
+   Never log raw prompts or user inputs in exception handlers or audit logs. Always use `result.safe_dict()`, which automatically scrubs raw text and secret substrings locally (note: this does not govern upstream third-party cloud LLM retention policies).
 4. **Correct Exception Handling**:
    - Runtime decorators (`@fw.protect`, `fw.protect_tool`) raise `SecurityBlockError`.
    - Client adapters (`LLMFirewallClient`, `StreamingTextGuard`) raise `SecurityViolation`.
@@ -161,7 +161,7 @@ llmfirewall integrate validate
 # Step 6: Execute automated integration tests
 pytest -v
 
-# Step 7: Zero-retention audit check
+# Step 7: Local audit log sanitization check
 # Verify that application logs use result.safe_dict() instead of raw prompts
 ```
 

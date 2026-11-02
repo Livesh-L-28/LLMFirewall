@@ -71,3 +71,6 @@ venv.bak/
 
 # Local LLMFirewall runtime database / demo files
 .llmfirewall/
+
+# MkDocs build directory
+site/

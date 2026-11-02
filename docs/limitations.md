@@ -20,7 +20,7 @@ Transparent disclosure of the security model, architectural boundaries, and know
 - **Known Limitations**:
   - **Indirect / Semantic Evasions**: Prompts using complex multi-paragraph narrative framing, passive voice, fictional roleplay, or novel multilingual phrasing without explicit override keywords may not trigger static rules.
   - **Context-Dependent Injections**: Content that is benign in one application (e.g. creative writing about hacking) may be classified as suspicious, or vice-versa.
-  - **Multi-turn Distributed Payloads**: Attackers splitting instructions across multiple conversational turns require explicit state tracking via [`MultiTurnSecurityState`](../src/llmfirewall/detectors/prompt_injection/context.py) or session-based wrappers.
+  - **Multi-turn Distributed Payloads**: Attackers splitting instructions across multiple conversational turns require explicit state tracking via [`MultiTurnSecurityState`](https://github.com/Livesh-L-28/LLMFirewall/blob/main/src/llmfirewall/detectors/prompt_injection/context.py) or session-based wrappers.
 
 ---
 

@@ -1,0 +1,99 @@
+site_name: LLMFirewall-Core
+site_description: "Security infrastructure for LLM-powered applications."
+site_author: "Livesh L"
+site_url: "https://llmfirewall.org"
+repo_name: "Livesh-L-28/LLMFirewall"
+repo_url: "https://github.com/Livesh-L-28/LLMFirewall"
+
+exclude_docs: |
+  README.md
+
+theme:
+  name: material
+  logo: assets/llmfirewall-icon.svg
+  favicon: assets/llmfirewall-icon.svg
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Getting Started:
+      - Overview: index.md
+      - 5-Minute Quickstart: quickstart.md
+      - Installation Guide: installation.md
+      - Configuration & Presets: configuration.md
+  - Architecture & Security:
+      - System Architecture: architecture.md
+      - Security Model: security-model.md
+      - Agent Tool Guardrails: agent-tool-security.md
+      - Policy-as-Code: policy-as-code.md
+  - Framework Integrations:
+      - Overview: integrations/overview.md
+      - OpenAI SDK: integrations/openai.md
+      - Anthropic SDK: integrations/anthropic.md
+      - Streaming Text Guard: integrations/streaming_guard.md
+      - Pure ASGI Middleware: integrations/asgi_middleware.md
+      - FastAPI Endpoint: integrations/fastapi_endpoint.md
+      - Flask Extension: integrations/flask_endpoint.md
+      - Django Middleware: integrations/django.md
+      - LangChain Integration: integrations/langchain.md
+      - LangGraph Workflows: integrations/langgraph.md
+      - Model Context Protocol (MCP): integrations/mcp.md
+      - Agent Tool Calling: integrations/agent_tool_calling.md
+      - Secure RAG Context: integrations/rag_context_guard.md
+  - Reference:
+      - Public API Reference: api.md
+      - CLI Commands: cli.md
+      - Empirical Benchmarks: benchmarks.md
+      - Known Limitations: limitations.md
+      - Troubleshooting Guide: troubleshooting.md
+      - FAQ: faq.md
+  - Governance & Community:
+      - Contributing Guide: contributing.md
+      - Code of Conduct: code_of_conduct.md
+      - Security Policy: security.md
+      - Project Governance: project-governance.md
+      - Release Changelog: changelog.md

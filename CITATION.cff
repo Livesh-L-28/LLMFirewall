@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use LLMFirewall-Core in your research or applications, please cite it as below."
+title: "LLMFirewall-Core: Security Infrastructure for LLM-Powered Applications"
+abstract: "An in-process, deterministic, defense-in-depth security framework and Policy-as-Code engine engineered for LLM applications, autonomous agents, and RAG pipelines."
+authors:
+  - family-names: "L"
+    given-names: "Livesh"
+version: 1.4.0
+date-released: "2026-11-01"
+license: Apache-2.0
+repository-code: "https://github.com/Livesh-L-28/LLMFirewall"
+url: "https://pypi.org/project/llmfirewall-core/"
+keywords:
+  - "llm-security"
+  - "prompt-injection"
+  - "guardrails"
+  - "pii-redaction"
+  - "ai-safety"
+  - "policy-as-code"
+  - "agent-security"
+  - "rag-security"
+

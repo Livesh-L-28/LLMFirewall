@@ -10,6 +10,12 @@ All examples operate **locally by default** with simulated models and synthetic 
 
 | Directory | Topic | Key Files | Capabilities Demonstrated |
 |:---|:---|:---|:---|
+| [`quickstart/`](quickstart/) | 5-Minute Quickstarts | [`quickstart.py`](quickstart/quickstart.py), [`advanced_quickstart.py`](quickstart/advanced_quickstart.py) | Minimal zero-dependency scans, safe text consumption, strict policy presets, streaming guard, async client. |
+| [`openai/`](openai/) | OpenAI SDK Guardrails | [`openai_guard_example.py`](openai/openai_guard_example.py) | Drop-in wrapper `wrap_openai`, input PII redaction, prompt injection defense, and streaming token guard. |
+| [`anthropic/`](anthropic/) | Anthropic Claude Guardrails | [`anthropic_guard_example.py`](anthropic/anthropic_guard_example.py) | Drop-in wrapper `wrap_anthropic`, Claude prompt scanning, credential leak scrubbing, and stream protection. |
+| [`langgraph/`](langgraph/) | LangGraph State Guard | [`langgraph_node_guard_example.py`](langgraph/langgraph_node_guard_example.py) | Multi-agent state guardrails using `@guard_node`, input sanitization, and state injection defense. |
+| [`mcp/`](mcp/) | Model Context Protocol | [`mcp_tool_guard_example.py`](mcp/mcp_tool_guard_example.py) | `MCPToolGuard` parameter inspection, SSRF prevention, directory traversal blocking, and output redaction. |
+| [`sample_apps/`](sample_apps/) | Reference Services | [`sample_apps/`](sample_apps/) | 5 production-style microservices (FastAPI, ASGI, Streaming, Agent Sandbox, RAG Context) with automated pytest suites. |
 | [`v1_1_end_to_end_pipeline.py`](v1_1_end_to_end_pipeline.py) | Complete v1.1.0 Pipeline | [`v1_1_end_to_end_pipeline.py`](v1_1_end_to_end_pipeline.py) | Full request lifecycle: Ingress → Detection (homoglyphs) → RAG Quarantine → Tool Sandboxing (SSRF) → Runtime Decorator → Policy Linting → Risk Intelligence (Multi-turn session, Attack chains, Blast radius) → Observability & SIEM. |
 | [`benchmark_performance.py`](benchmark_performance.py) | Caching & Performance | [`benchmark_performance.py`](benchmark_performance.py) | Benchmark measuring L1/L2 ScanCache throughput, latency distributions, and ~8x speedup. |
 | [`custom_detector.py`](custom_detector.py) | Extensibility & Custom Detectors | [`custom_detector.py`](custom_detector.py) | Implementing and registering custom heuristic/regex threat detectors conforming to `DetectorProtocol`. |

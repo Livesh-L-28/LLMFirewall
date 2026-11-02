@@ -87,4 +87,4 @@ Security practitioners must consider the following technical boundaries:
 
 ## 7. Responsible Disclosure
 
-We welcome vulnerability reports from security researchers and practitioners. For instructions on reporting security findings privately, please see [SECURITY.md](../SECURITY.md).
+We welcome vulnerability reports from security researchers and practitioners. For instructions on reporting security findings privately, please see [SECURITY.md](security.md).
