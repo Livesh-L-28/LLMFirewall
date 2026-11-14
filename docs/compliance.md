@@ -137,3 +137,21 @@ diff = fw.compliance.diff(snap1, snap2)
 if diff.regressions:
     print(f"Detected {len(diff.regressions)} compliance regressions!")
 ```
+
+
+---
+
+## 4. OWASP Top 10 for LLM Applications Mapping (2025 Edition)
+
+| OWASP ID | Vulnerability Category | LLMFirewall Defensive Component | Enforcement Mechanism |
+| :--- | :--- | :--- | :--- |
+| **LLM01** | **Prompt Injection** | `PromptInjectionDetector`, `SemanticEntropyEvaluator` | Real-time multi-pattern and entropy scan; fail-closed rejection. |
+| **LLM02** | **Sensitive Information Disclosure** | `PIIRedactor`, `CredentialScanner` | In-process regex/token scanning; automated redacting and masking. |
+| **LLM03** | **Supply Chain Vulnerabilities** | `DependencyScanner`, `ProvenanceVerifier` | Manifest verification, SLSA level validation, and lockfile audit. |
+| **LLM04** | **Data and Model Poisoning** | `ContextSanitizer`, `DataIntegrityGuard` | Document hash verification and anomalous chunk filtering. |
+| **LLM05** | **Improper Output Handling** | `OutputGuardrail`, `XSSSanitizer` | Sanitization of model completions prior to downstream rendering. |
+| **LLM06** | **Excessive Agency** | `ToolAuthorizationPolicy`, `RBACValidator` | Declarative Policy-as-Code restricting tool invocation arguments. |
+| **LLM07** | **System Prompt Leakage** | `SystemPromptGuard`, `InstructionIsolator` | Detection of system prompt repetition attempts in output tokens. |
+| **LLM08** | **Vector and Embedding Weaknesses** | `VectorInputValidator`, `EmbeddingBoundaryGuard` | RAG retrieval boundary enforcement and embedding distance clamping. |
+| **LLM09** | **Misinformation & Hallucination** | `GroundednessEvaluator`, `CitationVerifier` | Fact-checking against retrieved source document spans. |
+| **LLM10** | **Unbounded Consumption** | `TokenRateLimiter`, `BudgetEnforcer` | Strict context window budgeting and per-session request rate caps. |
