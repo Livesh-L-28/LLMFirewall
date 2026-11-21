@@ -1,0 +1,10 @@
+{
+  "policy_schema": "1.0.0",
+  "last_updated": "2026-11-21",
+  "mappings": [
+    {"id": "LLM01", "name": "Prompt Injection", "detector": "llmfirewall.detectors.injection", "action": "BLOCK", "severity": "CRITICAL"},
+    {"id": "LLM02", "name": "Insecure Output Handling", "detector": "llmfirewall.detectors.output", "action": "SANITIZE", "severity": "HIGH"},
+    {"id": "LLM06", "name": "Sensitive Information Disclosure", "detector": "llmfirewall.detectors.pii", "action": "REDACT", "severity": "CRITICAL"},
+    {"id": "LLM07", "name": "Insecure Plugin Design", "detector": "llmfirewall.detectors.tool_guard", "action": "REJECT", "severity": "HIGH"}
+  ]
+}
