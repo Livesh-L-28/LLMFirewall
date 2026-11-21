@@ -1,0 +1,62 @@
+name: Daily AI Threat Intelligence Sync
+
+on:
+  schedule:
+    # Runs daily at 03:00 UTC (8:30 AM IST)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync even if no upstream changes'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-threat-intel:
+    name: Sync AI Threat Advisories & Injection Signatures
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Execute Threat Intelligence Ingestion Engine
+        run: |
+          python scripts/sync_threat_intel.py
+
+      - name: Validate Threat Intelligence Schema & Integrity
+        run: |
+          pytest tests/test_threat_intel.py -v
+
+      - name: Commit and Push Verified Signatures
+        run: |
+          git config --global user.name "Livesh L"
+          git config --global user.email "liveshjaidj@gmail.com"
+
+          # Stage verified signature files
+          git add signatures/threat_intel.json signatures/THREAT_FEED_SUMMARY.md
+
+          # Strict diff guard: commit only if content actually changed
+          if git diff --staged --quiet; then
+            echo "No updates to threat intelligence signatures today. Skipping commit."
+          else
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
+            git commit -m "chore(threat-intel): sync daily AI vulnerability signatures [skip ci]" -m "Automated threat intelligence feed sync completed at ${TIMESTAMP}."
+            git push origin main
+            echo "Successfully synced and committed new threat intelligence signatures."
+          fi

@@ -13,6 +13,7 @@
   <a href="https://github.com/Livesh-L-28/LLMFirewall/actions"><img src="https://img.shields.io/github/actions/workflow/status/Livesh-L-28/LLMFirewall/release-governance.yml?branch=main&label=CI&logo=github" alt="GitHub Actions CI"></a>
   <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/tests-1195%20passed%20%7C%2013%20skipped-brightgreen.svg" alt="Tests"></a>
   <a href="docs/benchmarks.md"><img src="https://img.shields.io/badge/inspection%20latency-0.408ms%20P50-blueviolet.svg" alt="Inspection Latency"></a>
+  <a href="signatures/THREAT_FEED_SUMMARY.md"><img src="https://img.shields.io/badge/threat%20intel-500%2B%20signatures-critical.svg" alt="Live Threat Intel Feed"></a>
   <a href="docs/"><img src="https://img.shields.io/badge/docs-Material%20MkDocs-blue.svg" alt="Documentation"></a>
 </p>
 
