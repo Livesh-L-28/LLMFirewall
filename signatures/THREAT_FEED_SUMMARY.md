@@ -1,7 +1,7 @@
 # 🛡️ LLMFirewall Live AI Threat Intelligence Feed
 
 > **Automated Threat Pipeline Status:** 🟢 Active  
-> **Last Synchronized:** `2026-11-27T11:31:49.826154+00:00`  
+> **Last Synchronized:** `2026-11-28T11:00:00.595061+00:00`  
 > **Total Monitored Advisories:** `519` (`83` Critical, `129` High, `286` Moderate)  
 > **Monitored Ecosystem:** PyPI AI/ML Stack (`langchain`, `transformers`, `openai`, `chromadb`, `vllm`, `fastapi`, `torch`, etc.)
 
